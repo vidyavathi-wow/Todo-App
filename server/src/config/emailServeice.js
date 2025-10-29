@@ -1,5 +1,5 @@
 const axios = require('axios');
-
+const logger = require('../utils/logger');
 const sendEmail = async (to, subject, text) => {
   try {
     const apiKey = process.env.BREVO_API_KEY;

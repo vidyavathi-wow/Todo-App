@@ -1,29 +1,8 @@
-import React, { useEffect, useRef } from "react";
-import Quill from "quill";
-import "quill/dist/quill.snow.css";
-// eslint-disable-next-line no-unused-vars
-import { motion as m } from "framer-motion";
+import React from 'react';
+
+import { motion as m } from 'framer-motion';
 
 export default function TodoContent({ todo, children }) {
-  const notesRef = useRef(null);
-
-  useEffect(() => {
-    if (todo.notes && notesRef.current) {
-      try {
-        const parsed = JSON.parse(todo.notes);
-        if (parsed && parsed.ops) {
-          const tempQuill = new Quill(document.createElement("div"));
-          tempQuill.setContents(parsed);
-          notesRef.current.innerHTML = tempQuill.root.innerHTML;
-        } else {
-          notesRef.current.innerHTML = todo.notes;
-        }
-      } catch {
-        notesRef.current.innerHTML = todo.notes;
-      }
-    }
-  }, [todo.notes]);
-
   return (
     <m.div
       className="p-4 sm:p-8 max-w-4xl mx-auto w-full relative"
@@ -41,17 +20,14 @@ export default function TodoContent({ todo, children }) {
 
         <div className="space-y-6">
           {todo.description && (
-            <p className="leading-relaxed text-gray-300">
-              {todo.description}
-            </p>
+            <p className="leading-relaxed text-gray-300">{todo.description}</p>
           )}
 
           {todo.notes && (
             <div className="bg-gray-800 rounded-lg p-5 sm:p-6 border border-gray-700/40">
-              <div
-                ref={notesRef}
-                className="prose prose-invert max-w-none leading-relaxed text-gray-200"
-              />
+              <p className="max-w-none leading-relaxed text-gray-200 whitespace-pre-line">
+                {todo.notes}
+              </p>
             </div>
           )}
         </div>
