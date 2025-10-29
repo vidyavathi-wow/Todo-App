@@ -21,7 +21,7 @@ export default function ResetPassword() {
     setLoading(true);
     try {
       const { data } = await axios.post(
-        `/api/v1/auth/reset-password/${token}`,
+        `/api/v1/auth/reset-password?token=${token}`, // ← Query param format
         { password }
       );
       if (data.success) {

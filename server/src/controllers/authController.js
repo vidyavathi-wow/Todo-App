@@ -185,7 +185,7 @@ exports.forgotPassword = async (req, res) => {
 
 exports.resetPassword = async (req, res) => {
   try {
-    const { token } = req.params;
+    const { token } = req.query; // ← Change this line
     const { password } = req.body;
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
