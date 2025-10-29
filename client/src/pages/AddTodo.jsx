@@ -1,54 +1,53 @@
-/* eslint-disable react-hooks/exhaustive-deps */
-import React, { useEffect, useState, useContext } from "react";
-import { useQuill } from "react-quilljs";
-import "quill/dist/quill.snow.css";
-import AppContext from "../context/AppContext";
-import toast from "react-hot-toast";
-import { useNavigate } from "react-router-dom";
-import Input from "../components/common/Input";
-import Button from "../components/common/Button";
-import Select from "../components/common/Select";
+import React, { useEffect, useState, useContext } from 'react';
+import { useQuill } from 'react-quilljs';
+import 'quill/dist/quill.snow.css';
+import AppContext from '../context/AppContext';
+import toast from 'react-hot-toast';
+import { useNavigate } from 'react-router-dom';
+import Input from '../components/common/Input';
+import Button from '../components/common/Button';
+import Select from '../components/common/Select';
 
 const AddTodo = () => {
   const { axios, editTodo, setEditTodo, fetchTodos } = useContext(AppContext);
   const navigate = useNavigate();
   const { quill, quillRef } = useQuill({
-    theme: "snow",
+    theme: 'snow',
     modules: {
       toolbar: [
         [{ header: [1, 2, 3, false] }],
-        ["bold", "italic", "underline"],
-        [{ list: "ordered" }, { list: "bullet" }],
-        ["link", "image"],
-        ["clean"],
+        ['bold', 'italic', 'underline'],
+        [{ list: 'ordered' }, { list: 'bullet' }],
+        ['link', 'image'],
+        ['clean'],
       ],
     },
   });
 
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [date, setDate] = useState("");
-  const [category, setCategory] = useState("Work");
-  const [priority, setPriority] = useState("Moderate");
-  const [status, setStatus] = useState("pending");
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [date, setDate] = useState('');
+  const [category, setCategory] = useState('Work');
+  const [priority, setPriority] = useState('Moderate');
+  const [status, setStatus] = useState('pending');
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     if (editTodo && quill) {
-      setTitle(editTodo.title || "");
-      setDescription(editTodo.description || "");
-      setCategory(editTodo.category || "Work");
-      setPriority(editTodo.priority || "Moderate");
-      setStatus(editTodo.status || "pending");
-      setDate(editTodo.date ? editTodo.date.split("T")[0] : "");
+      setTitle(editTodo.title || '');
+      setDescription(editTodo.description || '');
+      setCategory(editTodo.category || 'Work');
+      setPriority(editTodo.priority || 'Moderate');
+      setStatus(editTodo.status || 'pending');
+      setDate(editTodo.date ? editTodo.date.split('T')[0] : '');
 
       setTimeout(() => {
         try {
-          const content = JSON.parse(editTodo.notes || "{}");
+          const content = JSON.parse(editTodo.notes || '{}');
           if (content && content.ops) quill.setContents(content);
-          else quill.root.innerHTML = editTodo.notes || "";
+          else quill.root.innerHTML = editTodo.notes || '';
         } catch {
-          quill.root.innerHTML = editTodo.notes || "";
+          quill.root.innerHTML = editTodo.notes || '';
         }
       }, 150);
     } else if (!editTodo && quill) {
@@ -57,20 +56,20 @@ const AddTodo = () => {
   }, [editTodo, quill]);
 
   const clearForm = () => {
-    setTitle("");
-    setDescription("");
-    setCategory("Work");
-    setPriority("Moderate");
-    setStatus("pending");
-    setDate("");
+    setTitle('');
+    setDescription('');
+    setCategory('Work');
+    setPriority('Moderate');
+    setStatus('pending');
+    setDate('');
     if (quill) quill.setContents([]);
   };
 
   const onSubmitHandler = async (e) => {
     e.preventDefault();
-    if (!title.trim()) return toast.error("Title is required");
-    if (!description.trim()) return toast.error("Description is required");
-    if (!date) return toast.error("Date is required");
+    if (!title.trim()) return toast.error('Title is required');
+    if (!description.trim()) return toast.error('Description is required');
+    if (!date) return toast.error('Date is required');
 
     try {
       setIsSaving(true);
@@ -85,20 +84,23 @@ const AddTodo = () => {
       };
 
       let response;
-      if (editTodo) response = await axios.put(`/api/v1/todos/${editTodo.id}`, todoData);
+      if (editTodo)
+        response = await axios.put(`/api/v1/todos/${editTodo.id}`, todoData);
       else response = await axios.post(`/api/v1/todos`, todoData);
 
       if (response.data.success) {
-        toast.success(editTodo ? "Todo updated successfully!" : "Todo added successfully!");
+        toast.success(
+          editTodo ? 'Todo updated successfully!' : 'Todo added successfully!'
+        );
         clearForm();
         setEditTodo(null);
         await fetchTodos();
-        navigate("/");
+        navigate('/');
       } else {
-        toast.error(response.data.message || "Something went wrong");
+        toast.error(response.data.message || 'Something went wrong');
       }
     } catch (error) {
-      toast.error(error.response?.data?.message || "Failed to save todo");
+      toast.error(error.response?.data?.message || 'Failed to save todo');
     } finally {
       setIsSaving(false);
     }
@@ -107,7 +109,7 @@ const AddTodo = () => {
   const onCancelHandler = () => {
     clearForm();
     setEditTodo(null);
-    navigate("/");
+    navigate('/');
   };
 
   return (
@@ -117,7 +119,7 @@ const AddTodo = () => {
     >
       <div className="bg-gray-dark w-full max-w-3xl p-6 md:p-10 shadow rounded mx-auto border border-gray-light">
         <h2 className="text-2xl font-semibold text-primary mb-6">
-          {editTodo ? "Edit Todo" : "Add New Todo"}
+          {editTodo ? 'Edit Todo' : 'Add New Todo'}
         </h2>
 
         {editTodo && (
@@ -153,9 +155,15 @@ const AddTodo = () => {
         </div>
 
         <div className="mb-6">
-          <label className="block text-secondary/90 mb-2 font-medium">Notes</label>
+          <label className="block text-secondary/90 mb-2 font-medium">
+            Notes
+          </label>
           <div className="relative max-w-lg border border-gray-light rounded overflow-hidden">
-            <div ref={quillRef} className="bg-gray text-secondary" style={{ height: "280px" }} />
+            <div
+              ref={quillRef}
+              className="bg-gray text-secondary"
+              style={{ height: '280px' }}
+            />
           </div>
         </div>
 
@@ -172,42 +180,48 @@ const AddTodo = () => {
         </div>
 
         <div className="mb-6">
-          <label className="block text-secondary/90 mb-2 font-medium">Category</label>
+          <label className="block text-secondary/90 mb-2 font-medium">
+            Category
+          </label>
           <Select
             value={category}
             onChange={setCategory}
             options={[
-              { label: "Work", value: "Work" },
-              { label: "Personal", value: "Personal" },
-              { label: "Other", value: "Other" },
+              { label: 'Work', value: 'Work' },
+              { label: 'Personal', value: 'Personal' },
+              { label: 'Other', value: 'Other' },
             ]}
             className="w-full max-w-lg"
           />
         </div>
 
         <div className="mb-6">
-          <label className="block text-secondary/90 mb-2 font-medium">Priority</label>
+          <label className="block text-secondary/90 mb-2 font-medium">
+            Priority
+          </label>
           <Select
             value={priority}
             onChange={setPriority}
             options={[
-              { label: "Low", value: "Low" },
-              { label: "Moderate", value: "Moderate" },
-              { label: "High", value: "High" },
+              { label: 'Low', value: 'Low' },
+              { label: 'Moderate', value: 'Moderate' },
+              { label: 'High', value: 'High' },
             ]}
             className="w-full max-w-lg"
           />
         </div>
 
         <div className="mb-8">
-          <label className="block text-secondary/90 mb-2 font-medium">Status</label>
+          <label className="block text-secondary/90 mb-2 font-medium">
+            Status
+          </label>
           <Select
             value={status}
             onChange={setStatus}
             options={[
-              { label: "Pending", value: "pending" },
-              { label: "In Progress", value: "inProgress" },
-              { label: "Completed", value: "completed" },
+              { label: 'Pending', value: 'pending' },
+              { label: 'In Progress', value: 'inProgress' },
+              { label: 'Completed', value: 'completed' },
             ]}
             className="w-full max-w-lg"
           />
@@ -221,11 +235,11 @@ const AddTodo = () => {
           >
             {isSaving
               ? editTodo
-                ? "Updating..."
-                : "Adding..."
+                ? 'Updating...'
+                : 'Adding...'
               : editTodo
-              ? "Update Todo"
-              : "Add Todo"}
+                ? 'Update Todo'
+                : 'Add Todo'}
           </Button>
 
           {editTodo && (
