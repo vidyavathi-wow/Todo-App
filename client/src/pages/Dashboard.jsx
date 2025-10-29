@@ -1,23 +1,20 @@
-
-import { useContext} from "react";
-import TodoList from "../components/todos/TodoList";
-import AppContext from "../context/AppContext";
-import toast from "react-hot-toast";
-import TodoInsights from "../components/TodoInsights";
+import { useContext } from 'react';
+import TodoList from '../components/todos/TodoList';
+import AppContext from '../context/AppContext';
+import toast from 'react-hot-toast';
+import TodoInsights from '../components/TodoInsights';
 
 export default function Dashboard() {
- 
-  const {todos,axios,fetchTodos}=useContext(AppContext);
+  const { todos, axios, fetchTodos } = useContext(AppContext);
 
   const updateTaskStatus = async (todo) => {
-    try{
-      const {data}=await axios.put(`/api/v1/todos/:${todo.id}`,{});
-      if(data.success){
-        toast.success("Todo status updated");
+    try {
+      const { data } = await axios.put(`/api/v1/todos/${todo.id}`, {});
+      if (data.success) {
+        toast.success('Todo status updated');
         fetchTodos();
       }
-
-    }catch(error){
+    } catch (error) {
       toast.error(error.message);
     }
   };
@@ -28,7 +25,7 @@ export default function Dashboard() {
         <TodoList todos={todos} onUpdateStatus={updateTaskStatus} />
       </div>
       <div className="lg:col-span-1">
-        <TodoInsights/>
+        <TodoInsights />
       </div>
     </div>
   );

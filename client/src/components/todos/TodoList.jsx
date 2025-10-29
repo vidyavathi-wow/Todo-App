@@ -52,16 +52,13 @@ export default function TodoList() {
 
   const handleToggleCompleted = async (todo) => {
     try {
-      const currentlyCompleted =
-        (todo.status || '').toLowerCase() === 'completed';
+      const isCompleted = (todo.status || '').toLowerCase() === 'completed';
+      const newStatus = isCompleted
+        ? prevStatusRef.current[todo.id] || 'In Progress'
+        : 'completed';
 
-      let newStatus;
-      if (!currentlyCompleted) {
+      if (!isCompleted)
         prevStatusRef.current[todo.id] = todo.status || 'Pending';
-        newStatus = 'completed';
-      } else {
-        newStatus = prevStatusRef.current[todo.id] || 'In Progress';
-      }
 
       await axios.put(`/api/v1/todos/${todo.id}`, {
         ...todo,
@@ -72,7 +69,10 @@ export default function TodoList() {
         prev.map((t) => (t.id === todo.id ? { ...t, status: newStatus } : t))
       );
     } catch (err) {
-      toast.error(err.message);
+      console.error(err.response || err);
+      toast.error(
+        err.response?.status === 404 ? 'Todo not found' : err.message
+      );
     }
   };
 
@@ -105,7 +105,11 @@ export default function TodoList() {
           variant="secondary"
           onClick={handleResetFilters}
           disabled={filterStatus === 'All' && !searchQuery}
-          className="w-full sm:w-auto px-4"
+          className={`w-full sm:w-auto px-4 ${
+            filterStatus === 'All' && !searchQuery
+              ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
+              : ''
+          }`}
         >
           Reset Filters
         </Button>

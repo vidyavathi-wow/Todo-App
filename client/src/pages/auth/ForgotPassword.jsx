@@ -19,12 +19,14 @@ export default function ForgotPassword() {
       const { data } = await axios.post('/api/v1/auth/forgot-password', {
         email,
       });
-      if (data.success) toast.success('Reset link sent to your email');
-      else toast.error(data.message);
+      if (data.success) {
+        toast.success('Reset link sent to your email');
+      } else toast.error(data.message);
     } catch (error) {
       toast.error(error.response?.data?.message || 'Something went wrong');
     } finally {
       setLoading(false);
+      setEmail('');
     }
   };
 

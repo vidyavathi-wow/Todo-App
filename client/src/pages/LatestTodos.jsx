@@ -1,10 +1,9 @@
-import { useContext, useEffect, useState } from "react";
-import { FiCheckCircle, FiClock, FiPlay, FiList } from "react-icons/fi";
-import toast from "react-hot-toast";
-import AppContext from "../context/AppContext";
-import TodoTableItem from "../components/TodoTableITem";
-const LatestTodos= () => {
-  const { axios,todos } = useContext(AppContext);
+import { useContext, useEffect, useState } from 'react';
+import { FiCheckCircle, FiClock, FiPlay, FiList } from 'react-icons/fi';
+import AppContext from '../context/AppContext';
+import TodoTableItem from '../components/TodoTableITem';
+const LatestTodos = () => {
+  const { axios, fetchTodos } = useContext(AppContext);
   const [overviewData, setoverviewData] = useState({
     completed: 0,
     inProgress: 0,
@@ -14,37 +13,34 @@ const LatestTodos= () => {
 
   const fetchDashboard = async () => {
     try {
-      const { data } = await axios.get("/api/v1/todos/data/dashboard");
-      console.log(data);
+      const { data } = await axios.get('/api/v1/todos/data/dashboard');
       if (data.success) {
-        console.log(data.overviewData);
         setoverviewData(data.overviewData);
-      } else {
-        toast.error(data.message);
+        fetchTodos();
       }
     } catch (error) {
-      toast.error(error.message);
+      console.log(error.message);
     }
   };
 
   useEffect(() => {
     fetchDashboard();
-  }, [todos]);
+  }, []);
 
   const stats = [
     {
       icon: <FiCheckCircle className="text-2xl text-primary" />,
-      label: "Completed",
+      label: 'Completed',
       value: overviewData.completed ? overviewData.completed : 0,
     },
     {
       icon: <FiClock className="text-2xl text-primary" />,
-      label: "In Progress",
+      label: 'In Progress',
       value: overviewData.inProgress ? overviewData.inProgress : 0,
     },
     {
       icon: <FiPlay className="text-2xl text-primary" />,
-      label: "Pending",
+      label: 'Pending',
       value: overviewData.pending ? overviewData.pending : 0,
     },
   ];
@@ -80,7 +76,7 @@ const LatestTodos= () => {
                   #
                 </th>
                 <th scope="col" className="px-2 py-4 xl:px-6">
-                 title
+                  title
                 </th>
                 <th scope="col" className="px-2 py-4 xl:px-6 max-sm:hidden">
                   Date

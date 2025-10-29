@@ -1,36 +1,36 @@
-import React, { useEffect, useState, useContext } from "react";
-import { PieChartBox } from "../components/analytics/wrappers/PieChartBox";
-import { BarChartBox } from "../components/analytics/wrappers/BarChartBox";
-import AnalyticsCard from "../components/analytics/wrappers/AnalyticsCard";
-import AppContext from "../context/AppContext";
-import toast from "react-hot-toast";
-import Loader from "../components/common/Loader";
-import { ANALYTICS_COLORS } from "../utils/Constants";
-import EmptyState from "../components/common/EmptyState";
+import React, { useEffect, useState, useContext } from 'react';
+import { PieChartBox } from '../components/analytics/wrappers/PieChartBox';
+import { BarChartBox } from '../components/analytics/wrappers/BarChartBox';
+import AnalyticsCard from '../components/analytics/wrappers/AnalyticsCard';
+import AppContext from '../context/AppContext';
+import Loader from '../components/common/Loader';
+import { ANALYTICS_COLORS } from '../utils/Constants';
+import EmptyState from '../components/common/EmptyState';
 
 export default function Analytics() {
-  const { axios, token } = useContext(AppContext);
+  const { axios, fetchTodos } = useContext(AppContext);
   const [analytics, setAnalytics] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchAnalytics = async () => {
       try {
-        const { data } = await axios.get("/api/v1/analytics");
-        if (data.success) setAnalytics(data);
-        else toast.error(data.message);
+        const { data } = await axios.get('/api/v1/analytics');
+        if (data.success) {
+          fetchTodos();
+          setAnalytics(data);
+        }
       } catch (error) {
-        toast.error(error.response?.data?.message || "Failed to fetch analytics");
+        console.log(error.message);
       } finally {
         setLoading(false);
       }
     };
     fetchAnalytics();
-  }, [axios, token]);
+  }, []);
 
   if (loading) return <Loader />;
-  if (!analytics)
-    return <EmptyState message="No Analytics Data"/>
+  if (!analytics) return <EmptyState message="No Analytics Data" />;
 
   const totalTodos = analytics.totalTodos || 0;
   const inProgress = analytics.statusCounts?.inProgress || 0;
@@ -60,7 +60,7 @@ export default function Analytics() {
       </div>
 
       {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-64">
         <PieChartBox
           title="Status Distribution"
           data={Object.entries(analytics.statusCounts).map(([name, value]) => ({
@@ -72,19 +72,23 @@ export default function Analytics() {
 
         <BarChartBox
           title="Priority Overview"
-          data={Object.entries(analytics.priorityCounts).map(([name, value]) => ({
-            name,
-            value,
-          }))}
-          barColor={ANALYTICS_COLORS.priority[2]} // high priority main color
+          data={Object.entries(analytics.priorityCounts).map(
+            ([name, value]) => ({
+              name,
+              value,
+            })
+          )}
+          barColor={ANALYTICS_COLORS.priority[2]}
         />
 
         <PieChartBox
           title="Category Breakdown"
-          data={Object.entries(analytics.categoryCounts).map(([name, value]) => ({
-            name,
-            value,
-          }))}
+          data={Object.entries(analytics.categoryCounts).map(
+            ([name, value]) => ({
+              name,
+              value,
+            })
+          )}
           colors={ANALYTICS_COLORS.category}
         />
       </div>
