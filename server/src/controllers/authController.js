@@ -154,6 +154,7 @@ exports.logout = async (req, res) => {
     res.status(403).json({ success: false, message: 'Invalid token' });
   }
 };
+
 exports.forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
@@ -163,7 +164,10 @@ exports.forgotPassword = async (req, res) => {
       const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, {
         expiresIn: '1d',
       });
-      const link = `${process.env.FRONTEND_URL}/reset-password/${token}`;
+
+      const encodedToken = encodeURIComponent(token);
+      const link = `${process.env.FRONTEND_URL}/reset-password/${encodedToken}`;
+
       try {
         await sendEmail(email, 'Reset Password', `Reset link: ${link}`);
       } catch (err) {

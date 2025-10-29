@@ -1,5 +1,5 @@
-import React, { useContext, useMemo } from "react";
-import AppContext from "../context/AppContext";
+import React, { useContext, useMemo } from 'react';
+import AppContext from '../context/AppContext';
 
 const TodoInsights = () => {
   const { todos } = useContext(AppContext);
@@ -7,24 +7,25 @@ const TodoInsights = () => {
   const insights = useMemo(() => {
     const total = todos.length;
     const completed = todos.filter(
-      (t) => t.status?.toLowerCase() === "completed"
+      (t) => t.status?.toLowerCase() === 'completed'
     ).length;
     const pending = todos.filter(
-      (t) => t.status?.toLowerCase() === "pending"
+      (t) => t.status?.toLowerCase() === 'pending'
     ).length;
     const inProgress = todos.filter(
-      (t) => t.status?.toLowerCase() === "inprogress" || t.status === "In Progress"
+      (t) =>
+        t.status?.toLowerCase() === 'inprogress' || t.status === 'In Progress'
     ).length;
 
     const highPriority = todos.filter(
-      (t) => t.priority?.toLowerCase() === "high"
+      (t) => t.priority?.toLowerCase() === 'high'
     );
 
-    const todayLocal = new Date().toLocaleDateString("en-CA");
+    const todayLocal = new Date().toLocaleDateString('en-CA');
     const todayTasks = todos.filter((t) => {
       const dueRaw = t.dueDate || t.due_date;
       if (!dueRaw) return false;
-      const dueLocal = new Date(dueRaw).toLocaleDateString("en-CA");
+      const dueLocal = new Date(dueRaw).toLocaleDateString('en-CA');
       return dueLocal === todayLocal;
     });
 
@@ -41,28 +42,26 @@ const TodoInsights = () => {
   return (
     <div className="space-y-6">
       <div className="bg-gray border border-gray-light rounded-xl p-4 shadow-md">
-        <h3 className="text-lg font-semibold mb-4 text-primary">
-          Quick Stats
-        </h3>
+        <h3 className="text-lg font-semibold mb-4 text-primary">Quick Stats</h3>
         <div className="space-y-2 text-sm">
           <p>
-            Total Tasks:{" "}
+            Total Tasks:{' '}
             <span className="text-primary font-medium">{insights.total}</span>
           </p>
           <p>
-            Completed:{" "}
+            Completed:{' '}
             <span className="text-green-400 font-medium">
               {insights.completed}
             </span>
           </p>
           <p>
-            In Progress:{" "}
+            In Progress:{' '}
             <span className="text-blue-400 font-medium">
               {insights.inProgress}
             </span>
           </p>
           <p>
-            Pending:{" "}
+            Pending:{' '}
             <span className="text-yellow-400 font-medium">
               {insights.pending}
             </span>

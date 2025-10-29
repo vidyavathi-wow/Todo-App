@@ -7,7 +7,8 @@ import Button from '../../components/common/Button';
 
 export default function ResetPassword() {
   const { axios } = useContext(AppContext);
-  const { token } = useParams();
+  const { token: rawToken } = useParams();
+  const token = decodeURIComponent(rawToken); // Decode the token here
   const navigate = useNavigate();
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
