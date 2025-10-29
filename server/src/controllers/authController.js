@@ -165,8 +165,8 @@ exports.forgotPassword = async (req, res) => {
         expiresIn: '1d',
       });
 
-      const encodedToken = encodeURIComponent(token);
-      const link = `${process.env.FRONTEND_URL}/reset-password/${encodedToken}`;
+      // Send token as query parameter instead of in path
+      const link = `${process.env.FRONTEND_URL}/reset-password?token=${encodeURIComponent(token)}`;
 
       try {
         await sendEmail(email, 'Reset Password', `Reset link: ${link}`);

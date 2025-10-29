@@ -1,5 +1,5 @@
 import React, { useState, useContext } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useSearchParams, Link, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import AppContext from '../../context/AppContext';
 import Input from '../../components/common/Input';
@@ -7,8 +7,8 @@ import Button from '../../components/common/Button';
 
 export default function ResetPassword() {
   const { axios } = useContext(AppContext);
-  const { token: rawToken } = useParams();
-  const token = decodeURIComponent(rawToken);
+  const [searchParams] = useSearchParams();
+  const token = searchParams.get('token');
   const navigate = useNavigate();
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -16,13 +16,13 @@ export default function ResetPassword() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!password.trim()) return toast.error('Enter a new password');
+    if (!token) return toast.error('Invalid or missing reset token');
+
     setLoading(true);
     try {
       const { data } = await axios.post(
         `/api/v1/auth/reset-password/${token}`,
-        {
-          password,
-        }
+        { password }
       );
       if (data.success) {
         toast.success('Password reset successfully');
@@ -36,6 +36,19 @@ export default function ResetPassword() {
       setLoading(false);
     }
   };
+
+  if (!token) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-dark text-gray-light">
+        <div className="text-center">
+          <p className="mb-4">Invalid reset link</p>
+          <Link to="/login" className="text-primary hover:underline">
+            Back to Login
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-dark text-gray-light px-4">
