@@ -59,7 +59,6 @@ export default function Analytics() {
         />
       </div>
 
-      {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-64">
         <PieChartBox
           title="Status Distribution"
