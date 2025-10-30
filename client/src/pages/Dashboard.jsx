@@ -3,6 +3,8 @@ import TodoList from '../components/todos/TodoList';
 import AppContext from '../context/AppContext';
 import toast from 'react-hot-toast';
 import TodoInsights from '../components/TodoInsights';
+import Calendar from '../components/Calender';
+import TodaysTodos from '../components/TodaysTodos';
 
 export default function Dashboard() {
   const { todos, axios, fetchTodos } = useContext(AppContext);
@@ -24,8 +26,9 @@ export default function Dashboard() {
       <div className="lg:col-span-2">
         <TodoList todos={todos} onUpdateStatus={updateTaskStatus} />
       </div>
-      <div className="lg:col-span-1">
-        <TodoInsights />
+      <div className="lg:col-span-1 overflow-y-auto max-h-[80vh] pr-2">
+        <Calendar />
+        <TodaysTodos />
       </div>
     </div>
   );

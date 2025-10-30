@@ -23,7 +23,12 @@ export default function ForgotPassword() {
         toast.success('Reset link sent to your email');
       } else toast.error(data.message);
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Something went wrong');
+      if (error.response && error.response.data && error.response.data.errors) {
+        const messages = error.response.data.errors.map((err) => err.msg);
+        messages.forEach((msg) => toast.error(msg));
+      } else {
+        toast.error(error.response?.data?.message || 'Failed to set Email');
+      }
     } finally {
       setLoading(false);
       setEmail('');
@@ -39,7 +44,7 @@ export default function ForgotPassword() {
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <label className="block mb-1 text-sm text-secondary/80">
+            <label className="block mb-1 text-sm text-text">
               Email Address
             </label>
             <Input

@@ -1,22 +1,24 @@
-import React from "react";
+import React from 'react';
 
 const Button = ({
   children,
   onClick,
-  type = "button",
+  type = 'button',
   disabled = false,
-  className = "",
+  className = '',
   noDefault = false,
+  ...rest
 }) => {
   const defaultClasses =
-    "mt-6 w-40 h-10 bg-primary text-white rounded text-sm hover:bg-primary/80 transition";
+    'mt-6 w-40 h-10 bg-primary text-white rounded text-sm hover:bg-primary/80 transition';
 
   return (
     <button
       type={type}
       onClick={onClick}
       disabled={disabled}
-      className={`${noDefault ? "" : defaultClasses} ${className}`}
+      className={`${noDefault ? '' : defaultClasses} ${className}`}
+      {...rest}
     >
       {children}
     </button>

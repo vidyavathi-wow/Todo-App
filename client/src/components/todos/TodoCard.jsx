@@ -44,7 +44,6 @@ export default function TodoCard({ todo, onToggleCompleted }) {
           </div>
         </div>
 
-        {/* Right: Status badge */}
         <span
           className={`px-3 py-1 rounded-full text-xs font-medium ${
             isCompleted

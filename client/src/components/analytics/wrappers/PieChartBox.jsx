@@ -9,10 +9,9 @@ import {
 } from 'recharts';
 
 export const PieChartBox = ({ title, data, colors }) => (
-  <div className="bg-gray-800 p-4 rounded-lg shadow border border-gray-700 min-w-0 flex flex-col">
+  <div className="bg-gray-800 p-4 rounded-lg shadow border border-gray-700 w-full min-h-[250px] flex flex-col">
     <h3 className="text-primary font-semibold mb-4 text-center">{title}</h3>
-    {/* Ensure container has a fixed height and flexible width */}
-    <div className="flex-1 h-64 min-w-0">
+    <div className="flex-1 w-full">
       <ResponsiveContainer width="100%" height="100%">
         <PieChart>
           <Pie

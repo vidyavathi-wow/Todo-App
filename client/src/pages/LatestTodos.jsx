@@ -2,6 +2,9 @@ import { useContext, useEffect, useState } from 'react';
 import { FiCheckCircle, FiClock, FiPlay, FiList } from 'react-icons/fi';
 import AppContext from '../context/AppContext';
 import TodoTableItem from '../components/TodoTableITem';
+import EmptyState from '../components/common/EmptyState'; // Assuming you have this
+import Loader from '../components/common/Loader';
+
 const LatestTodos = () => {
   const { axios, fetchTodos } = useContext(AppContext);
   const [overviewData, setoverviewData] = useState({
@@ -10,8 +13,10 @@ const LatestTodos = () => {
     pending: 0,
     recentTodos: [],
   });
+  const [loading, setLoading] = useState(true);
 
   const fetchDashboard = async () => {
+    setLoading(true);
     try {
       const { data } = await axios.get('/api/v1/todos/data/dashboard');
       if (data.success) {
@@ -20,6 +25,8 @@ const LatestTodos = () => {
       }
     } catch (error) {
       console.log(error.message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -31,22 +38,23 @@ const LatestTodos = () => {
     {
       icon: <FiCheckCircle className="text-2xl text-primary" />,
       label: 'Completed',
-      value: overviewData.completed ? overviewData.completed : 0,
+      value: overviewData.completed || 0,
     },
     {
       icon: <FiClock className="text-2xl text-primary" />,
       label: 'In Progress',
-      value: overviewData.inProgress ? overviewData.inProgress : 0,
+      value: overviewData.inProgress || 0,
     },
     {
       icon: <FiPlay className="text-2xl text-primary" />,
       label: 'Pending',
-      value: overviewData.pending ? overviewData.pending : 0,
+      value: overviewData.pending || 0,
     },
   ];
 
   return (
     <div className="flex-1 p-4 md:p-10 bg-gray-900 text-gray-200">
+      {/* Stats */}
       <div className="flex flex-wrap gap-4">
         {stats.map(({ icon, label, value }) => (
           <div
@@ -62,6 +70,7 @@ const LatestTodos = () => {
         ))}
       </div>
 
+      {/* Latest Todos */}
       <div>
         <div className="flex items-center m-4 mt-6 gap-3 text-gray-200">
           <FiList className="text-xl text-primary" />
@@ -69,37 +78,43 @@ const LatestTodos = () => {
         </div>
 
         <div className="relative max-w-4xl overflow-x-auto shadow rounded-lg scrollbar-hide bg-gray-800">
-          <table className="w-full text-sm text-gray-200">
-            <thead className="w-full text-sm text-gray-400 text-left uppercase border-b border-gray-700">
-              <tr>
-                <th scope="col" className="px-2 py-4 xl:px-6">
-                  #
-                </th>
-                <th scope="col" className="px-2 py-4 xl:px-6">
-                  title
-                </th>
-                <th scope="col" className="px-2 py-4 xl:px-6 max-sm:hidden">
-                  Date
-                </th>
-                <th scope="col" className="px-2 py-4 xl:px-6 max-sm:hidden">
-                  Status
-                </th>
-                <th scope="col" className="px-2 py-4 xl:px-6">
-                  Delete
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {overviewData.recentTodos.map((todo, index) => (
-                <TodoTableItem
-                  key={todo.id}
-                  todo={todo}
-                  fetchTodos={fetchDashboard}
-                  index={index + 1}
-                />
-              ))}
-            </tbody>
-          </table>
+          {loading ? (
+            <Loader />
+          ) : overviewData.recentTodos.length === 0 ? (
+            <EmptyState message="No recent todos found" />
+          ) : (
+            <table className="w-full text-sm text-gray-200">
+              <thead className="w-full text-sm text-gray-400 text-left uppercase border-b border-gray-700">
+                <tr>
+                  <th scope="col" className="px-2 py-4 xl:px-6">
+                    #
+                  </th>
+                  <th scope="col" className="px-2 py-4 xl:px-6">
+                    Title
+                  </th>
+                  <th scope="col" className="px-2 py-4 xl:px-6 max-sm:hidden">
+                    Date
+                  </th>
+                  <th scope="col" className="px-2 py-4 xl:px-6 max-sm:hidden">
+                    Status
+                  </th>
+                  <th scope="col" className="px-2 py-4 xl:px-6">
+                    Delete
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {overviewData.recentTodos.map((todo, index) => (
+                  <TodoTableItem
+                    key={todo.id}
+                    todo={todo}
+                    fetchTodos={fetchDashboard}
+                    index={index + 1}
+                  />
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
       </div>
     </div>

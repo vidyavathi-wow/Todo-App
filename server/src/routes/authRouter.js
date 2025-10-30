@@ -8,12 +8,14 @@ const {
 const {
   validateLogin,
   validateRegister,
+  validatePassword,
+  validateEmail,
 } = require('../middlewares/validators');
 const router = express.Router();
 
 router.post('/login', validateLogin, login);
 router.post('/register', validateRegister, register);
-router.post('/forgot-password', forgotPassword);
-router.post('/reset-password', resetPassword);
+router.post('/forgot-password', validateEmail, forgotPassword);
+router.post('/reset-password', validatePassword, resetPassword);
 
 module.exports = router;

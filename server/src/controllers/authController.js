@@ -172,6 +172,11 @@ exports.forgotPassword = async (req, res) => {
       } catch (err) {
         console.error('Email error:', err.message);
       }
+    } else {
+      return res.status(400).json({
+        success: false,
+        message: 'Please enter your registered email',
+      });
     }
 
     res
@@ -185,7 +190,7 @@ exports.forgotPassword = async (req, res) => {
 
 exports.resetPassword = async (req, res) => {
   try {
-    const { token } = req.query; // ← Change this line
+    const { token } = req.query;
     const { password } = req.body;
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);

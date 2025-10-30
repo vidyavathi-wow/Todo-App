@@ -32,8 +32,13 @@ export default function Signup() {
       } else {
         toast.error(data.message);
       }
-    } catch (err) {
-      toast.error(err.response?.data?.message || 'Signup failed');
+    } catch (error) {
+      if (error.response && error.response.data && error.response.data.errors) {
+        const messages = error.response.data.errors.map((err) => err.msg);
+        messages.forEach((msg) => toast.error(msg));
+      } else {
+        toast.error(error.message || 'Signup failed');
+      }
     } finally {
       setLoading(false);
     }
@@ -42,7 +47,7 @@ export default function Signup() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-dark text-gray-light px-4">
       <div className="w-full max-w-md bg-gray-800 p-8 rounded-2xl shadow-md">
-        <h2 className="text-2xl font-semibold text-center mb-6">
+        <h2 className="text-2xl text-primary font-semibold text-center mb-6">
           Create an Account
         </h2>
 

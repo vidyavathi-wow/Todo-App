@@ -6,6 +6,8 @@ import toast from 'react-hot-toast';
 import TodoHeader from '../components/todoItem/TodoHeader';
 import TodoContent from '../components/todoItem/TodoContent';
 import Button from '../components/common/Button';
+import Loader from '../components/common/Loader';
+import EmptyState from '../components/common/EmptyState';
 export default function TodoItem() {
   const { todoId } = useParams();
   const { axios, setEditTodo, fetchTodos } = useContext(AppContext);
@@ -45,7 +47,11 @@ export default function TodoItem() {
         toast.error(data.message);
       }
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to update status');
+      if (error.response?.data?.errors) {
+        error.response.data.errors.forEach((err) => toast.error(err.msg));
+      } else {
+        toast.error(error.message || 'Failed to save todo');
+      }
     } finally {
       setUpdatingStatus(false);
     }
@@ -68,8 +74,8 @@ export default function TodoItem() {
     }
   };
 
-  if (loading) return <div>Loading...</div>;
-  if (!todo) return <div>Todo not found</div>;
+  if (loading) return <Loader />;
+  if (!todo) return <EmptyState />;
 
   return (
     <div className="flex-1 bg-gray-dark text-secondary h-full overflow-scroll p-6">
@@ -84,15 +90,17 @@ export default function TodoItem() {
           <div className="flex justify-end gap-4 mt-8">
             <Button
               onClick={handleEdit}
-              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium px-4 py-2 rounded-lg shadow-md transition"
+              noDefault
+              className="flex items-center gap-2 bg-blue-500 hover:bg-blue-400 text-white text-sm font-medium px-4 py-2 rounded-lg shadow-md transition"
             >
               <Edit size={18} />
               Edit
             </Button>
 
             <Button
+              noDefault
               onClick={handleDelete}
-              className="flex items-center gap-2 bg-red-600 hover:bg-red-500 text-white text-sm font-medium px-4 py-2 rounded-lg shadow-md transition"
+              className="flex items-center gap-2 bg-red-500 hover:bg-red-400 text-white text-sm font-medium px-4 py-2 rounded-lg shadow-md transition"
             >
               <Trash size={18} />
               Delete

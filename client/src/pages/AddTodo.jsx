@@ -10,63 +10,66 @@ const AddTodo = () => {
   const { axios, editTodo, setEditTodo, fetchTodos } = useContext(AppContext);
   const navigate = useNavigate();
 
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [notes, setNotes] = useState('');
-  const [date, setDate] = useState('');
-  const [category, setCategory] = useState('Work');
-  const [priority, setPriority] = useState('Moderate');
-  const [status, setStatus] = useState('pending');
+  const [form, setForm] = useState({
+    title: '',
+    description: '',
+    notes: '',
+    date: '',
+    category: 'Work',
+    priority: 'Moderate',
+    status: 'pending',
+  });
+
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     if (editTodo) {
-      setTitle(editTodo.title || '');
-      setDescription(editTodo.description || '');
-      setNotes(editTodo.notes || '');
-      setCategory(editTodo.category || 'Work');
-      setPriority(editTodo.priority || 'Moderate');
-      setStatus(editTodo.status || 'pending');
-      setDate(editTodo.date ? editTodo.date.split('T')[0] : '');
+      setForm({
+        title: editTodo.title || '',
+        description: editTodo.description || '',
+        notes: editTodo.notes || '',
+        category: editTodo.category || 'Work',
+        priority: editTodo.priority || 'Moderate',
+        status: editTodo.status || 'pending',
+        date: editTodo.date ? editTodo.date.split('T')[0] : '',
+      });
     } else {
       clearForm();
     }
   }, [editTodo]);
 
   const clearForm = () => {
-    setTitle('');
-    setDescription('');
-    setNotes('');
-    setCategory('Work');
-    setPriority('Moderate');
-    setStatus('pending');
-    setDate('');
+    setForm({
+      title: '',
+      description: '',
+      notes: '',
+      category: 'Work',
+      priority: 'Moderate',
+      status: 'pending',
+      date: '',
+    });
+  };
+
+  const handleChange = (field) => (e) => {
+    setForm((prev) => ({
+      ...prev,
+      [field]: e.target.value,
+    }));
   };
 
   const onSubmitHandler = async (e) => {
     e.preventDefault();
-    if (!title.trim()) return toast.error('Title is required');
-    if (!description.trim()) return toast.error('Description is required');
-    if (!date) return toast.error('Date is required');
+    if (!form.title.trim()) return toast.error('Title is required');
+    if (!form.description.trim()) return toast.error('Description is required');
+    if (!form.date) return toast.error('Date is required');
 
     try {
       setIsSaving(true);
-      const todoData = {
-        title,
-        description,
-        notes,
-        date,
-        category,
-        priority,
-        status,
-      };
+      const todoData = { ...form };
 
-      let response;
-      if (editTodo) {
-        response = await axios.put(`/api/v1/todos/${editTodo.id}`, todoData);
-      } else {
-        response = await axios.post(`/api/v1/todos`, todoData);
-      }
+      const response = editTodo
+        ? await axios.put(`/api/v1/todos/${editTodo.id}`, todoData)
+        : await axios.post(`/api/v1/todos`, todoData);
 
       if (response.data.success) {
         toast.success(
@@ -80,7 +83,11 @@ const AddTodo = () => {
         toast.error(response.data.message || 'Something went wrong');
       }
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to save todo');
+      if (error.response?.data?.errors) {
+        error.response.data.errors.forEach((err) => toast.error(err.msg));
+      } else {
+        toast.error(error.message || 'Failed to save todo');
+      }
     } finally {
       setIsSaving(false);
     }
@@ -114,8 +121,8 @@ const AddTodo = () => {
           </label>
           <Input
             type="text"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
+            value={form.title}
+            onChange={handleChange('title')}
             placeholder="Enter todo title"
           />
         </div>
@@ -126,8 +133,8 @@ const AddTodo = () => {
           </label>
           <Input
             type="text"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
+            value={form.description}
+            onChange={handleChange('description')}
             placeholder="Enter description"
           />
         </div>
@@ -137,8 +144,8 @@ const AddTodo = () => {
             Notes
           </label>
           <textarea
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
+            value={form.notes}
+            onChange={handleChange('notes')}
             placeholder="Enter notes"
             className="w-full p-2 border border-gray-300 rounded bg-gray-dark text-text min-h-[150px]"
           />
@@ -150,8 +157,8 @@ const AddTodo = () => {
           </label>
           <Input
             type="date"
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
+            value={form.date}
+            onChange={handleChange('date')}
           />
         </div>
 
@@ -160,8 +167,8 @@ const AddTodo = () => {
             Category
           </label>
           <Select
-            value={category}
-            onChange={setCategory}
+            value={form.category}
+            onChange={(e) => setForm({ ...form, category: e.target.value })}
             options={[
               { label: 'Work', value: 'Work' },
               { label: 'Personal', value: 'Personal' },
@@ -175,8 +182,8 @@ const AddTodo = () => {
             Priority
           </label>
           <Select
-            value={priority}
-            onChange={setPriority}
+            value={form.priority}
+            onChange={(e) => setForm({ ...form, priority: e.target.value })}
             options={[
               { label: 'Low', value: 'Low' },
               { label: 'Moderate', value: 'Moderate' },
@@ -190,8 +197,8 @@ const AddTodo = () => {
             Status
           </label>
           <Select
-            value={status}
-            onChange={setStatus}
+            value={form.status}
+            onChange={(e) => setForm({ ...form, status: e.target.value })}
             options={[
               { label: 'Pending', value: 'pending' },
               { label: 'In Progress', value: 'inProgress' },

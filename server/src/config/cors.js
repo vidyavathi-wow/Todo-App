@@ -1,6 +1,6 @@
 require('dotenv').config();
 
-const allowedOrigins = [process.env.FRONTEND_URL || 'http://localhost:5173'];
+const allowedOrigins = [process.env.FRONTEND_URL, 'http://localhost:5173'];
 
 const corsOptions = {
   origin: (origin, callback) => {

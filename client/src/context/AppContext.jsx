@@ -3,7 +3,10 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 
-axios.defaults.baseURL = import.meta.env.VITE_BASE_URL;
+const axiosInstance = axios.create({
+  baseURL: import.meta.env.VITE_BASE_URL || 'http://localhost:5000',
+  withCredentials: true,
+});
 
 const AppContext = createContext();
 
@@ -17,17 +20,16 @@ export const AppProvider = ({ children }) => {
 
   useEffect(() => {
     if (token) {
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      axiosInstance.defaults.headers.common['Authorization'] =
+        `Bearer ${token}`;
     } else {
-      delete axios.defaults.headers.common['Authorization'];
+      delete axiosInstance.defaults.headers.common['Authorization'];
     }
   }, [token]);
 
   useEffect(() => {
     const storedToken = localStorage.getItem('token');
-    if (storedToken) {
-      setToken(storedToken);
-    }
+    if (storedToken) setToken(storedToken);
     setLoading(false);
   }, []);
 
@@ -39,19 +41,27 @@ export const AppProvider = ({ children }) => {
 
   const fetchTodos = async () => {
     try {
-      const { data } = await axios.get('/api/v1/todos');
+      const { data } = await axiosInstance.get('/api/v1/todos');
       if (data.success) {
         setTodos(data.todos);
       } else {
-        toast.error(data.message);
+        toast.error(data.message || 'Failed to fetch todos');
       }
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to fetch todos');
+      if (error.response?.data?.errors) {
+        error.response.data.errors.forEach((err) => toast.error(err.msg));
+      } else {
+        toast.error(
+          error.response?.data?.message ||
+            error.message ||
+            'Something went wrong'
+        );
+      }
     }
   };
 
   const value = {
-    axios,
+    axios: axiosInstance,
     navigate,
     token,
     setToken,

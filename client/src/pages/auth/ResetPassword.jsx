@@ -31,7 +31,14 @@ export default function ResetPassword() {
         toast.error(data.message);
       }
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Invalid or expired token');
+      if (error.response && error.response.data && error.response.data.errors) {
+        const messages = error.response.data.errors.map((err) => err.msg);
+        messages.forEach((msg) => toast.error(msg));
+      } else {
+        toast.error(
+          error.response?.data?.message || 'Failed to reset password'
+        );
+      }
     } finally {
       setLoading(false);
     }
@@ -53,7 +60,7 @@ export default function ResetPassword() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-dark text-gray-light px-4">
       <div className="w-full max-w-md bg-gray-800 p-8 rounded-2xl shadow-md">
-        <h2 className="text-2xl font-semibold text-center mb-6">
+        <h2 className="text-2xl font-semibold text-center mb-6 text-primary">
           Reset Password
         </h2>
 
