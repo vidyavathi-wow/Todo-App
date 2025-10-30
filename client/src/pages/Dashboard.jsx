@@ -22,13 +22,20 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="flex-1 h-full overflow-scroll p-4 bg-gray-dark  text-white sm:p-6 md:p-8 grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <div className="lg:col-span-2">
+    <div
+      className="flex-1 h-full overflow-scroll p-4 bg-gray-dark text-white sm:p-6 md:p-8 
+                    grid grid-cols-1 lg:grid-cols-3 gap-6 transition-all duration-500 ease-in-out"
+    >
+      <div className="lg:col-span-2 transition-transform duration-500 ease-in-out hover:scale-[1.01]">
         <TodoList todos={todos} onUpdateStatus={updateTaskStatus} />
       </div>
-      <div className="lg:col-span-1 overflow-y-auto max-h-[80vh] pr-2">
-        <Calendar />
-        <TodaysTodos />
+      <div className="lg:col-span-1 overflow-y-auto max-h-[80vh] pr-2 space-y-6">
+        <div className="transition-transform duration-500 ease-in-out hover:scale-[1.02]">
+          <Calendar />
+        </div>
+        <div className="transition-transform duration-500 ease-in-out hover:scale-[1.02]">
+          <TodaysTodos />
+        </div>
       </div>
     </div>
   );
