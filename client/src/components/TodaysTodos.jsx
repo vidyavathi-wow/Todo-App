@@ -47,7 +47,7 @@ export default function TodaysTodos() {
       </h3>
 
       {todaysTodos.length === 0 ? (
-        <EmptyState message="No tasks for today" />
+        <EmptyState message="No todos" className="text-center" />
       ) : (
         <div className="flex-1 overflow-y-auto max-h-64 space-y-3">
           {todaysTodos.map((todo) => {

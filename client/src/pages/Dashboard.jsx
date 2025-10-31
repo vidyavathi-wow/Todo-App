@@ -1,11 +1,9 @@
 import { useContext } from 'react';
 import TodoList from '../components/todos/TodoList';
 import AppContext from '../context/AppContext';
-import toast from 'react-hot-toast';
-import TodoInsights from '../components/TodoInsights';
 import Calendar from '../components/Calender';
 import TodaysTodos from '../components/TodaysTodos';
-
+import toast from 'react-hot-toast';
 export default function Dashboard() {
   const { todos, axios, fetchTodos } = useContext(AppContext);
 
