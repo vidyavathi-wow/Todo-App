@@ -4,7 +4,7 @@ import toast from 'react-hot-toast';
 import AppContext from '../../context/AppContext';
 import Input from '../../components/common/Input';
 import Button from '../../components/common/Button';
-
+import Select from '../../components/common/Select';
 export default function Signup() {
   const navigate = useNavigate();
   const { axios } = useContext(AppContext);
@@ -91,6 +91,20 @@ export default function Signup() {
               noDefault
               placeholder="Enter your password"
               className="w-full p-3 rounded bg-gray-700 border border-gray-600 focus:ring-2 focus:ring-primary outline-none"
+            />
+          </div>
+
+          <div>
+            <label className="block mb-1 text-sm">Role</label>
+            <Select
+              name="role"
+              value={formData.role}
+              onChange={handleChange}
+              options={[
+                { label: 'User', value: 'user' },
+                { label: 'Admin', value: 'admin' },
+              ]}
+              required
             />
           </div>
 

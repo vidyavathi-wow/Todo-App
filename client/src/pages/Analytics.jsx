@@ -38,9 +38,9 @@ export default function Analytics() {
 
   return (
     <div className="flex-1 bg-gray-dark text-secondary h-full overflow-scroll p-4">
-      <h1 className="text-2xl font-semibold text-primary mb-4">
+      <h2 className="text-2xl font-bold mb-6 border-b border-gray-700 pb-2">
         Todo Analytics
-      </h1>
+      </h2>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
         <AnalyticsCard
           title="Total Todos"

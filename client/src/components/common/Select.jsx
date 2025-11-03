@@ -1,25 +1,21 @@
-import React from 'react';
-
 export default function Select({
-  options = [],
+  name,
   value,
   onChange,
+  options,
   className = '',
-  disabled = false,
-  noDefault = false,
+  noDefault,
   ...rest
 }) {
-  const defaultClasses =
-    'h-10 px-3 py-0 border border-gray-600 rounded bg-gray-900 text-gray-200 focus:outline-none focus:ring-2 focus:ring-primary appearance-none box-border';
-
   return (
     <select
+      name={name}
       value={value}
-      onChange={(e) => onChange(e.target.value)}
-      disabled={disabled}
-      className={`${noDefault ? '' : defaultClasses} ${className}`}
+      onChange={onChange}
+      className={`p-3 rounded bg-gray-700 border border-gray-600 focus:ring-2 focus:ring-primary outline-none w-full ${className}`}
       {...rest}
     >
+      {!noDefault && <option value="">Select an option</option>}
       {options.map((opt) => (
         <option key={opt.value} value={opt.value}>
           {opt.label}

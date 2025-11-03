@@ -1,31 +1,25 @@
-// models/User.js
+const sequelize = require('../config/db.js');
 const { DataTypes } = require('sequelize');
-const sequelize = require('../config/db'); // your sequelize instance
-
-const User = sequelize.define('User', {
-  name: {
-    type: DataTypes.STRING,
-    allowNull: false
+const User = sequelize.define(
+  'User',
+  {
+    name: { type: DataTypes.STRING, allowNull: false },
+    email: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      unique: true,
+      validate: { isEmail: true },
+    },
+    password: { type: DataTypes.STRING, allowNull: false },
+    refreshToken: { type: DataTypes.STRING, allowNull: true },
+    profilePic: { type: DataTypes.STRING, allowNull: true },
+    bio: { type: DataTypes.STRING, allowNull: true },
+    role: { type: DataTypes.ENUM('user', 'admin'), defaultValue: 'user' },
   },
-  email: {
-    type: DataTypes.STRING,
-    allowNull: false,
-    unique: true,
-    validate: {
-      isEmail: true
-    }
-  },
-  password: {
-    type: DataTypes.STRING,
-    allowNull: false
-  },
-  refreshToken: {
-  type: DataTypes.STRING,
-  allowNull: true,
+  {
+    tableName: 'users',
+    timestamps: true,
   }
-}, {
-  tableName: 'users',
-  timestamps: true
-});
+);
 
 module.exports = User;

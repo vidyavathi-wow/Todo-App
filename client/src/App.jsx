@@ -14,6 +14,8 @@ import Overview from './pages/LatestTodos';
 import Loader from './components/common/Loader';
 import LatestTodos from './pages/LatestTodos';
 import Analytics from './pages/Analytics';
+import UpdateProfile from './pages/auth/UpdateProfile';
+import ActivityLogs from './pages/ActivityLogs';
 
 function App() {
   const { token, loading } = useContext(AppContext);
@@ -40,6 +42,8 @@ function App() {
           <Route path="latesttodos" element={<LatestTodos />} />
           <Route path="analytics" element={<Analytics />} />
           <Route path="/todo/:todoId" element={<TodoItem />} />
+          <Route path="/profile" element={<UpdateProfile />} />
+          <Route path="/activity-logs" element={<ActivityLogs />} />
         </Route>
       </Routes>
     </div>

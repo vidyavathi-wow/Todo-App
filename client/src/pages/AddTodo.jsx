@@ -108,7 +108,7 @@ const AddTodo = () => {
         className="bg-gray-dark w-full max-w-3xl p-6 md:p-10 shadow-lg rounded-lg mx-auto border border-gray-light 
                       transition-transform duration-500 ease-in-out hover:scale-[1.01]"
       >
-        <h2 className="text-2xl font-semibold text-primary mb-6 transition-colors duration-300">
+        <h2 className="text-2xl font-bold mb-6 border-b border-gray-700 pb-2">
           {editTodo ? 'Edit Todo' : 'Add New Todo'}
         </h2>
 

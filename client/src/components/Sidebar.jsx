@@ -1,12 +1,21 @@
 import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { FiHome, FiPlusCircle, FiList, FiBarChart2 } from 'react-icons/fi';
+import {
+  FiHome,
+  FiPlusCircle,
+  FiList,
+  FiBarChart2,
+  FiClock,
+} from 'react-icons/fi';
+import { User } from 'lucide-react';
 
 const menuItems = [
   { name: 'Dashboard', path: '/', icon: <FiHome />, end: true },
   { name: 'Add Todo', path: '/addTodo', icon: <FiPlusCircle /> },
   { name: 'Latest Todos', path: '/latesttodos', icon: <FiList /> },
   { name: 'Analytics', path: '/analytics', icon: <FiBarChart2 /> },
+  { name: 'Profile', path: '/profile', icon: <User /> },
+  { name: 'Activity Logs', path: '/activity-logs', icon: <FiClock /> },
 ];
 
 const Sidebar = () => {
@@ -34,7 +43,6 @@ const Sidebar = () => {
             <p className="hidden md:inline-block">{name}</p>
           </NavLink>
 
-          {/* Mobile tooltip */}
           <span
             className={`absolute left-full top-1/2 -translate-y-1/2 ml-2 px-3 py-1 rounded bg-gray-700 text-white text-sm whitespace-nowrap pointer-events-none transition-all duration-300
             ${activeTooltip === name ? 'opacity-100 scale-100' : 'opacity-0 scale-90'}

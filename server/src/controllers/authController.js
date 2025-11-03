@@ -3,11 +3,12 @@ const jwt = require('jsonwebtoken');
 const sequelize = require('../config/db');
 const User = require('../models/User');
 const sendEmail = require('../config/emailServeice');
+const ActivityLog = require('../models/ActivityLog');
 
 exports.register = async (req, res) => {
   const t = await sequelize.transaction();
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, role } = req.body;
     const existingUser = await User.findOne({
       where: { email },
       transaction: t,
@@ -21,7 +22,7 @@ exports.register = async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
     const user = await User.create(
-      { name, email, password: hashedPassword },
+      { name, email, password: hashedPassword, role: role || 'user' },
       { transaction: t }
     );
 
@@ -33,12 +34,26 @@ exports.register = async (req, res) => {
         'Welcome to Your To-Do App!',
         `Hi ${name},\n\nWelcome to your To-Do App! 🎉\nYou can now create, edit, and manage your daily tasks easily.\n\nThanks for joining us!\n\n– The To-Do App Team`
       );
-    } catch {}
-
+    } catch (error) {
+      return res.status(500).json({
+        success: false,
+        message: error.message,
+      });
+    }
+    await ActivityLog.create({
+      userId: user.id,
+      action: 'User Registered',
+      details: `User ${user.email} signed up.`,
+    });
     return res.status(201).json({
       success: true,
       message: 'User registered successfully',
-      user: { id: user.id, name: user.name, email: user.email },
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
     });
   } catch (error) {
     await t.rollback();
@@ -68,7 +83,7 @@ exports.login = async (req, res) => {
     }
 
     const accessToken = jwt.sign(
-      { userId: user.id, email: user.email },
+      { userId: user.id, email: user.email, role: user.role },
       process.env.JWT_SECRET,
       { expiresIn: '7d' }
     );
@@ -83,16 +98,27 @@ exports.login = async (req, res) => {
     await user.save({ transaction: t });
     await t.commit();
 
-    res.status(200).json({
+    await ActivityLog.create({
+      userId: user.id,
+      action: 'User Logged In',
+      details: `User ${user.email} logged in.`,
+    });
+
+    return res.status(200).json({
       success: true,
       message: 'Login successful',
       accessToken,
       refreshToken,
-      user: { id: user.id, name: user.name, email: user.email },
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
     });
   } catch (error) {
     await t.rollback();
-    res.status(500).json({ success: false, message: 'Server error' });
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 

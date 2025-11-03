@@ -12,6 +12,7 @@ export const AppProvider = ({ children }) => {
   const [input, setInput] = useState('');
   const [editTodo, setEditTodo] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState(null);
 
   useEffect(() => {
     if (token) {
@@ -31,8 +32,22 @@ export const AppProvider = ({ children }) => {
   useEffect(() => {
     if (token) {
       fetchTodos();
+      fetchUserProfile();
     }
   }, [token]);
+
+  const fetchUserProfile = async () => {
+    try {
+      const { data } = await axiosInstance.get('/api/v1/profile');
+      if (data.success) {
+        setUser(data.user);
+      } else {
+        toast.error(data.message || 'Failed to fetch profile');
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || error.message);
+    }
+  };
 
   const fetchTodos = async () => {
     try {
@@ -68,6 +83,7 @@ export const AppProvider = ({ children }) => {
     setEditTodo,
     fetchTodos,
     loading,
+    user,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
