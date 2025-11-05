@@ -67,6 +67,7 @@ export default function TodoItem() {
       const { data } = await axios.delete(`/api/v1/todos/${todoId}`);
       if (data.success) {
         toast.success('Todo deleted');
+        fetchTodos();
         window.history.back();
       } else toast.error(data.message);
     } catch (error) {

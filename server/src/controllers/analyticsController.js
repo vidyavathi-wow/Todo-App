@@ -5,26 +5,31 @@ exports.getAnalytics = async (req, res) => {
   try {
     const userId = req.user.id;
 
+    // Run all aggregations simultaneously
     const [statusData, priorityData, categoryData, totalTodos] =
       await Promise.all([
         Todo.findAll({
           attributes: ['status', [fn('COUNT', col('status')), 'count']],
-          where: { userId, isDeleted: false },
+          where: { userId },
           group: ['status'],
+          paranoid: true, // ✅ exclude soft-deleted todos
         }),
         Todo.findAll({
           attributes: ['priority', [fn('COUNT', col('priority')), 'count']],
-          where: { userId, isDeleted: false },
+          where: { userId },
           group: ['priority'],
+          paranoid: true,
         }),
         Todo.findAll({
           attributes: ['category', [fn('COUNT', col('category')), 'count']],
-          where: { userId, isDeleted: false },
+          where: { userId },
           group: ['category'],
+          paranoid: true,
         }),
-        Todo.count({ where: { userId, isDeleted: false } }),
+        Todo.count({ where: { userId }, paranoid: true }),
       ]);
 
+    // No todos found case
     if (totalTodos === 0) {
       return res.status(200).json({
         success: true,
@@ -38,6 +43,7 @@ exports.getAnalytics = async (req, res) => {
       });
     }
 
+    // Helper: Convert Sequelize result into { key: count } object
     const formatResult = (data, keys) => {
       const result = Object.fromEntries(keys.map((k) => [k, 0]));
       data.forEach((item) => {
@@ -45,11 +51,12 @@ exports.getAnalytics = async (req, res) => {
           (k) => k !== 'count'
         );
         const key = item.getDataValue(keyName);
-        result[key] = parseInt(item.getDataValue('count'));
+        if (key) result[key] = parseInt(item.getDataValue('count'));
       });
       return result;
     };
 
+    // Format aggregated data
     const statusCounts = formatResult(statusData, [
       'completed',
       'inProgress',
@@ -66,14 +73,16 @@ exports.getAnalytics = async (req, res) => {
       'Other',
     ]);
 
+    // Helper: Calculate % of total
     const calcPercentages = (obj) =>
       Object.fromEntries(
         Object.entries(obj).map(([k, v]) => [
           k,
-          ((v / totalTodos) * 100).toFixed(1),
+          totalTodos > 0 ? ((v / totalTodos) * 100).toFixed(1) : 0,
         ])
       );
 
+    // ✅ Final analytics response
     res.status(200).json({
       success: true,
       totalTodos,
@@ -85,7 +94,7 @@ exports.getAnalytics = async (req, res) => {
       categoryPercentages: calcPercentages(categoryCounts),
     });
   } catch (error) {
-    console.error(error);
+    console.error('❌ Error in getAnalytics:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to fetch analytics',

@@ -1,8 +1,9 @@
+// ActivityLogs.jsx
 import { useEffect, useState, useContext } from 'react';
 import AppContext from '../../context/AppContext';
 import Loader from '../common/Loader';
 import EmptyState from '../common/EmptyState';
-import Pagination from '../common/Pagination';
+import Pagination from '../common/Pagination'; // ✅ import from separate file
 import toast from 'react-hot-toast';
 
 const ActivityLogs = () => {

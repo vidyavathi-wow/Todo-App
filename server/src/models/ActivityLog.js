@@ -29,6 +29,8 @@ const ActivityLog = sequelize.define(
   {
     tableName: 'activity_logs',
     timestamps: false,
+    paranoid: true,
+    deletedAt: 'deletedAt',
   }
 );
 

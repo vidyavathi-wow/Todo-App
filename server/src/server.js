@@ -7,9 +7,10 @@ const corsOptions = require('./config/cors');
 const logger = require('./utils/logger.js');
 const errorHandler = require('./middlewares/errorHandler.js');
 
+// Routers
 const authRouter = require('./routes/authRouter.js');
 const todosRouter = require('./routes/todoRouter.js');
-const analyticsRouter = require('./routes/analyticsRouter');
+const analyticsRouter = require('./routes/analyticsRouter.js');
 const activityRouter = require('./routes/activityRouter.js');
 const profileRouter = require('./routes/profileRouter.js');
 const adminRouter = require('./routes/adminRouter.js');
@@ -41,21 +42,17 @@ app.use((req, res) => {
 
 app.use(errorHandler);
 
-sequelize
-  .authenticate()
-  .then(() => {
+(async () => {
+  try {
+    await sequelize.authenticate();
     logger.info('Database connected successfully');
-    return sequelize.sync({ alter: true });
-  })
-  .then(() => {
-    logger.info('Database synced successfully');
-    logger.info('✅ All models synchronized');
-
+    await sequelize.sync({ alter: true });
+    logger.info('✅ Database synced successfully (soft delete enabled)');
     app.listen(PORT, () => {
-      logger.info(`Server running at http://localhost:${PORT}`);
+      logger.info(`🚀 Server running at http://localhost:${PORT}`);
     });
-  })
-  .catch((error) => {
-    logger.error('Error connecting/syncing database:', error);
+  } catch (error) {
+    logger.error('❌ Error connecting or syncing database:', error);
     process.exit(1);
-  });
+  }
+})();

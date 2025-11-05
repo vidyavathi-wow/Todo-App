@@ -1,6 +1,6 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/db');
-const User = require('../models/User');
+const User = require('./User');
 
 const Todo = sequelize.define(
   'Todo',
@@ -9,9 +9,7 @@ const Todo = sequelize.define(
       type: DataTypes.STRING,
       allowNull: false,
     },
-    description: {
-      type: DataTypes.TEXT,
-    },
+    description: DataTypes.TEXT,
     date: {
       type: DataTypes.DATE,
       allowNull: false,
@@ -23,22 +21,17 @@ const Todo = sequelize.define(
       type: DataTypes.ENUM('Low', 'Moderate', 'High'),
       defaultValue: 'Moderate',
     },
-    notes: {
-      type: DataTypes.STRING,
-    },
+    notes: DataTypes.STRING,
     status: {
       type: DataTypes.ENUM('inProgress', 'pending', 'completed'),
       defaultValue: 'pending',
-    },
-    isDeleted: {
-      type: DataTypes.BOOLEAN,
-      allowNull: false,
-      defaultValue: false,
     },
   },
   {
     tableName: 'todos',
     timestamps: true,
+    paranoid: true, // ✅ Soft delete
+    deletedAt: 'deletedAt',
   }
 );
 

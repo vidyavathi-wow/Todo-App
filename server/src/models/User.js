@@ -1,5 +1,6 @@
 const sequelize = require('../config/db.js');
 const { DataTypes } = require('sequelize');
+
 const User = sequelize.define(
   'User',
   {
@@ -18,6 +19,8 @@ const User = sequelize.define(
   {
     tableName: 'users',
     timestamps: true,
+    paranoid: true, // ✅ Enables soft delete
+    deletedAt: 'deletedAt', // Column name
   }
 );
 

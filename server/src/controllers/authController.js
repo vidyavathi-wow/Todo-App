@@ -65,6 +65,13 @@ exports.login = async (req, res) => {
         .json({ success: false, message: 'Invalid credentials' });
     }
 
+    if (user.deletedAt) {
+      return res.status(403).json({
+        success: false,
+        message: 'Your account has been deactivated. Please contact admin.',
+      });
+    }
+
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res

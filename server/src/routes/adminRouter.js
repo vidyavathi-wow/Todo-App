@@ -6,6 +6,7 @@ const {
   getAllUsers,
   getActivityLogs,
   deleteUserByAdmin,
+  restoreUserByAdmin,
 } = require('../controllers/adminController');
 
 router.get('/', verifyToken, verifyRole('admin'), (req, res) => {
@@ -22,5 +23,6 @@ router.delete(
   verifyRole('admin'),
   deleteUserByAdmin
 );
+router.get('/users/:id', verifyToken, verifyRole('admin'), restoreUserByAdmin);
 
 module.exports = router;

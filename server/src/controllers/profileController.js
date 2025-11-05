@@ -8,13 +8,29 @@ exports.getProfile = async (req, res) => {
     }
 
     const user = await User.findByPk(req.user.id, {
-      attributes: ['id', 'name', 'email', 'profilePic', 'role', 'createdAt'],
+      attributes: [
+        'id',
+        'name',
+        'email',
+        'profilePic',
+        'role',
+        'createdAt',
+        'deletedAt',
+      ],
+      paranoid: false,
     });
 
     if (!user) {
       return res
         .status(404)
-        .json({ success: false, message: 'User not found' });
+        .json({ success: false, message: 'Details does not match' });
+    }
+
+    if (user.deletedAt) {
+      return res.status(403).json({
+        success: false,
+        message: 'Your account has been deactivated. Please contact support.',
+      });
     }
 
     const profileWithDefault = {
@@ -38,12 +54,19 @@ exports.updateProfile = async (req, res) => {
       return res.status(401).json({ success: false, message: 'Unauthorized' });
     }
 
-    const user = await User.findByPk(req.user.id);
+    const user = await User.findByPk(req.user.id, { paranoid: false });
 
     if (!user) {
       return res
         .status(404)
         .json({ success: false, message: 'User not found' });
+    }
+
+    if (user.deletedAt) {
+      return res.status(403).json({
+        success: false,
+        message: 'Your account is deactivated and cannot be updated.',
+      });
     }
 
     if (name && name.trim()) {
@@ -60,6 +83,12 @@ exports.updateProfile = async (req, res) => {
 
     await user.save();
 
+    await ActivityLog.create({
+      userId: user.id,
+      action: 'UPDATE_PROFILE',
+      details: `User ${user.email} updated their profile.`,
+    });
+
     const response = {
       success: true,
       message: 'Profile updated successfully',
@@ -71,6 +100,7 @@ exports.updateProfile = async (req, res) => {
         role: user.role,
       },
     };
+
     return res.status(200).json(response);
   } catch (error) {
     return res.status(500).json({
