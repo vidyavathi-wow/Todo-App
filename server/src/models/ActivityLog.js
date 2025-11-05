@@ -1,4 +1,3 @@
-// models/ActivityLog.js
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/db');
 const User = require('./User');
@@ -15,8 +14,16 @@ const ActivityLog = sequelize.define(
       allowNull: true,
     },
     timestamp: {
-      type: DataTypes.DATE, // includes both date and time
+      type: DataTypes.DATE,
       defaultValue: DataTypes.NOW,
+    },
+    userId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      references: {
+        model: 'users',
+        key: 'id',
+      },
     },
   },
   {

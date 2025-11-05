@@ -11,7 +11,6 @@ const User = sequelize.define(
       validate: { isEmail: true },
     },
     password: { type: DataTypes.STRING, allowNull: false },
-    refreshToken: { type: DataTypes.STRING, allowNull: true },
     profilePic: { type: DataTypes.STRING, allowNull: true },
     bio: { type: DataTypes.STRING, allowNull: true },
     role: { type: DataTypes.ENUM('user', 'admin'), defaultValue: 'user' },

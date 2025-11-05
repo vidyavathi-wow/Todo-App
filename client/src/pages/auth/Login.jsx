@@ -20,6 +20,7 @@ export default function Login() {
 
     try {
       const { data } = await axios.post('/api/v1/auth/login', formData);
+
       if (data.success) {
         setToken(data.accessToken);
         localStorage.setItem('token', data.accessToken);
@@ -28,12 +29,14 @@ export default function Login() {
         setFormData({ email: '', password: '' });
         navigate('/');
       } else {
-        toast.error(data.message);
+        toast.error(data.message || 'Login failed');
       }
     } catch (error) {
-      if (error.response && error.response.data && error.response.data.errors) {
-        const messages = error.response.data.errors.map((err) => err.msg);
-        messages.forEach((msg) => toast.error(msg));
+      const res = error.response?.data;
+      if (res?.errors && Array.isArray(res.errors)) {
+        res.errors.forEach((err) => toast.error(err.msg));
+      } else if (res?.message) {
+        toast.error(res.message);
       } else {
         toast.error(error.message || 'Login failed');
       }

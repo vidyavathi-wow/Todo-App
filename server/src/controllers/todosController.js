@@ -1,30 +1,49 @@
-const sequelize = require('../config/db');
 const Todo = require('../models/Todo');
 const logger = require('../utils/logger');
 const ActivityLog = require('../models/ActivityLog');
+const { fn, col } = require('sequelize');
 
 exports.createTodo = async (req, res) => {
-  const t = await sequelize.transaction();
   try {
     const { title, description, status, date, category, priority, notes } =
       req.body;
     const userId = req.user.id;
-    const todo = await Todo.create(
-      { title, description, status, date, category, priority, notes, userId },
-      { transaction: t }
-    );
-    await t.commit();
-    logger.info(`Todo created by user ${userId}: ${title}`);
-    await ActivityLog.create({
+
+    const todo = await Todo.create({
+      title,
+      description,
+      status,
+      date,
+      category,
+      priority,
+      notes,
       userId,
-      action: 'CREATE_TODO',
-      details: `Created todo: ${title}`,
     });
-    res.status(201).json({ success: true, message: 'Todo created', todo });
+
+    logger.info(`Todo created by user ${userId}: ${title}`);
+
+    try {
+      await ActivityLog.create({
+        userId,
+        action: 'CREATE_TODO',
+        details: `Created todo: ${title}`,
+      });
+    } catch (logError) {
+      logger.warn(`ActivityLog failed (createTodo): ${logError.message}`);
+    }
+
+    const { id } = todo;
+    res.status(201).json({
+      success: true,
+      message: 'Todo created successfully',
+      todo: { id, title, description, status, date, category, priority, notes },
+    });
   } catch (error) {
-    await t.rollback();
-    logger.error(error.message);
-    res.status(500).json({ success: false, message: error.message });
+    logger.error(`Error in createTodo: ${error.message}`);
+    res.status(500).json({
+      success: false,
+      message: 'Something went wrong. Please try again later.',
+    });
   }
 };
 
@@ -32,14 +51,29 @@ exports.getAllTodos = async (req, res) => {
   try {
     const userId = req.user.id;
     const todos = await Todo.findAll({
-      where: { userId },
+      where: { userId, isDeleted: false },
       order: [['createdAt', 'DESC']],
+      attributes: [
+        'id',
+        'title',
+        'description',
+        'status',
+        'date',
+        'category',
+        'priority',
+        'notes',
+        'createdAt',
+      ],
     });
+
     logger.info(`Fetched todos for user ${userId}`);
     res.status(200).json({ success: true, todos });
   } catch (error) {
-    logger.error(error.message);
-    res.status(500).json({ success: false, message: error.message });
+    logger.error(`Error in getAllTodos: ${error.message}`);
+    res.status(500).json({
+      success: false,
+      message: 'Something went wrong. Please try again later.',
+    });
   }
 };
 
@@ -47,103 +81,168 @@ exports.getTodo = async (req, res) => {
   try {
     const { id } = req.params;
     const userId = req.user.id;
-    const todo = await Todo.findOne({ where: { id, userId } });
+
+    const todo = await Todo.findOne({
+      where: { id, userId, isDeleted: false },
+      attributes: [
+        'id',
+        'title',
+        'description',
+        'status',
+        'date',
+        'category',
+        'priority',
+        'notes',
+        'createdAt',
+      ],
+    });
+
     if (!todo)
       return res
         .status(404)
-        .json({ success: false, message: 'Todo not found' });
+        .json({ success: false, message: 'Resource not found' });
+
     logger.info(`Todo fetched: ${id}`);
     res.status(200).json({ success: true, todo });
   } catch (error) {
-    logger.error(error.message);
-    res.status(500).json({ success: false, message: error.message });
+    logger.error(`Error in getTodo: ${error.message}`);
+    res.status(500).json({
+      success: false,
+      message: 'Something went wrong. Please try again later.',
+    });
   }
 };
 
 exports.updateTodo = async (req, res) => {
-  const t = await sequelize.transaction();
   try {
     const { id } = req.params;
     const userId = req.user.id;
     const { title, description, date, category, priority, notes, status } =
       req.body;
-    const todo = await Todo.findOne({ where: { id, userId }, transaction: t });
-    if (!todo) {
-      await t.rollback();
+
+    const todo = await Todo.findOne({
+      where: { id, userId, isDeleted: false },
+    });
+
+    if (!todo)
       return res
         .status(404)
-        .json({ success: false, message: 'Todo not found' });
-    }
-    await todo.update(
-      { title, description, date, category, priority, notes, status },
-      { transaction: t }
-    );
-    await t.commit();
-    await ActivityLog.create({
-      userId,
-      action: 'UPDATE_TODO',
-      details: `Updated todo: ${title || id}`,
+        .json({ success: false, message: 'Resource not found' });
+
+    await todo.update({
+      title,
+      description,
+      date,
+      category,
+      priority,
+      notes,
+      status,
     });
-    res.status(200).json({ success: true, message: 'Todo updated', todo });
+
+    try {
+      await ActivityLog.create({
+        userId,
+        action: 'UPDATE_TODO',
+        details: `Updated todo: ${title || id}`,
+      });
+    } catch (logError) {
+      logger.warn(`ActivityLog failed (updateTodo): ${logError.message}`);
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Todo updated successfully',
+      todo: { id, title, description, status, date, category, priority, notes },
+    });
   } catch (error) {
-    await t.rollback();
-    logger.error(error.message);
-    res.status(500).json({ success: false, message: error.message });
+    logger.error(`Error in updateTodo: ${error.message}`);
+    res.status(500).json({
+      success: false,
+      message: 'Something went wrong. Please try again later.',
+    });
   }
 };
 
 exports.deleteTodo = async (req, res) => {
-  const t = await sequelize.transaction();
   try {
     const { id } = req.params;
     const userId = req.user.id;
-    const todo = await Todo.findOne({ where: { id, userId }, transaction: t });
-    if (!todo) {
-      await t.rollback();
+
+    const [updated] = await Todo.update(
+      { isDeleted: true },
+      { where: { id, userId, isDeleted: false } }
+    );
+
+    if (!updated)
       return res
         .status(404)
-        .json({ success: false, message: 'Todo not found' });
+        .json({ success: false, message: 'Resource not found' });
+
+    try {
+      await ActivityLog.create({
+        userId,
+        action: 'DELETE_TODO',
+        details: `Soft deleted todo with id: ${id}`,
+      });
+    } catch (logError) {
+      logger.warn(`ActivityLog failed (deleteTodo): ${logError.message}`);
     }
-    await todo.destroy({ transaction: t });
-    await t.commit();
-    await ActivityLog.create({
-      userId,
-      action: 'DELETE_TODO',
-      details: `Deleted todo with id: ${id}`,
+
+    res.json({
+      success: true,
+      message: 'Todo deleted successfully (soft delete)',
     });
-    res.json({ success: true, message: 'Todo deleted' });
   } catch (error) {
-    await t.rollback();
-    logger.error(error.message);
-    res.status(500).json({ success: false, message: 'Server error' });
+    logger.error(`Error in deleteTodo: ${error.message}`);
+    res.status(500).json({
+      success: false,
+      message: 'Something went wrong. Please try again later.',
+    });
   }
 };
 
 exports.getDashboardData = async (req, res) => {
   try {
     const userId = req.user.id;
-    const [completedCount, inProgressCount, pendingCount] = await Promise.all([
-      Todo.count({ where: { userId, status: 'completed' } }),
-      Todo.count({ where: { userId, status: 'inProgress' } }),
-      Todo.count({ where: { userId, status: 'pending' } }),
-    ]);
+
+    const statusCounts = await Todo.findAll({
+      attributes: ['status', [fn('COUNT', col('status')), 'count']],
+      where: { userId, isDeleted: false },
+      group: ['status'],
+      raw: true,
+    });
+
+    const overviewData = statusCounts.reduce(
+      (acc, { status, count }) => ({
+        ...acc,
+        [status]: Number(count),
+      }),
+      { completed: 0, inProgress: 0, pending: 0 }
+    );
+
     const recentTodos = await Todo.findAll({
-      where: { userId },
+      where: { userId, isDeleted: false },
       order: [['createdAt', 'DESC']],
       limit: 5,
+      attributes: [
+        'id',
+        'title',
+        'description',
+        'status',
+        'date',
+        'category',
+        'priority',
+        'notes',
+      ],
     });
+
     logger.info(`Dashboard data fetched for user ${userId}`);
-    res.status(200).json({
-      success: true,
-      overviewData: {
-        completed: completedCount,
-        inProgress: inProgressCount,
-        pending: pendingCount,
-        recentTodos,
-      },
-    });
+    res.status(200).json({ success: true, overviewData, recentTodos });
   } catch (error) {
-    logger.error(error.message);
-    res.status(500).json({ success: false, message: error.message });
+    logger.error(`Error in getDashboardData: ${error.message}`);
+    res.status(500).json({
+      success: false,
+      message: 'Something went wrong. Please try again later.',
+    });
   }
 };

@@ -1,32 +1,27 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const sequelize = require('../config/db');
 const User = require('../models/User');
 const sendEmail = require('../config/emailServeice');
 const ActivityLog = require('../models/ActivityLog');
 
 exports.register = async (req, res) => {
-  const t = await sequelize.transaction();
   try {
     const { name, email, password, role } = req.body;
-    const existingUser = await User.findOne({
-      where: { email },
-      transaction: t,
-    });
+
+    const existingUser = await User.findOne({ where: { email } });
     if (existingUser) {
-      await t.rollback();
       return res
         .status(400)
         .json({ success: false, message: 'User already exists' });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const user = await User.create(
-      { name, email, password: hashedPassword, role: role || 'user' },
-      { transaction: t }
-    );
-
-    await t.commit();
+    const user = await User.create({
+      name,
+      email,
+      password: hashedPassword,
+      role: role || 'user',
+    });
 
     try {
       await sendEmail(
@@ -35,16 +30,15 @@ exports.register = async (req, res) => {
         `Hi ${name},\n\nWelcome to your To-Do App! 🎉\nYou can now create, edit, and manage your daily tasks easily.\n\nThanks for joining us!\n\n– The To-Do App Team`
       );
     } catch (error) {
-      return res.status(500).json({
-        success: false,
-        message: error.message,
-      });
+      console.error('Email error:', error.message);
     }
+
     await ActivityLog.create({
       userId: user.id,
       action: 'User Registered',
       details: `User ${user.email} signed up.`,
     });
+
     return res.status(201).json({
       success: true,
       message: 'User registered successfully',
@@ -56,19 +50,16 @@ exports.register = async (req, res) => {
       },
     });
   } catch (error) {
-    await t.rollback();
     res.status(500).json({ success: false, message: 'Server error' });
   }
 };
 
 exports.login = async (req, res) => {
-  const t = await sequelize.transaction();
   try {
     const { email, password } = req.body;
-    const user = await User.findOne({ where: { email }, transaction: t });
+    const user = await User.findOne({ where: { email } });
 
     if (!user) {
-      await t.rollback();
       return res
         .status(400)
         .json({ success: false, message: 'Invalid credentials' });
@@ -76,7 +67,6 @@ exports.login = async (req, res) => {
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      await t.rollback();
       return res
         .status(400)
         .json({ success: false, message: 'Invalid credentials' });
@@ -88,16 +78,6 @@ exports.login = async (req, res) => {
       { expiresIn: '7d' }
     );
 
-    const refreshToken = jwt.sign(
-      { userId: user.id, email: user.email },
-      process.env.REFRESH_TOKEN_SECRET,
-      { expiresIn: '1d' }
-    );
-
-    user.refreshToken = refreshToken;
-    await user.save({ transaction: t });
-    await t.commit();
-
     await ActivityLog.create({
       userId: user.id,
       action: 'User Logged In',
@@ -108,7 +88,6 @@ exports.login = async (req, res) => {
       success: true,
       message: 'Login successful',
       accessToken,
-      refreshToken,
       user: {
         id: user.id,
         name: user.name,
@@ -117,67 +96,24 @@ exports.login = async (req, res) => {
       },
     });
   } catch (error) {
-    await t.rollback();
     res.status(500).json({ success: false, message: error.message });
-  }
-};
-
-exports.refreshToken = async (req, res) => {
-  try {
-    const { token } = req.body;
-    if (!token)
-      return res
-        .status(401)
-        .json({ success: false, message: 'Refresh token required' });
-
-    const payload = jwt.verify(
-      token,
-      process.env.REFRESH_TOKEN_SECRET || 'refreshsecret'
-    );
-    const user = await User.findByPk(payload.userId);
-
-    if (!user || user.refreshToken !== token) {
-      return res
-        .status(403)
-        .json({ success: false, message: 'Invalid refresh token' });
-    }
-
-    const accessToken = jwt.sign(
-      { userId: user.id, email: user.email },
-      process.env.JWT_SECRET || 'secretkey',
-      { expiresIn: '1d' }
-    );
-
-    res.status(200).json({ success: true, accessToken });
-  } catch {
-    res
-      .status(403)
-      .json({ success: false, message: 'Invalid or expired refresh token' });
   }
 };
 
 exports.logout = async (req, res) => {
   try {
-    const { token } = req.body;
-    if (!token)
-      return res
-        .status(400)
-        .json({ success: false, message: 'Refresh token required' });
-
-    const payload = jwt.verify(
-      token,
-      process.env.REFRESH_TOKEN_SECRET || 'refreshsecret'
-    );
-    const user = await User.findByPk(payload.userId);
-
-    if (user) {
-      user.refreshToken = null;
-      await user.save();
+    const userId = req.user?.id;
+    if (userId) {
+      await ActivityLog.create({
+        userId,
+        action: 'User Logged Out',
+        details: `User logged out.`,
+      });
     }
 
     res.status(200).json({ success: true, message: 'Logged out successfully' });
-  } catch {
-    res.status(403).json({ success: false, message: 'Invalid token' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Server error' });
   }
 };
 
@@ -186,23 +122,25 @@ exports.forgotPassword = async (req, res) => {
     const { email } = req.body;
     const user = await User.findOne({ where: { email } });
 
-    if (user) {
-      const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, {
-        expiresIn: '1d',
-      });
-
-      const link = `${process.env.FRONTEND_URL}/reset-password?token=${encodeURIComponent(token)}`;
-
-      try {
-        await sendEmail(email, 'Reset Password', `Reset link: ${link}`);
-      } catch (err) {
-        console.error('Email error:', err.message);
-      }
-    } else {
+    if (!user) {
       return res.status(400).json({
         success: false,
         message: 'Please enter your registered email',
       });
+    }
+
+    const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, {
+      expiresIn: '1d',
+    });
+
+    const link = `${process.env.FRONTEND_URL}/reset-password?token=${encodeURIComponent(
+      token
+    )}`;
+
+    try {
+      await sendEmail(email, 'Reset Password', `Reset link: ${link}`);
+    } catch (err) {
+      console.error('Email error:', err.message);
     }
 
     res

@@ -20,7 +20,10 @@ const LatestTodos = () => {
     try {
       const { data } = await axios.get('/api/v1/todos/data/dashboard');
       if (data.success) {
-        setoverviewData(data.overviewData);
+        setoverviewData({
+          ...data.overviewData,
+          recentTodos: data.recentTodos || [],
+        });
         fetchTodos();
       }
     } catch (error) {

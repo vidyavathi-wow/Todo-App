@@ -11,7 +11,7 @@ export default function TodoCard({ todo, onToggleCompleted }) {
         isCompleted ? 'opacity-75' : ''
       }`}
     >
-      <div className="flex items-start justify-between gap-3 mb-3">
+      <div className="flex items-start justify-between items-center gap-3 mb-3">
         <div className="flex items-start gap-3">
           <input
             type="checkbox"
@@ -62,11 +62,13 @@ export default function TodoCard({ todo, onToggleCompleted }) {
         <div className="flex flex-wrap items-center gap-4">
           <span>Priority: {todo.priority}</span>
           <span>
-            Created:{' '}
+            Created At:{' '}
             {todo.createdAt
               ? new Date(todo.createdAt).toLocaleDateString()
               : '-'}
           </span>
+          <span>Status: {todo.status}</span>
+          <span>Category: {todo.category}</span>
         </div>
         {isCompleted && <span className="text-xs text-success">✅ Done</span>}
       </div>

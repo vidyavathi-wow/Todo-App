@@ -4,7 +4,7 @@ import { BarChartBox } from '../components/analytics/wrappers/BarChartBox';
 import AnalyticsCard from '../components/analytics/wrappers/AnalyticsCard';
 import AppContext from '../context/AppContext';
 import Loader from '../components/common/Loader';
-import { ANALYTICS_COLORS } from '../utils/Constants';
+import { ANALYTICS_COLORS } from '../utils/Constants.jsx';
 import EmptyState from '../components/common/EmptyState';
 
 export default function Analytics() {

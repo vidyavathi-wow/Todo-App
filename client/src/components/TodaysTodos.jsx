@@ -3,7 +3,7 @@ import AppContext from '../context/AppContext';
 import { FiClock, FiCheckCircle } from 'react-icons/fi';
 import EmptyState from './common/EmptyState';
 import toast from 'react-hot-toast';
-import { STATUS_COLORS as COLORS } from '../utils/Constants';
+import { STATUS_COLORS as COLORS } from '../utils/Constants.jsx';
 
 export default function TodaysTodos() {
   const { todos, axios, fetchTodos } = useContext(AppContext);

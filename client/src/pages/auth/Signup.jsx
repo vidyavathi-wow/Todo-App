@@ -5,6 +5,7 @@ import AppContext from '../../context/AppContext';
 import Input from '../../components/common/Input';
 import Button from '../../components/common/Button';
 import Select from '../../components/common/Select';
+
 export default function Signup() {
   const navigate = useNavigate();
   const { axios } = useContext(AppContext);
@@ -12,6 +13,7 @@ export default function Signup() {
     name: '',
     email: '',
     password: '',
+    role: 'user',
   });
   const [loading, setLoading] = useState(false);
 
@@ -25,17 +27,20 @@ export default function Signup() {
 
     try {
       const { data } = await axios.post('/api/v1/auth/register', formData);
+
       if (data.success) {
         toast.success(data.message);
-        setFormData({ name: '', email: '', password: '' });
+        setFormData({ name: '', email: '', password: '', role: 'user' });
         navigate('/login');
       } else {
-        toast.error(data.message);
+        toast.error(data.message || 'Signup failed');
       }
     } catch (error) {
-      if (error.response && error.response.data && error.response.data.errors) {
-        const messages = error.response.data.errors.map((err) => err.msg);
-        messages.forEach((msg) => toast.error(msg));
+      const res = error.response?.data;
+      if (res?.errors && Array.isArray(res.errors)) {
+        res.errors.forEach((err) => toast.error(err.msg));
+      } else if (res?.message) {
+        toast.error(res.message);
       } else {
         toast.error(error.message || 'Signup failed');
       }
