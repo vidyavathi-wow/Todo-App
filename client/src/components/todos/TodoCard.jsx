@@ -67,7 +67,6 @@ export default function TodoCard({ todo, onToggleCompleted }) {
               ? new Date(todo.createdAt).toLocaleDateString()
               : '-'}
           </span>
-          <span>Status: {todo.status}</span>
           <span>Category: {todo.category}</span>
         </div>
         {isCompleted && <span className="text-xs text-success">✅ Done</span>}
