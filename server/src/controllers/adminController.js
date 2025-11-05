@@ -60,36 +60,48 @@ exports.getActivityLogs = async (req, res) => {
 };
 
 exports.deleteUserByAdmin = async (req, res) => {
+  const t = await sequelize.transaction();
   try {
     const { id } = req.params;
-    const user = await User.findByPk(id);
+    const user = await User.findByPk(id, { transaction: t });
 
-    if (!user)
+    if (!user) {
+      await t.rollback();
       return res
         .status(404)
         .json({ success: false, message: 'User not found' });
+    }
 
-    if (user.role === 'admin')
+    if (user.role === 'admin') {
+      await t.rollback();
       return res
         .status(403)
         .json({ success: false, message: 'Admins cannot delete other admins' });
+    }
 
-    await Todo.destroy({ where: { userId: id } });
-    await ActivityLog.destroy({ where: { userId: id } });
-    await user.destroy();
+    await Todo.destroy({ where: { userId: id }, transaction: t });
+    await ActivityLog.destroy({ where: { userId: id }, transaction: t });
 
-    await ActivityLog.create({
-      userId: req.user?.id || null,
-      action: 'DELETE_USER',
-      details: `Admin ${req.user?.email || 'Unknown'} deleted user ${user.email} and related data.`,
-      timestamp: new Date(),
-    });
+    await user.destroy({ transaction: t });
+
+    await ActivityLog.create(
+      {
+        userId: req.user?.id || null,
+        action: 'DELETE_USER',
+        details: `Admin ${req.user?.email || 'Unknown'} deleted user ${user.email} and related data.`,
+        timestamp: new Date(),
+      },
+      { transaction: t }
+    );
+
+    await t.commit();
 
     return res.status(200).json({
       success: true,
       message: `User '${user.email}' and related data deleted successfully.`,
     });
   } catch (error) {
+    await t.rollback();
     return res.status(500).json({ success: false, message: error.message });
   }
 };

@@ -1,86 +1,89 @@
-import { useState, useEffect, useContext } from 'react';
+import { useEffect, useState, useContext } from 'react';
+import { useForm } from 'react-hook-form';
 import AppContext from '../../context/AppContext';
 import Input from '../../components/common/Input';
 import Button from '../../components/common/Button';
+import toast from 'react-hot-toast';
 
 const Profile = () => {
   const { axios } = useContext(AppContext);
-  const [profile, setProfile] = useState({
-    name: '',
-    email: '',
-    profilePic: '',
-  });
-  const [preview, setPreview] = useState('');
+  const [preview, setPreview] = useState('/default-avatar.png');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [serverError, setServerError] = useState('');
 
+  const {
+    register,
+    handleSubmit,
+    watch,
+    reset,
+    formState: { errors },
+  } = useForm({
+    defaultValues: {
+      name: '',
+      email: '',
+      profilePic: null,
+    },
+  });
+
+  const profilePic = watch('profilePic');
+
+  // Preview image when file selected
+  useEffect(() => {
+    if (profilePic && profilePic.length > 0) {
+      const file = profilePic[0];
+      setPreview(URL.createObjectURL(file));
+    }
+  }, [profilePic]);
+
+  // Fetch user profile on mount
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        setError('');
+        setServerError('');
         const res = await axios.get('/api/v1/profile');
-        console.log('Profile response:', res.data);
 
-        setProfile({
+        reset({
           name: res.data.user.name || '',
           email: res.data.user.email || '',
-          profilePic: res.data.user.profilePic || '',
         });
+
         setPreview(res.data.user.profilePic || '/default-avatar.png');
       } catch (error) {
         console.error('Error fetching profile:', error);
-        setError('Failed to load profile');
+        setServerError('Failed to load profile');
       }
     };
     fetchProfile();
-  }, [axios]);
+  }, [axios, reset]);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setProfile({ ...profile, [name]: value });
-  };
-
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setProfile({ ...profile, profilePic: file });
-      setPreview(URL.createObjectURL(file));
-    }
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const onSubmit = async (data) => {
     try {
-      setError('');
       setLoading(true);
+      setServerError('');
 
       const formData = new FormData();
-      formData.append('name', profile.name);
-      formData.append('email', profile.email);
+      formData.append('name', data.name);
+      formData.append('email', data.email);
 
-      // Only append file if it's a File object (new upload), not a string (existing URL)
-      if (profile.profilePic instanceof File) {
-        formData.append('profilePic', profile.profilePic);
+      if (data.profilePic && data.profilePic.length > 0) {
+        formData.append('profilePic', data.profilePic[0]);
       }
 
       const res = await axios.put('/api/v1/profile', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
 
-      console.log('Update response:', res.data);
-      alert('Profile updated successfully!');
-
-      // Update preview with new URL from response
-      setPreview(res.data.user.profilePic);
-      setProfile({
+      toast.success('Profile updated successfully!');
+      setPreview(res.data.user.profilePic || preview);
+      reset({
         name: res.data.user.name,
         email: res.data.user.email,
-        profilePic: res.data.user.profilePic,
+        profilePic: null,
       });
     } catch (error) {
       console.error('Error updating profile:', error);
-      setError(error.response?.data?.message || 'Error updating profile');
-      alert(error.response?.data?.message || 'Error updating profile');
+      setServerError(error.response?.data?.message || 'Error updating profile');
+      toast.error(error.response?.data?.message || 'Error updating profile');
     } finally {
       setLoading(false);
     }
@@ -92,61 +95,80 @@ const Profile = () => {
         Account Information
       </h2>
 
-      {error && (
+      {serverError && (
         <div className="bg-red-900/30 border border-red-600 text-red-300 p-3 rounded mb-6">
-          {error}
+          {serverError}
         </div>
       )}
 
+      {/* Profile Image */}
       <div className="flex flex-col md:flex-row items-center gap-6 mb-8">
         <div className="relative">
           <img
-            src={preview || '/default-avatar.png'}
+            src={preview}
             alt="Profile"
             className="w-28 h-28 rounded-full object-cover border-4 border-primary"
           />
           <label className="absolute bottom-0 right-0 bg-primary text-white px-2 py-1 rounded cursor-pointer text-xs hover:bg-primary/80">
             Change
-            <Input
+            <input
               type="file"
               accept="image/*"
-              onChange={handleFileChange}
+              {...register('profilePic')}
               className="hidden"
             />
           </label>
         </div>
         <div>
-          <h3 className="text-lg font-semibold">{profile.name}</h3>
-          <p className="text-gray-400">{profile.email}</p>
+          <h3 className="text-lg font-semibold">{watch('name')}</h3>
+          <p className="text-gray-400">{watch('email')}</p>
         </div>
       </div>
 
+      {/* Form */}
       <form
-        onSubmit={handleSubmit}
+        onSubmit={handleSubmit(onSubmit)}
         className="bg-gray-800 p-6 rounded-2xl shadow-md border border-gray-700 w-full md:w-2/3"
       >
+        {/* Name */}
         <div className="mb-4">
-          <label className="block mb-1 text-gray-400">Name</label>
+          <label className="block mb-1 text-gray-400">
+            Name <span className="text-red-500">*</span>
+          </label>
           <Input
             type="text"
-            name="name"
-            value={profile.name}
-            onChange={handleChange}
+            placeholder="Enter your name"
+            {...register('name', { required: 'Name is required' })}
             className="w-full p-2 rounded bg-gray-900 border border-gray-600 focus:border-primary outline-none"
           />
+          {errors.name && (
+            <p className="text-red-500 text-sm mt-1">{errors.name.message}</p>
+          )}
         </div>
 
+        {/* Email */}
         <div className="mb-4">
-          <label className="block mb-1 text-gray-400">Email Address</label>
+          <label className="block mb-1 text-gray-400">
+            Email Address <span className="text-red-500">*</span>
+          </label>
           <Input
             type="email"
-            name="email"
-            value={profile.email}
-            onChange={handleChange}
+            placeholder="Enter your email"
+            {...register('email', {
+              required: 'Email is required',
+              pattern: {
+                value: /^[^@\s]+@[^@\s]+\.[^@\s]+$/,
+                message: 'Enter a valid email address',
+              },
+            })}
             className="w-full p-2 rounded bg-gray-900 border border-gray-600 focus:border-primary outline-none"
           />
+          {errors.email && (
+            <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>
+          )}
         </div>
 
+        {/* Buttons */}
         <div className="flex justify-end gap-3">
           <Button
             type="button"

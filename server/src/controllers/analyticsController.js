@@ -1,57 +1,91 @@
+const { fn, col } = require('sequelize');
 const Todo = require('../models/Todo');
 
 exports.getAnalytics = async (req, res) => {
   try {
     const userId = req.user.id;
-    const todos = await Todo.findAll({ where: { userId } });
-    const statusCounts = {
-      completed: todos.filter((t) => t.status === 'completed').length,
-      inProgress: todos.filter((t) => t.status === 'inProgress').length,
-      pending: todos.filter((t) => t.status === 'pending').length,
-    };
-    const priorityCounts = {
-      High: todos.filter((t) => t.priority === 'High').length,
-      Moderate: todos.filter((t) => t.priority === 'Moderate').length,
-      Low: todos.filter((t) => t.priority === 'Low').length,
-    };
-    const categoryCounts = {
-      Work: todos.filter((t) => t.category === 'Work').length,
-      Personal: todos.filter((t) => t.category === 'Personal').length,
-      Other: todos.filter((t) => t.category === 'Other').length,
-    };
-    const totalTodos = todos.length || 1;
-    const statusPercentages = Object.fromEntries(
-      Object.entries(statusCounts).map(([k, v]) => [
-        k,
-        ((v / totalTodos) * 100).toFixed(1),
-      ])
-    );
 
-    const priorityPercentages = Object.fromEntries(
-      Object.entries(priorityCounts).map(([k, v]) => [
-        k,
-        ((v / totalTodos) * 100).toFixed(1),
-      ])
-    );
+    const [statusData, priorityData, categoryData, totalTodos] =
+      await Promise.all([
+        Todo.findAll({
+          attributes: ['status', [fn('COUNT', col('status')), 'count']],
+          where: { userId, isDeleted: false },
+          group: ['status'],
+        }),
+        Todo.findAll({
+          attributes: ['priority', [fn('COUNT', col('priority')), 'count']],
+          where: { userId, isDeleted: false },
+          group: ['priority'],
+        }),
+        Todo.findAll({
+          attributes: ['category', [fn('COUNT', col('category')), 'count']],
+          where: { userId, isDeleted: false },
+          group: ['category'],
+        }),
+        Todo.count({ where: { userId, isDeleted: false } }),
+      ]);
 
-    const categoryPercentages = Object.fromEntries(
-      Object.entries(categoryCounts).map(([k, v]) => [
-        k,
-        ((v / totalTodos) * 100).toFixed(1),
-      ])
-    );
+    if (totalTodos === 0) {
+      return res.status(200).json({
+        success: true,
+        totalTodos: 0,
+        statusCounts: { completed: 0, inProgress: 0, pending: 0 },
+        priorityCounts: { High: 0, Moderate: 0, Low: 0 },
+        categoryCounts: { Work: 0, Personal: 0, Other: 0 },
+        statusPercentages: { completed: 0, inProgress: 0, pending: 0 },
+        priorityPercentages: { High: 0, Moderate: 0, Low: 0 },
+        categoryPercentages: { Work: 0, Personal: 0, Other: 0 },
+      });
+    }
+
+    const formatResult = (data, keys) => {
+      const result = Object.fromEntries(keys.map((k) => [k, 0]));
+      data.forEach((item) => {
+        const [keyName] = Object.keys(item.dataValues).filter(
+          (k) => k !== 'count'
+        );
+        const key = item.getDataValue(keyName);
+        result[key] = parseInt(item.getDataValue('count'));
+      });
+      return result;
+    };
+
+    const statusCounts = formatResult(statusData, [
+      'completed',
+      'inProgress',
+      'pending',
+    ]);
+    const priorityCounts = formatResult(priorityData, [
+      'High',
+      'Moderate',
+      'Low',
+    ]);
+    const categoryCounts = formatResult(categoryData, [
+      'Work',
+      'Personal',
+      'Other',
+    ]);
+
+    const calcPercentages = (obj) =>
+      Object.fromEntries(
+        Object.entries(obj).map(([k, v]) => [
+          k,
+          ((v / totalTodos) * 100).toFixed(1),
+        ])
+      );
 
     res.status(200).json({
       success: true,
-      totalTodos: todos.length,
+      totalTodos,
       statusCounts,
       priorityCounts,
       categoryCounts,
-      statusPercentages,
-      priorityPercentages,
-      categoryPercentages,
+      statusPercentages: calcPercentages(statusCounts),
+      priorityPercentages: calcPercentages(priorityCounts),
+      categoryPercentages: calcPercentages(categoryCounts),
     });
   } catch (error) {
+    console.error(error);
     res.status(500).json({
       success: false,
       message: 'Failed to fetch analytics',

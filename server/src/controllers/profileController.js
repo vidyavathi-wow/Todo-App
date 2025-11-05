@@ -4,12 +4,11 @@ const ActivityLog = require('../models/ActivityLog');
 exports.getProfile = async (req, res) => {
   try {
     if (!req.user || !req.user.id) {
-      console.log('ERROR: No user in request');
       return res.status(401).json({ success: false, message: 'Unauthorized' });
     }
 
     const user = await User.findByPk(req.user.id, {
-      attributes: ['id', 'name', 'email', 'profilePic', 'role', 'createdAt'], // ✅ include role here
+      attributes: ['id', 'name', 'email', 'profilePic', 'role', 'createdAt'],
     });
 
     if (!user) {
@@ -42,7 +41,6 @@ exports.updateProfile = async (req, res) => {
     const user = await User.findByPk(req.user.id);
 
     if (!user) {
-      console.log('ERROR: User not found in DB');
       return res
         .status(404)
         .json({ success: false, message: 'User not found' });

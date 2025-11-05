@@ -182,7 +182,7 @@ exports.deleteTodo = async (req, res) => {
       await ActivityLog.create({
         userId,
         action: 'DELETE_TODO',
-        details: `Soft deleted todo with id: ${id}`,
+        details: `deleted todo with id: ${id}`,
       });
     } catch (logError) {
       logger.warn(`ActivityLog failed (deleteTodo): ${logError.message}`);
@@ -205,44 +205,50 @@ exports.getDashboardData = async (req, res) => {
   try {
     const userId = req.user.id;
 
-    const statusCounts = await Todo.findAll({
-      attributes: ['status', [fn('COUNT', col('status')), 'count']],
-      where: { userId, isDeleted: false },
-      group: ['status'],
-      raw: true,
-    });
-
-    const overviewData = statusCounts.reduce(
-      (acc, { status, count }) => ({
-        ...acc,
-        [status]: Number(count),
+    const [statusCounts, recentTodos] = await Promise.all([
+      Todo.findAll({
+        attributes: ['status', [fn('COUNT', col('status')), 'count']],
+        where: { userId, isDeleted: false },
+        group: ['status'],
+        raw: true,
       }),
-      { completed: 0, inProgress: 0, pending: 0 }
-    );
+      Todo.findAll({
+        where: { userId, isDeleted: false },
+        order: [['createdAt', 'DESC']],
+        limit: 5,
+        attributes: [
+          'id',
+          'title',
+          'description',
+          'status',
+          'date',
+          'category',
+          'priority',
+          'notes',
+        ],
+      }),
+    ]);
 
-    const recentTodos = await Todo.findAll({
-      where: { userId, isDeleted: false },
-      order: [['createdAt', 'DESC']],
-      limit: 5,
-      attributes: [
-        'id',
-        'title',
-        'description',
-        'status',
-        'date',
-        'category',
-        'priority',
-        'notes',
-      ],
+    const overviewData = { completed: 0, inProgress: 0, pending: 0 };
+    statusCounts.forEach(({ status, count }) => {
+      if (overviewData.hasOwnProperty(status)) {
+        overviewData[status] = Number(count);
+      }
     });
 
-    logger.info(`Dashboard data fetched for user ${userId}`);
-    res.status(200).json({ success: true, overviewData, recentTodos });
+    logger.info(`✅ Dashboard data fetched for user ${userId}`);
+
+    res.status(200).json({
+      success: true,
+      overviewData,
+      recentTodos,
+    });
   } catch (error) {
-    logger.error(`Error in getDashboardData: ${error.message}`);
+    logger.error(`❌ Error in getDashboardData: ${error.message}`);
     res.status(500).json({
       success: false,
       message: 'Something went wrong. Please try again later.',
+      error: error.message,
     });
   }
 };

@@ -57,7 +57,6 @@ const LatestTodos = () => {
 
   return (
     <div className="flex-1 p-4 md:p-10 bg-gray-900 text-gray-200">
-      {/* Stats */}
       <div className="flex flex-wrap gap-4">
         {stats.map(({ icon, label, value }) => (
           <div
@@ -73,7 +72,6 @@ const LatestTodos = () => {
         ))}
       </div>
 
-      {/* Latest Todos */}
       <div>
         <div className="flex items-center m-4 mt-6 gap-3 text-gray-200">
           <FiList className="text-xl text-primary" />
@@ -89,9 +87,7 @@ const LatestTodos = () => {
             <table className="w-full text-sm text-gray-200">
               <thead className="w-full text-sm text-gray-400 text-left uppercase border-b border-gray-700">
                 <tr>
-                  <th scope="col" className="px-2 py-4 xl:px-6">
-                    #
-                  </th>
+                  <th scope="col" className="px-2 py-4 xl:px-6"></th>
                   <th scope="col" className="px-2 py-4 xl:px-6">
                     Title
                   </th>
@@ -101,7 +97,7 @@ const LatestTodos = () => {
                   <th scope="col" className="px-2 py-4 xl:px-6 max-sm:hidden">
                     Status
                   </th>
-                  <th scope="col" className="px-2 py-4 xl:px-6">
+                  <th scope="col" className="px-2 py-4">
                     Delete
                   </th>
                 </tr>

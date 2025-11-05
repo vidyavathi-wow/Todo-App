@@ -8,7 +8,7 @@ import { ANALYTICS_COLORS } from '../utils/Constants.jsx';
 import EmptyState from '../components/common/EmptyState';
 
 export default function Analytics() {
-  const { axios, fetchTodos } = useContext(AppContext);
+  const { axios, fetchTodos, todos } = useContext(AppContext);
   const [analytics, setAnalytics] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -27,7 +27,7 @@ export default function Analytics() {
       }
     };
     fetchAnalytics();
-  }, []);
+  }, [todos]);
 
   if (loading) return <Loader />;
   if (!analytics) return <EmptyState message="No Analytics Data" />;

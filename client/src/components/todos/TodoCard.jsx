@@ -1,9 +1,11 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { STATUS_COLORS } from '../../utils/Constants';
 
 export default function TodoCard({ todo, onToggleCompleted }) {
   const navigate = useNavigate();
-  const isCompleted = (todo.status || '').toLowerCase() === 'completed';
+  const status = (todo.status || '').toLowerCase();
+  const isCompleted = status === 'completed';
 
   return (
     <div
@@ -11,7 +13,7 @@ export default function TodoCard({ todo, onToggleCompleted }) {
         isCompleted ? 'opacity-75' : ''
       }`}
     >
-      <div className="flex items-start justify-between items-center gap-3 mb-3">
+      <div className="flex justify-between items-center gap-3 mb-3">
         <div className="flex items-start gap-3">
           <input
             type="checkbox"
@@ -44,13 +46,10 @@ export default function TodoCard({ todo, onToggleCompleted }) {
           </div>
         </div>
 
+        {/* ✅ Use STATUS_COLORS constant here */}
         <span
-          className={`px-3 py-1 rounded-full text-xs font-medium ${
-            isCompleted
-              ? 'bg-success/30 text-success'
-              : (todo.status || '').toLowerCase() === 'in progress'
-                ? 'bg-primary/30 text-primary'
-                : 'bg-gray-light/30 text-secondary/70'
+          className={`px-3 py-1 rounded-full text-xs font-medium text-white ${
+            STATUS_COLORS[status] || 'bg-gray-light text-secondary/70'
           }`}
         >
           {todo.status}
