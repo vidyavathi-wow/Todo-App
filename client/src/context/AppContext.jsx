@@ -2,7 +2,7 @@ import { createContext, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { getTodos } from '../services/todos';
-import { getUserProfile } from '../services/profile';
+import { getProfile } from '../services/profile';
 import axiosInstance from '../configs/axiosInstance';
 
 const AppContext = createContext();
@@ -31,7 +31,7 @@ export const AppProvider = ({ children }) => {
 
   const fetchUserProfile = async () => {
     try {
-      const data = await getUserProfile();
+      const data = await getProfile();
       if (data.success) setUser(data.user);
       else toast.error(data.message || 'Failed to fetch profile');
     } catch (error) {
