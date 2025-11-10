@@ -1,12 +1,10 @@
-import { useEffect, useState, useContext } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import AppContext from '../../context/AppContext';
 import Input from '../../components/common/Input';
 import Button from '../../components/common/Button';
 import toast from 'react-hot-toast';
-
+import { getProfile, updateProfile } from '../../services/profile';
 const Profile = () => {
-  const { axios } = useContext(AppContext);
   const [preview, setPreview] = useState('/default-avatar.png');
   const [loading, setLoading] = useState(false);
   const [serverError, setServerError] = useState('');
@@ -27,7 +25,6 @@ const Profile = () => {
 
   const profilePic = watch('profilePic');
 
-  // Preview image when file selected
   useEffect(() => {
     if (profilePic && profilePic.length > 0) {
       const file = profilePic[0];
@@ -35,55 +32,52 @@ const Profile = () => {
     }
   }, [profilePic]);
 
-  // Fetch user profile on mount
   useEffect(() => {
-    const fetchProfile = async () => {
+    const fetchProfileData = async () => {
       try {
         setServerError('');
-        const res = await axios.get('/api/v1/profile');
-
+        const data = await getProfile();
         reset({
-          name: res.data.user.name || '',
-          email: res.data.user.email || '',
+          name: data.user.name || '',
+          email: data.user.email || '',
         });
-
-        setPreview(res.data.user.profilePic || '/default-avatar.png');
+        setPreview(data.user.profilePic || '/default-avatar.png');
       } catch (error) {
-        console.error('Error fetching profile:', error);
+        toast.error(error.message);
         setServerError('Failed to load profile');
       }
     };
-    fetchProfile();
-  }, [axios, reset]);
 
-  const onSubmit = async (data) => {
+    fetchProfileData();
+  }, [reset]);
+
+  const onSubmit = async (formValues) => {
     try {
       setLoading(true);
       setServerError('');
 
       const formData = new FormData();
-      formData.append('name', data.name);
-      formData.append('email', data.email);
+      formData.append('name', formValues.name);
+      formData.append('email', formValues.email);
 
-      if (data.profilePic && data.profilePic.length > 0) {
-        formData.append('profilePic', data.profilePic[0]);
+      if (formValues.profilePic && formValues.profilePic.length > 0) {
+        formData.append('profilePic', formValues.profilePic[0]);
       }
 
-      const res = await axios.put('/api/v1/profile', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
+      const data = await updateProfile(formData);
 
       toast.success('Profile updated successfully!');
-      setPreview(res.data.user.profilePic || preview);
+      setPreview(data.user.profilePic || preview);
       reset({
-        name: res.data.user.name,
-        email: res.data.user.email,
+        name: data.user.name,
+        email: data.user.email,
         profilePic: null,
       });
     } catch (error) {
       console.error('Error updating profile:', error);
-      setServerError(error.response?.data?.message || 'Error updating profile');
-      toast.error(error.response?.data?.message || 'Error updating profile');
+      const message = error.response?.data?.message || 'Error updating profile';
+      setServerError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }

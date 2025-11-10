@@ -6,27 +6,28 @@ import AppContext from '../context/AppContext';
 import Loader from '../components/common/Loader';
 import { ANALYTICS_COLORS } from '../utils/Constants.jsx';
 import EmptyState from '../components/common/EmptyState';
+import { getAnalytics } from '../services/analytics.js';
 
 export default function Analytics() {
-  const { axios, fetchTodos, todos } = useContext(AppContext);
+  const { fetchTodos, todos } = useContext(AppContext);
   const [analytics, setAnalytics] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchAnalytics = async () => {
+    const fetchAnalyticsData = async () => {
       try {
-        const { data } = await axios.get('/api/v1/analytics');
+        const data = await getAnalytics();
         if (data.success) {
           fetchTodos();
           setAnalytics(data);
         }
       } catch (error) {
-        console.log(error.message);
+        console.error('Analytics fetch error:', error.message);
       } finally {
         setLoading(false);
       }
     };
-    fetchAnalytics();
+    fetchAnalyticsData();
   }, [todos]);
 
   if (loading) return <Loader />;
@@ -37,10 +38,11 @@ export default function Analytics() {
   const highPriority = analytics.priorityCounts?.High || 0;
 
   return (
-    <div className="flex-1 bg-gray-dark text-secondary h-full overflow-scroll p-4">
+    <div className="flex-1 bg-gray-dark text-secondary h-full overflow-y-auto p-4 sm:p-6">
       <h2 className="text-2xl font-bold mb-6 border-b border-gray-700 pb-2">
         Todo Analytics
       </h2>
+
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
         <AnalyticsCard
           title="Total Todos"
@@ -59,7 +61,7 @@ export default function Analytics() {
         />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-64">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 auto-rows-[minmax(320px,auto)]">
         <PieChartBox
           title="Status Distribution"
           data={Object.entries(analytics.statusCounts).map(([name, value]) => ({

@@ -1,12 +1,12 @@
-import { useEffect, useState, useContext } from 'react';
-import AppContext from '../context/AppContext';
+import { useEffect, useState } from 'react';
 import { FiClock } from 'react-icons/fi';
 import Loader from '../components/common/Loader';
 import EmptyState from '../components/common/EmptyState';
 import Pagination from '../components/common/Pagination';
+import { getActivityLogs } from '../services/activitylogs';
+import toast from 'react-hot-toast';
 
 const ActivityLogs = () => {
-  const { axios } = useContext(AppContext);
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -15,13 +15,16 @@ const ActivityLogs = () => {
   const fetchLogs = async () => {
     setLoading(true);
     try {
-      const res = await axios.get(`/api/v1/activitylogs?page=${page}&limit=3`);
-      if (res.data.success) {
-        setLogs(res.data.logs || []);
-        setTotalPages(res.data.totalPages || 1);
+      const data = await getActivityLogs(page, 3);
+      if (data.success) {
+        setLogs(data.logs || []);
+        setTotalPages(data.totalPages || 1);
+      } else {
+        toast.error(data.message || 'Failed to load activity logs');
       }
     } catch (error) {
-      console.error('Error fetching activity logs:', error.message);
+      console.error('Error fetching activity logs:', error);
+      toast.error(error.response?.data?.message || 'Failed to fetch logs');
     } finally {
       setLoading(false);
     }

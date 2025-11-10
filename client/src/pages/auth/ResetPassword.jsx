@@ -1,15 +1,15 @@
-import React, { useState, useContext } from 'react';
+import React, { useState } from 'react';
 import { useSearchParams, Link, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import AppContext from '../../context/AppContext';
 import Input from '../../components/common/Input';
 import Button from '../../components/common/Button';
+import { resetPassword } from '../../services/auth'; // ✅ new import
 
 export default function ResetPassword() {
-  const { axios } = useContext(AppContext);
   const [searchParams] = useSearchParams();
   const token = searchParams.get('token');
   const navigate = useNavigate();
+
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -20,24 +20,20 @@ export default function ResetPassword() {
 
     setLoading(true);
     try {
-      const { data } = await axios.post(
-        `/api/v1/auth/reset-password?token=${token}`, // ← Query param format
-        { password }
-      );
+      const data = await resetPassword(token, password); // ✅ using authService
+
       if (data.success) {
         toast.success('Password reset successfully');
         navigate('/login');
       } else {
-        toast.error(data.message);
+        toast.error(data.message || 'Reset failed');
       }
     } catch (error) {
-      if (error.response && error.response.data && error.response.data.errors) {
-        const messages = error.response.data.errors.map((err) => err.msg);
-        messages.forEach((msg) => toast.error(msg));
+      const res = error.response?.data;
+      if (res?.errors?.length) {
+        res.errors.forEach((err) => toast.error(err.msg));
       } else {
-        toast.error(
-          error.response?.data?.message || 'Failed to reset password'
-        );
+        toast.error(res?.message || 'Failed to reset password');
       }
     } finally {
       setLoading(false);
@@ -48,7 +44,7 @@ export default function ResetPassword() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-dark text-gray-light">
         <div className="text-center">
-          <p className="mb-4">Invalid reset link</p>
+          <p className="mb-4">Invalid or expired reset link</p>
           <Link to="/login" className="text-primary hover:underline">
             Back to Login
           </Link>

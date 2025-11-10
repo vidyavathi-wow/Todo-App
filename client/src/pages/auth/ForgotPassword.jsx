@@ -1,12 +1,11 @@
-import React, { useState, useContext } from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import AppContext from '../../context/AppContext';
 import Input from '../../components/common/Input';
 import Button from '../../components/common/Button';
+import { sendForgotPasswordLink } from '../../services/auth';
 
 export default function ForgotPassword() {
-  const { axios } = useContext(AppContext);
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -16,22 +15,23 @@ export default function ForgotPassword() {
     setLoading(true);
 
     try {
-      const { data } = await axios.post('/api/v1/auth/forgot-password', {
-        email,
-      });
+      const data = await sendForgotPasswordLink(email);
+
       if (data.success) {
         toast.success('Reset link sent to your email');
-      } else toast.error(data.message);
-    } catch (error) {
-      if (error.response && error.response.data && error.response.data.errors) {
-        const messages = error.response.data.errors.map((err) => err.msg);
-        messages.forEach((msg) => toast.error(msg));
+        setEmail('');
       } else {
-        toast.error(error.response?.data?.message || 'Failed to set Email');
+        toast.error(data.message || 'Failed to send reset link');
+      }
+    } catch (error) {
+      const res = error.response?.data;
+      if (res?.errors?.length) {
+        res.errors.forEach((err) => toast.error(err.msg));
+      } else {
+        toast.error(res?.message || 'Something went wrong');
       }
     } finally {
       setLoading(false);
-      setEmail('');
     }
   };
 

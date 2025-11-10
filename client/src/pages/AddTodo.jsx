@@ -1,14 +1,15 @@
 import React, { useEffect, useContext } from 'react';
 import { useForm } from 'react-hook-form';
-import AppContext from '../context/AppContext';
-import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
+import AppContext from '../context/AppContext';
 import Input from '../components/common/Input';
 import Button from '../components/common/Button';
 import Select from '../components/common/Select';
+import { createTodo, updateTodo } from '../services/todos';
 
 const AddTodo = () => {
-  const { axios, editTodo, setEditTodo, fetchTodos } = useContext(AppContext);
+  const { editTodo, setEditTodo, fetchTodos } = useContext(AppContext);
   const navigate = useNavigate();
 
   const {
@@ -29,7 +30,6 @@ const AddTodo = () => {
     },
   });
 
-  // Prefill form if editing
   useEffect(() => {
     if (editTodo) {
       Object.entries(editTodo).forEach(([key, value]) => {
@@ -47,12 +47,15 @@ const AddTodo = () => {
   const onSubmitHandler = async (formData) => {
     try {
       const todoData = { ...formData };
+      let response;
 
-      const response = editTodo
-        ? await axios.put(`/api/v1/todos/${editTodo.id}`, todoData)
-        : await axios.post(`/api/v1/todos`, todoData);
+      if (editTodo) {
+        response = await updateTodo(editTodo.id, todoData);
+      } else {
+        response = await createTodo(todoData);
+      }
 
-      if (response.data.success) {
+      if (response.success) {
         toast.success(
           editTodo ? 'Todo updated successfully!' : 'Todo added successfully!'
         );
@@ -60,13 +63,14 @@ const AddTodo = () => {
         await fetchTodos();
         navigate('/');
       } else {
-        toast.error(response.data.message || 'Something went wrong');
+        toast.error(response.message || 'Something went wrong');
       }
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to save todo');
     }
   };
 
+  // ✅ Cancel edit
   const onCancelHandler = () => {
     reset();
     setEditTodo(null);

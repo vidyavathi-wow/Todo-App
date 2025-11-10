@@ -1,7 +1,9 @@
 import { createContext, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import axiosInstance from '../api/axiosInstance';
+import { getTodos } from '../services/todos';
+import { getUserProfile } from '../services/profile';
+import axiosInstance from '../configs/axiosInstance';
 
 const AppContext = createContext();
 
@@ -15,15 +17,6 @@ export const AppProvider = ({ children }) => {
   const [user, setUser] = useState(null);
 
   useEffect(() => {
-    if (token) {
-      axiosInstance.defaults.headers.common['Authorization'] =
-        `Bearer ${token}`;
-    } else {
-      delete axiosInstance.defaults.headers.common['Authorization'];
-    }
-  }, [token]);
-
-  useEffect(() => {
     const storedToken = localStorage.getItem('token');
     if (storedToken) setToken(storedToken);
     setLoading(false);
@@ -31,19 +24,16 @@ export const AppProvider = ({ children }) => {
 
   useEffect(() => {
     if (token) {
-      fetchTodos();
       fetchUserProfile();
+      fetchTodos();
     }
   }, [token]);
 
   const fetchUserProfile = async () => {
     try {
-      const { data } = await axiosInstance.get('/api/v1/profile');
-      if (data.success) {
-        setUser(data.user);
-      } else {
-        toast.error(data.message || 'Failed to fetch profile');
-      }
+      const data = await getUserProfile();
+      if (data.success) setUser(data.user);
+      else toast.error(data.message || 'Failed to fetch profile');
     } catch (error) {
       toast.error(error.response?.data?.message || error.message);
     }
@@ -51,12 +41,9 @@ export const AppProvider = ({ children }) => {
 
   const fetchTodos = async () => {
     try {
-      const { data } = await axiosInstance.get('/api/v1/todos');
-      if (data.success) {
-        setTodos(data.todos);
-      } else {
-        toast.error(data.message || 'Failed to fetch todos');
-      }
+      const data = await getTodos();
+      if (data.success) setTodos(data.todos || []);
+      else toast.error(data.message || 'Failed to fetch todos');
     } catch (error) {
       if (error.response?.data?.errors) {
         error.response.data.errors.forEach((err) => toast.error(err.msg));

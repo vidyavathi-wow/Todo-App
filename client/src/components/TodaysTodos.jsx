@@ -1,12 +1,13 @@
 import React, { useContext } from 'react';
-import AppContext from '../context/AppContext';
 import { FiClock, FiCheckCircle } from 'react-icons/fi';
+import AppContext from '../context/AppContext';
 import EmptyState from './common/EmptyState';
 import toast from 'react-hot-toast';
 import { STATUS_COLORS as COLORS } from '../utils/Constants.jsx';
+import { updateTodoStatus } from '../services/todos';
 
 export default function TodaysTodos() {
-  const { todos, axios, fetchTodos } = useContext(AppContext);
+  const { todos, fetchTodos } = useContext(AppContext);
 
   const today = new Date().toISOString().split('T')[0];
 
@@ -19,16 +20,15 @@ export default function TodaysTodos() {
   const handleToggleCompleted = async (todo) => {
     const newStatus = todo.status === 'completed' ? 'pending' : 'completed';
     try {
-      await axios.put(`/api/v1/todos/${todo.id}`, {
-        ...todo,
-        status: newStatus,
-      });
+      await updateTodoStatus(todo.id, { status: newStatus });
       toast.success(
-        newStatus === 'completed' ? 'Todo completed!' : 'Todo marked pending!'
+        newStatus === 'completed'
+          ? 'Todo marked as completed!'
+          : 'Todo marked as pending!'
       );
       fetchTodos();
     } catch (error) {
-      toast.error(error.message || 'Failed to update todo');
+      toast.error(error.response?.data?.message || 'Failed to update todo');
     }
   };
 
@@ -39,7 +39,7 @@ export default function TodaysTodos() {
       </h3>
 
       {todaysTodos.length === 0 ? (
-        <EmptyState message="No todos" className="text-center" />
+        <EmptyState message="No todos for today" className="text-center" />
       ) : (
         <div className="flex-1 overflow-y-auto max-h-64 space-y-3">
           {todaysTodos.map((todo) => {
@@ -53,7 +53,6 @@ export default function TodaysTodos() {
               >
                 <div className="flex items-center gap-2">
                   <span className={`w-3 h-3 rounded-full ${colorClass}`} />
-
                   <span
                     className={`${
                       todo.status === 'completed'

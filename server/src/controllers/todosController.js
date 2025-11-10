@@ -180,6 +180,23 @@ exports.deleteTodo = async (req, res) => {
   }
 };
 
+exports.updateTodoStatus = async (req, res) => {
+  try {
+    const todo = await Todo.findByPk(req.params.id);
+    if (!todo)
+      return res
+        .status(404)
+        .json({ success: false, message: 'Todo not found' });
+
+    todo.status = req.body.status;
+    await todo.save();
+
+    res.json({ success: true, message: 'Todo status updated', todo });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
 exports.restoreTodo = async (req, res) => {
   const t = await sequelize.transaction();
   try {

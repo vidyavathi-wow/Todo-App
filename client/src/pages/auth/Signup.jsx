@@ -1,20 +1,21 @@
-import React, { useState, useContext } from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import AppContext from '../../context/AppContext';
 import Input from '../../components/common/Input';
 import Button from '../../components/common/Button';
 import Select from '../../components/common/Select';
+import { registerUser } from '../../services/auth';
 
 export default function Signup() {
   const navigate = useNavigate();
-  const { axios } = useContext(AppContext);
+
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     password: '',
     role: 'user',
   });
+
   const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
@@ -23,13 +24,19 @@ export default function Signup() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (
+      !formData.name.trim() ||
+      !formData.email.trim() ||
+      !formData.password.trim()
+    ) {
+      return toast.error('All fields are required');
+    }
+
     setLoading(true);
-
     try {
-      const { data } = await axios.post('/api/v1/auth/register', formData);
-
+      const data = await registerUser(formData); // ✅ using service
       if (data.success) {
-        toast.success(data.message);
+        toast.success(data.message || 'Account created successfully!');
         setFormData({ name: '', email: '', password: '', role: 'user' });
         navigate('/login');
       } else {
@@ -37,12 +44,10 @@ export default function Signup() {
       }
     } catch (error) {
       const res = error.response?.data;
-      if (res?.errors && Array.isArray(res.errors)) {
+      if (res?.errors?.length) {
         res.errors.forEach((err) => toast.error(err.msg));
-      } else if (res?.message) {
-        toast.error(res.message);
       } else {
-        toast.error(error.message || 'Signup failed');
+        toast.error(res?.message || 'Signup failed');
       }
     } finally {
       setLoading(false);

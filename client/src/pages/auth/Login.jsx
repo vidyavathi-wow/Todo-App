@@ -4,9 +4,10 @@ import toast from 'react-hot-toast';
 import AppContext from '../../context/AppContext';
 import Input from '../../components/common/Input';
 import Button from '../../components/common/Button';
+import { loginUser } from '../../services/auth';
 
 export default function Login() {
-  const { navigate, axios, setToken } = useContext(AppContext);
+  const { navigate, setToken } = useContext(AppContext);
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [loading, setLoading] = useState(false);
 
@@ -16,16 +17,18 @@ export default function Login() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!formData.email.trim() || !formData.password.trim())
+      return toast.error('Enter both email and password');
+
     setLoading(true);
 
     try {
-      const { data } = await axios.post('/api/v1/auth/login', formData);
+      const data = await loginUser(formData);
 
       if (data.success) {
         setToken(data.accessToken);
         localStorage.setItem('token', data.accessToken);
-        axios.defaults.headers.common['Authorization'] = data.accessToken;
-        toast.success(data.message);
+        toast.success(data.message || 'Login successful!');
         setFormData({ email: '', password: '' });
         navigate('/');
       } else {
@@ -38,7 +41,7 @@ export default function Login() {
       } else if (res?.message) {
         toast.error(res.message);
       } else {
-        toast.error(error.message || 'Login failed');
+        toast.error('Login failed');
       }
     } finally {
       setLoading(false);
@@ -61,9 +64,9 @@ export default function Login() {
               value={formData.email}
               onChange={handleChange}
               placeholder="Enter your email"
+              required
               noDefault
               className="w-full p-3 rounded bg-gray-700 border border-gray-600 focus:ring-2 focus:ring-primary outline-none"
-              required
             />
           </div>
 

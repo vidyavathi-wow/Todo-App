@@ -2,30 +2,32 @@ import React, { useContext, useState } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import toast from 'react-hot-toast';
 import AppContext from '../../context/AppContext';
+import { updateTodo } from '../../services/todos'; // ✅ Imported from services
 
 export default function TodoHeader({ todo, onStatusUpdated }) {
-  const { axios, fetchTodos } = useContext(AppContext);
+  const { fetchTodos } = useContext(AppContext);
   const [updatingStatus, setUpdatingStatus] = useState(false);
 
   const handleStatusChange = async (newStatus) => {
     if (!todo?.id) return;
     setUpdatingStatus(true);
+
     try {
-      const { data } = await axios.put(`/api/v1/todos/${todo.id}`, {
-        ...todo,
-        status: newStatus,
-      });
+      // ✅ Use service layer for API call
+      const data = await updateTodo(todo.id, { status: newStatus });
 
       if (data.success) {
         toast.success('Status updated successfully!');
         if (onStatusUpdated) onStatusUpdated(data);
-        fetchTodos();
+        fetchTodos(); // ✅ Refresh todos after update
+      } else {
+        toast.error(data.message || 'Failed to update status');
       }
     } catch (error) {
       if (error.response?.data?.errors) {
         error.response.data.errors.forEach((err) => toast.error(err.msg));
       } else {
-        toast.error(error.message || 'Failed to update status');
+        toast.error(error.response?.data?.message || 'Failed to update status');
       }
     } finally {
       setUpdatingStatus(false);

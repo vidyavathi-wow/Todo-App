@@ -4,19 +4,22 @@ import AppContext from '../context/AppContext';
 import Calendar from '../components/Calender';
 import TodaysTodos from '../components/TodaysTodos';
 import toast from 'react-hot-toast';
+import { updateTodoStatus } from '../services/todos';
 
 export default function Dashboard() {
-  const { todos, axios, fetchTodos, user } = useContext(AppContext);
+  const { todos, fetchTodos, user } = useContext(AppContext);
 
-  const updateTaskStatus = async (todo) => {
+  const handleUpdateStatus = async (todo) => {
     try {
-      const { data } = await axios.put(`/api/v1/todos/${todo.id}`, {});
+      const data = await updateTodoStatus(todo.id, {}); // ✅ cleaner
       if (data.success) {
         toast.success('Todo status updated');
         fetchTodos();
+      } else {
+        toast.error(data.message || 'Failed to update status');
       }
     } catch (error) {
-      toast.error(error.message);
+      toast.error(error.response?.data?.message || 'Error updating status');
     }
   };
 
@@ -32,7 +35,7 @@ export default function Dashboard() {
             <span className="text-primary">{user?.name || 'User'}</span>!
           </h2>
         </div>
-        <TodoList todos={todos} onUpdateStatus={updateTaskStatus} />
+        <TodoList todos={todos} onUpdateStatus={handleUpdateStatus} />
       </div>
 
       <div className="lg:col-span-1 overflow-y-auto max-h-[80vh] pr-2 space-y-6">

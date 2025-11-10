@@ -6,26 +6,28 @@ const {
   getAllTodos,
   updateTodo,
   deleteTodo,
-  getDashboardData
+  getDashboardData,
+  updateTodoStatus,
 } = require('../controllers/todosController');
 
 const verifyToken = require('../middlewares/verifyToken');
 const {
   validateTodo,
-  validateTodoIdParam
+  validateTodoIdParam,
 } = require('../middlewares/validators');
 
 router.post('/', verifyToken, validateTodo, createTodo);
 
 router.get('/:id', verifyToken, validateTodoIdParam, getTodo);
 
-router.get("/data/dashboard",verifyToken,getDashboardData);
+router.get('/data/dashboard', verifyToken, getDashboardData);
 
 router.get('/', verifyToken, getAllTodos);
 
 router.put('/:id', verifyToken, validateTodoIdParam, validateTodo, updateTodo);
 
-
 router.delete('/:id', verifyToken, validateTodoIdParam, deleteTodo);
+
+router.patch('/:id/status', verifyToken, validateTodoIdParam, updateTodoStatus);
 
 module.exports = router;

@@ -2,12 +2,13 @@ import { useContext, useEffect, useState } from 'react';
 import { FiCheckCircle, FiClock, FiPlay, FiList } from 'react-icons/fi';
 import AppContext from '../context/AppContext';
 import TodoTableItem from '../components/TodoTableITem';
-import EmptyState from '../components/common/EmptyState'; // Assuming you have this
+import EmptyState from '../components/common/EmptyState';
 import Loader from '../components/common/Loader';
+import { getDashboardData } from '../services/todos';
 
 const LatestTodos = () => {
-  const { axios, fetchTodos } = useContext(AppContext);
-  const [overviewData, setoverviewData] = useState({
+  const { fetchTodos } = useContext(AppContext);
+  const [overviewData, setOverviewData] = useState({
     completed: 0,
     inProgress: 0,
     pending: 0,
@@ -18,16 +19,16 @@ const LatestTodos = () => {
   const fetchDashboard = async () => {
     setLoading(true);
     try {
-      const { data } = await axios.get('/api/v1/todos/data/dashboard');
+      const data = await getDashboardData();
       if (data.success) {
-        setoverviewData({
+        setOverviewData({
           ...data.overviewData,
           recentTodos: data.recentTodos || [],
         });
         fetchTodos();
       }
     } catch (error) {
-      console.log(error.message);
+      console.error('Dashboard fetch error:', error.message);
     } finally {
       setLoading(false);
     }
@@ -57,6 +58,7 @@ const LatestTodos = () => {
 
   return (
     <div className="flex-1 p-4 md:p-10 bg-gray-900 text-gray-200">
+      {/* Stats Overview */}
       <div className="flex flex-wrap gap-4">
         {stats.map(({ icon, label, value }) => (
           <div

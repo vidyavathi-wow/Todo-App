@@ -8,9 +8,11 @@ import TodoContent from '../components/todoItem/TodoContent';
 import Button from '../components/common/Button';
 import Loader from '../components/common/Loader';
 import EmptyState from '../components/common/EmptyState';
+import { getTodoById, deleteTodo, updateTodoStatus } from '../services/todos';
+
 export default function TodoItem() {
   const { todoId } = useParams();
-  const { axios, setEditTodo, fetchTodos } = useContext(AppContext);
+  const { setEditTodo, fetchTodos } = useContext(AppContext);
   const navigate = useNavigate();
 
   const [todo, setTodo] = useState(null);
@@ -20,9 +22,12 @@ export default function TodoItem() {
   useEffect(() => {
     const fetchTodo = async () => {
       try {
-        const { data } = await axios.get(`/api/v1/todos/${todoId}`);
-        if (data.success) setTodo(data.todo);
-        else toast.error(data.message);
+        const data = await getTodoById(todoId);
+        if (data.success) {
+          setTodo(data.todo);
+        } else {
+          toast.error(data.message || 'Failed to load todo');
+        }
       } catch (error) {
         toast.error(error.response?.data?.message || 'Failed to fetch todo');
       } finally {
@@ -30,28 +35,22 @@ export default function TodoItem() {
       }
     };
     fetchTodo();
-  }, [todoId, axios]);
+  }, [todoId]);
 
-  const updateTodoStatus = async (newStatus) => {
+  const updateStatus = async (newStatus) => {
     if (!todo) return;
     try {
       setUpdatingStatus(true);
-      const { data } = await axios.put(`/api/v1/todos/${todoId}`, {
-        status: newStatus,
-      });
+      const data = await updateTodoStatus(todoId, { status: newStatus });
       if (data.success) {
         setTodo((prev) => ({ ...prev, status: newStatus }));
         toast.success('Status updated');
         fetchTodos();
       } else {
-        toast.error(data.message);
+        toast.error(data.message || 'Failed to update');
       }
     } catch (error) {
-      if (error.response?.data?.errors) {
-        error.response.data.errors.forEach((err) => toast.error(err.msg));
-      } else {
-        toast.error(error.message || 'Failed to save todo');
-      }
+      toast.error(error.response?.data?.message || 'Error updating todo');
     } finally {
       setUpdatingStatus(false);
     }
@@ -64,19 +63,21 @@ export default function TodoItem() {
 
   const handleDelete = async () => {
     try {
-      const { data } = await axios.delete(`/api/v1/todos/${todoId}`);
+      const data = await deleteTodo(todoId);
       if (data.success) {
         toast.success('Todo deleted');
         fetchTodos();
-        window.history.back();
-      } else toast.error(data.message);
+        navigate(-1); // go back
+      } else {
+        toast.error(data.message || 'Delete failed');
+      }
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to delete todo');
     }
   };
 
   if (loading) return <Loader />;
-  if (!todo) return <EmptyState />;
+  if (!todo) return <EmptyState message="Todo not found" />;
 
   return (
     <div className="flex-1 bg-gray-dark text-secondary h-full overflow-scroll p-6">
@@ -84,7 +85,7 @@ export default function TodoItem() {
         <TodoHeader
           todo={todo}
           updatingStatus={updatingStatus}
-          onStatusChange={(e) => updateTodoStatus(e.target.value)}
+          onStatusChange={(e) => updateStatus(e.target.value)}
         />
         <div className="mt-6 bg-linear-to-br from-gray-800 via-gray-900 to-black border border-gray-700 rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 relative">
           <TodoContent todo={todo} />
