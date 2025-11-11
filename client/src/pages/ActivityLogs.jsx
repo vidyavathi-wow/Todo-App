@@ -23,7 +23,6 @@ const ActivityLogs = () => {
         toast.error(data.message || 'Failed to load activity logs');
       }
     } catch (error) {
-      console.error('Error fetching activity logs:', error);
       toast.error(error.response?.data?.message || 'Failed to fetch logs');
     } finally {
       setLoading(false);
@@ -35,8 +34,8 @@ const ActivityLogs = () => {
   }, [page]);
 
   return (
-    <div className="flex-1 bg-gray-900 text-white px-6 md:px-12 py-10 overflow-y-auto">
-      <h2 className="text-2xl font-bold mb-6 border-b border-gray-700 pb-2">
+    <div className="flex-1 bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 px-6 md:px-12 py-10 overflow-y-auto transition-colors duration-300">
+      <h2 className="text-2xl font-bold mb-6 border-b border-gray-700 dark:border-gray-300 pb-2">
         Activity Logs
       </h2>
 
@@ -50,7 +49,7 @@ const ActivityLogs = () => {
             {logs.map((log) => (
               <div
                 key={log.id}
-                className="flex items-start gap-4 bg-gray-800 border border-gray-700 p-4 rounded-xl hover:border-primary/50 transition"
+                className="flex items-start gap-4 bg-gray-800 dark:bg-white border border-gray-700 dark:border-gray-300 p-4 rounded-xl hover:border-primary/50 dark:hover:border-primary/70 transition-all duration-300"
               >
                 <div className="p-2 bg-primary/20 text-primary rounded-full">
                   <FiClock size={20} />
@@ -58,9 +57,11 @@ const ActivityLogs = () => {
                 <div className="flex-1">
                   <p className="text-base font-medium">{log.action}</p>
                   {log.details && (
-                    <p className="text-sm text-gray-400 mt-1">{log.details}</p>
+                    <p className="text-sm text-gray-400 dark:text-gray-700 mt-1">
+                      {log.details}
+                    </p>
                   )}
-                  <p className="text-xs text-gray-500 mt-2">
+                  <p className="text-xs text-gray-500 dark:text-gray-600 mt-2">
                     {new Date(log.timestamp).toLocaleString()}
                   </p>
                 </div>

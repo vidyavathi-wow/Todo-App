@@ -38,8 +38,8 @@ export default function Analytics() {
   const highPriority = analytics.priorityCounts?.High || 0;
 
   return (
-    <div className="flex-1 bg-gray-dark text-secondary h-full overflow-y-auto p-4 sm:p-6">
-      <h2 className="text-2xl font-bold mb-6 border-b border-gray-700 pb-2">
+    <div className="flex-1 bg-gray-dark dark:bg-gray-100 text-secondary dark:text-gray-900 h-full overflow-y-auto p-4 sm:p-6 transition-colors duration-300">
+      <h2 className="text-2xl font-bold mb-6 border-b border-gray-700 dark:border-gray-300 pb-2">
         Todo Analytics
       </h2>
 

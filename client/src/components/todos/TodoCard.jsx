@@ -9,7 +9,7 @@ export default function TodoCard({ todo, onToggleCompleted }) {
 
   return (
     <div
-      className={`bg-gray border border-gray-light rounded-lg p-4 hover:shadow-lg transition-shadow ${
+      className={`bg-gray dark:bg-white border border-gray-light dark:border-gray-300 rounded-lg p-4 hover:shadow-lg transition-all duration-300 ${
         isCompleted ? 'opacity-75' : ''
       }`}
     >
@@ -23,9 +23,9 @@ export default function TodoCard({ todo, onToggleCompleted }) {
           />
           <div>
             <h3
-              className={`text-lg font-semibold cursor-pointer ${
+              className={`text-lg font-semibold cursor-pointer transition-colors duration-300 ${
                 isCompleted
-                  ? 'line-through text-gray-500'
+                  ? 'line-through text-gray-500 dark:text-gray-400'
                   : 'text-primary hover:underline'
               }`}
               onClick={() => navigate(`/todo/${todo.id}`)}
@@ -34,10 +34,10 @@ export default function TodoCard({ todo, onToggleCompleted }) {
             </h3>
             {todo.description && (
               <p
-                className={`text-sm mt-1 ${
+                className={`text-sm mt-1 transition-colors duration-300 ${
                   isCompleted
-                    ? 'text-secondary/50 line-through'
-                    : 'text-secondary/70'
+                    ? 'text-secondary/50 dark:text-gray-500 line-through'
+                    : 'text-secondary/70 dark:text-gray-700'
                 }`}
               >
                 {todo.description}
@@ -46,7 +46,6 @@ export default function TodoCard({ todo, onToggleCompleted }) {
           </div>
         </div>
 
-        {/* ✅ Use STATUS_COLORS constant here */}
         <span
           className={`px-3 py-1 rounded-full text-xs font-medium text-white ${
             STATUS_COLORS[status] || 'bg-gray-light text-secondary/70'
@@ -56,8 +55,7 @@ export default function TodoCard({ todo, onToggleCompleted }) {
         </span>
       </div>
 
-      {/* Footer Info */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between text-sm text-secondary/70 gap-2">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between text-sm text-secondary/70 dark:text-gray-700 gap-2">
         <div className="flex flex-wrap items-center gap-4">
           <span>Priority: {todo.priority}</span>
           <span>

@@ -26,4 +26,8 @@ export const API = {
   analytics: {
     base: '/api/v1/analytics',
   },
+
+  activitylogs: {
+    base: 'api/v1/activitylogs',
+  },
 };

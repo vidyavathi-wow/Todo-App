@@ -18,14 +18,22 @@ export default function Calendar() {
   const [selectedDate, setSelectedDate] = useState(new Date());
 
   const renderHeader = () => (
-    <div className="flex justify-between items-center mb-2 px-2">
-      <button onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}>
+    <div className="flex justify-between items-center mb-2 px-2 text-secondary dark:text-gray-800">
+      <button
+        onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
+        className="p-1 rounded hover:bg-gray-700 dark:hover:bg-gray-300 transition"
+      >
         <FiChevronLeft />
       </button>
-      <span className="font-semibold text-sm">
+
+      <span className="font-semibold text-sm text-secondary dark:text-gray-900">
         {format(currentMonth, 'MMMM yyyy')}
       </span>
-      <button onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}>
+
+      <button
+        onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
+        className="p-1 rounded hover:bg-gray-700 dark:hover:bg-gray-300 transition"
+      >
         <FiChevronRight />
       </button>
     </div>
@@ -34,7 +42,7 @@ export default function Calendar() {
   const renderDays = () => {
     const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     return (
-      <div className="flex justify-between text-xs text-gray-400 mb-1">
+      <div className="flex justify-between text-xs text-gray-light dark:text-gray-500 mb-1">
         {days.map((day) => (
           <div key={day} className="text-center flex-1">
             {day}
@@ -57,20 +65,32 @@ export default function Calendar() {
     while (day <= endDate) {
       for (let i = 0; i < 7; i++) {
         const cloneDay = day;
+        const inactive = !isSameMonth(day, monthStart);
+        const selected = isSameDay(day, selectedDate);
+
         days.push(
           <div
             key={day}
             onClick={() => setSelectedDate(cloneDay)}
             className={`flex items-center justify-center cursor-pointer rounded-full transition-colors
-              ${!isSameMonth(day, monthStart) ? 'text-gray-500' : 'text-gray-200'}
-              ${isSameDay(day, selectedDate) ? 'bg-primary text-white' : 'hover:bg-gray-700'}`}
-            style={{ aspectRatio: '1 / 1' }} // make square
+              ${
+                inactive
+                  ? 'text-gray-light dark:text-gray-400'
+                  : 'text-secondary dark:text-gray-900'
+              }
+              ${
+                selected
+                  ? 'bg-primary text-white'
+                  : 'hover:bg-gray-700 dark:hover:bg-gray-300'
+              }`}
+            style={{ aspectRatio: '1 / 1' }}
           >
             {format(day, 'd')}
           </div>
         );
         day = addDays(day, 1);
       }
+
       rows.push(
         <div key={day} className="flex justify-between mb-1 gap-1">
           {days.map((d, idx) => (
@@ -83,7 +103,7 @@ export default function Calendar() {
       days = [];
     }
 
-    // Ensure 6 rows
+    // Fill empty rows to maintain layout
     while (rows.length < 6) {
       const emptyRow = Array.from({ length: 7 }, (_, i) => (
         <div key={i} className="flex-1 aspect-square"></div>
@@ -102,7 +122,7 @@ export default function Calendar() {
   };
 
   return (
-    <div className="bg-gray-800 rounded-lg shadow p-2 mb-4 w-full">
+    <div className="bg-gray dark:bg-white rounded-lg shadow p-2 mb-4 w-full border border-gray-light dark:border-gray-300 transition-colors duration-300">
       {renderHeader()}
       {renderDays()}
       {renderCells()}

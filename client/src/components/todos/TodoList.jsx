@@ -74,8 +74,7 @@ export default function TodoList() {
   }
 
   return (
-    <div className="overflow-y-auto max-h-[80vh] pr-2">
-      {/* 🔍 Search */}
+    <div className="overflow-y-auto max-h-[80vh] pr-2 transition-colors duration-300">
       <div className="w-full mb-3">
         <SearchTodo
           value={searchQuery}
@@ -99,7 +98,10 @@ export default function TodoList() {
             { value: 'inProgress', label: 'In Progress' },
             { value: 'completed', label: 'Completed' },
           ]}
-          className="w-full sm:w-48 h-11 px-3 text-sm border border-gray-600 rounded-md bg-gray-900 text-gray-200 focus:outline-none focus:ring-2 focus:ring-primary appearance-none leading-tight truncate"
+          className="w-full sm:w-48 h-11 px-3 text-sm border border-gray-600 dark:border-gray-400 
+                     rounded-md bg-gray-900 dark:bg-gray-100 
+                     text-gray-200 dark:text-gray-900 
+                     focus:outline-none focus:ring-2 focus:ring-primary appearance-none leading-tight truncate transition-colors duration-300"
           style={{
             lineHeight: '1.5rem',
             whiteSpace: 'nowrap',
@@ -112,10 +114,10 @@ export default function TodoList() {
           onClick={handleResetFilters}
           noDefault
           disabled={!normalize(filterStatus) && !normalize(searchQuery)}
-          className={`w-full sm:w-auto px-4 h-11 text-sm rounded-md transition ${
+          className={`w-full sm:w-auto px-4 h-11 text-sm rounded-md transition-all duration-300 ${
             !normalize(filterStatus) && !normalize(searchQuery)
-              ? 'bg-gray-700 text-gray-400 cursor-not-allowed'
-              : 'bg-primary text-white hover:bg-primary/80'
+              ? 'bg-gray-700 dark:bg-gray-300 text-gray-400 dark:text-gray-600 cursor-not-allowed'
+              : 'bg-primary text-white hover:bg-primary/80 dark:hover:bg-primary/70'
           }`}
         >
           Reset Filters
