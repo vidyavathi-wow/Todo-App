@@ -14,7 +14,12 @@ export const PieChartBox = ({ title, data = [], colors = [] }) => {
   const hasData = data.some((item) => item.value > 0);
 
   return (
-    <div className="bg-gray-800 p-4 rounded-lg shadow border border-gray-700 w-full flex flex-col justify-between min-h-[320px] transition-transform duration-300 hover:scale-[1.01]">
+    <div
+      className="bg-gray-800 dark:bg-white p-4 rounded-lg shadow border border-gray-700 dark:border-gray-300 
+                    w-full flex flex-col justify-between min-h-[320px] 
+                    transition-all duration-500 hover:scale-[1.01] 
+                    text-gray-200 dark:text-gray-900"
+    >
       <h3 className="text-primary font-semibold mb-4 text-center">{title}</h3>
 
       {hasData ? (
@@ -36,14 +41,28 @@ export const PieChartBox = ({ title, data = [], colors = [] }) => {
                 ))}
               </Pie>
               <Tooltip
-                contentStyle={{ backgroundColor: '#1f2937', color: '#fff' }}
+                contentStyle={{
+                  backgroundColor: 'var(--tooltip-bg)',
+                  color: 'var(--tooltip-text)',
+                  border: 'none',
+                }}
+                wrapperStyle={{
+                  '--tooltip-bg': '#1f2937',
+                  '--tooltip-text': '#fff',
+                }}
+                className="dark:[--tooltip-bg:#f9fafb] dark:[--tooltip-text:#111]"
               />
-              <Legend />
+              <Legend
+                wrapperStyle={{
+                  color: 'inherit',
+                  fontSize: '0.85rem',
+                }}
+              />
             </PieChart>
           </ResponsiveContainer>
         </div>
       ) : (
-        <div className="flex flex-col items-center justify-center text-gray-400 space-y-2 py-6">
+        <div className="flex flex-col items-center justify-center text-gray-400 dark:text-gray-600 space-y-2 py-6">
           <FiInbox className="text-4xl animate-bounce" />
           <EmptyState message="No data available" />
         </div>

@@ -1,4 +1,4 @@
-import React, { useEffect, useContext } from 'react';
+import React, { useEffect, useContext, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
@@ -27,14 +27,28 @@ const AddTodo = () => {
       category: 'Work',
       priority: 'Moderate',
       status: 'pending',
+      reminderBeforeMinutes: 10,
     },
   });
+
+  const [minDateTime, setMinDateTime] = useState(
+    new Date().toISOString().slice(0, 16)
+  );
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setMinDateTime(new Date().toISOString().slice(0, 16));
+    }, 60000);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     if (editTodo) {
       Object.entries(editTodo).forEach(([key, value]) => {
         if (key === 'date' && value) {
-          setValue('date', value.split('T')[0]);
+          const localDate = new Date(value);
+          const formatted = localDate.toISOString().slice(0, 16);
+          setValue('date', formatted);
         } else if (value !== undefined) {
           setValue(key, value);
         }
@@ -46,9 +60,10 @@ const AddTodo = () => {
 
   const onSubmitHandler = async (formData) => {
     try {
-      const todoData = { ...formData };
-      let response;
+      const utcDate = new Date(formData.date);
+      const todoData = { ...formData, date: utcDate.toISOString() };
 
+      let response;
       if (editTodo) {
         response = await updateTodo(editTodo.id, todoData);
       } else {
@@ -70,7 +85,6 @@ const AddTodo = () => {
     }
   };
 
-  // ✅ Cancel edit
   const onCancelHandler = () => {
     reset();
     setEditTodo(null);
@@ -80,22 +94,16 @@ const AddTodo = () => {
   return (
     <form
       onSubmit={handleSubmit(onSubmitHandler)}
-      className="flex-1 bg-gray-dark text-secondary h-full overflow-scroll p-4"
+      className="flex-1 bg-gray-dark dark:bg-gray-100 text-secondary dark:text-gray-900 h-full overflow-scroll p-4 transition-colors duration-300"
     >
-      <div className="bg-gray-dark w-full max-w-3xl p-6 md:p-10 shadow-lg rounded-lg mx-auto border border-gray-light">
-        <h2 className="text-2xl font-bold mb-6 border-b border-gray-700 pb-2">
+      <div className="bg-gray-dark dark:bg-white w-full max-w-3xl p-6 md:p-10 shadow-lg rounded-lg mx-auto border border-gray-light dark:border-gray-300 transition-colors duration-300">
+        <h2 className="text-2xl font-bold mb-6 border-b border-gray-700 dark:border-gray-300 pb-2">
           {editTodo ? 'Edit Todo' : 'Add New Todo'}
         </h2>
 
-        {editTodo && (
-          <div className="mb-4 p-3 bg-blue-500/10 border border-blue-500/30 rounded text-blue-400 text-sm">
-            ✏️ Editing: <strong>{editTodo.title}</strong>
-          </div>
-        )}
-
         {/* Title */}
         <div className="mb-6">
-          <label className="block text-secondary/90 mb-2 font-medium">
+          <label className="block text-secondary/90 dark:text-gray-800 mb-2 font-medium">
             Title <span className="text-red-500">*</span>
           </label>
           <Input
@@ -110,7 +118,7 @@ const AddTodo = () => {
 
         {/* Description */}
         <div className="mb-6">
-          <label className="block text-secondary/90 mb-2 font-medium">
+          <label className="block text-secondary/90 dark:text-gray-800 mb-2 font-medium">
             Description <span className="text-red-500">*</span>
           </label>
           <Input
@@ -129,34 +137,63 @@ const AddTodo = () => {
 
         {/* Notes */}
         <div className="mb-6">
-          <label className="block text-secondary/90 mb-2 font-medium">
+          <label className="block text-secondary/90 dark:text-gray-800 mb-2 font-medium">
             Notes
           </label>
           <textarea
-            className="w-full p-2 border border-gray-300 rounded bg-gray-dark text-text min-h-[150px]"
+            className="w-full p-2 border border-gray-300 dark:border-gray-400 rounded bg-gray-dark dark:bg-gray-50 text-text dark:text-gray-900 min-h-[150px]"
             placeholder="Enter notes"
             {...register('notes')}
           />
         </div>
 
-        {/* Date */}
+        {/* Date-Time Picker */}
         <div className="mb-6">
-          <label className="block text-secondary/90 mb-2 font-medium">
-            Date <span className="text-red-500">*</span>
+          <label className="block text-secondary/90 dark:text-gray-800 mb-2 font-medium">
+            Date & Time <span className="text-red-500">*</span>
           </label>
           <Input
-            type="date"
-            {...register('date', { required: 'Date is required' })}
+            type="datetime-local"
+            min={minDateTime}
+            {...register('date', {
+              required: 'Date and time are required',
+              validate: (value) => {
+                const selected = new Date(value);
+                if (selected < new Date()) {
+                  return 'Please select a future date and time';
+                }
+                return true;
+              },
+            })}
           />
           {errors.date && (
             <p className="text-red-500 text-sm mt-1">{errors.date.message}</p>
           )}
+          <p className="text-xs text-gray-400 dark:text-gray-600 mt-1">
+            You can only select a future date and time.
+          </p>
+        </div>
+
+        {/* Reminder Time */}
+        <div className="mb-6">
+          <label className="block text-secondary/90 dark:text-gray-800 mb-2 font-medium">
+            Remind Me Before
+          </label>
+          <Select
+            {...register('reminderBeforeMinutes')}
+            options={[
+              { label: '10 minutes before', value: 10 },
+              { label: '30 minutes before', value: 30 },
+              { label: '1 hour before', value: 60 },
+              { label: '1 day before', value: 1440 },
+            ]}
+          />
         </div>
 
         {/* Dropdowns */}
         <div className="mb-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
-            <label className="block text-secondary/90 mb-2 font-medium">
+            <label className="block text-secondary/90 dark:text-gray-800 mb-2 font-medium">
               Category
             </label>
             <Select
@@ -170,7 +207,7 @@ const AddTodo = () => {
           </div>
 
           <div>
-            <label className="block text-secondary/90 mb-2 font-medium">
+            <label className="block text-secondary/90 dark:text-gray-800 mb-2 font-medium">
               Priority
             </label>
             <Select
@@ -184,7 +221,7 @@ const AddTodo = () => {
           </div>
 
           <div>
-            <label className="block text-secondary/90 mb-2 font-medium">
+            <label className="block text-secondary/90 dark:text-gray-800 mb-2 font-medium">
               Status
             </label>
             <Select
@@ -214,7 +251,7 @@ const AddTodo = () => {
             <Button
               type="button"
               onClick={onCancelHandler}
-              className="bg-gray-700"
+              className="bg-gray-700 dark:bg-gray-300 dark:text-gray-900"
             >
               Cancel
             </Button>

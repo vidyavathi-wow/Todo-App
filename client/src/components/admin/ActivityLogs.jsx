@@ -36,8 +36,11 @@ const ActivityLogs = () => {
   if (loading) return <Loader />;
 
   return (
-    <div className="flex-1 bg-gray-dark text-gray-200 px-4 sm:px-6 py-6 overflow-y-auto rounded-lg">
-      <h3 className="text-xl sm:text-2xl font-semibold mb-6 border-b border-gray-700 pb-2">
+    <div
+      className="flex-1 bg-gray-dark dark:bg-gray-100 text-gray-200 dark:text-gray-900 
+                    px-4 sm:px-6 py-6 overflow-y-auto rounded-lg transition-colors duration-500"
+    >
+      <h3 className="text-xl sm:text-2xl font-semibold mb-6 border-b border-gray-700 dark:border-gray-300 pb-2">
         Recent Activity Logs
       </h3>
 
@@ -48,15 +51,17 @@ const ActivityLogs = () => {
           {logs.map((log) => (
             <div
               key={log.id}
-              className="bg-gray-800 border border-gray-700 p-4 rounded-xl hover:border-primary/50 transition break-words whitespace-pre-wrap"
+              className="bg-gray-800 dark:bg-white border border-gray-700 dark:border-gray-300 
+                         p-4 rounded-xl hover:border-primary/50 transition-colors duration-300 
+                         wrap-break-word whitespace-pre-wrap"
             >
-              <p className="font-medium text-white text-base sm:text-lg leading-snug">
+              <p className="font-medium text-white dark:text-gray-900 text-base sm:text-lg leading-snug">
                 {log.action}
               </p>
-              <p className="text-sm text-gray-400 mt-1">
+              <p className="text-sm text-gray-400 dark:text-gray-700 mt-1">
                 By: {log.user?.name || 'Unknown User'}
               </p>
-              <p className="text-xs text-gray-500 mt-2">
+              <p className="text-xs text-gray-500 dark:text-gray-600 mt-2">
                 {new Date(log.timestamp).toLocaleString()}
               </p>
             </div>

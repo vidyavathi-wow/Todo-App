@@ -6,12 +6,10 @@ exports.getActivityLogs = async (req, res) => {
     const userId = req.user.id;
     let { page = 1, limit = 5 } = req.query;
 
-    // Convert to numbers and handle invalid values
     page = Math.max(Number(page), 1);
     limit = Math.max(Number(limit), 1);
     const offset = (page - 1) * limit;
 
-    // Fetch logs with pagination
     const { count, rows: logs } = await ActivityLog.findAndCountAll({
       where: { userId },
       attributes: ['id', 'action', 'details', 'timestamp'],

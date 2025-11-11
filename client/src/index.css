@@ -1,21 +1,21 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
+@custom-variant dark (&:where(.dark, .dark *));
 
-
-::-webkit-scrollbar{
-  display:none;
+::-webkit-scrollbar {
+  display: none;
 }
 
 @theme {
-  --color-primary: #ff8058;      /* Orange */
-  --color-white: #f5f5f5; 
-  --color-secondary:#f5f5f5;      /* White */
-  --color-gray-dark: #0f172a;    /* Dark bluish background */
-  --color-gray: #1f2937;         /* Gray for cards / table */
-  --color-gray-light: #4b5563;   /* Light gray for text / borders */
-  --color-success: #10b981;      /* Green */
-  --color-error: #ef4444;        /* Red */
-  --color-info: #3b82f6;         /* Blue accent if needed */
-  --color-warning: #f59e0b;      /* Amber */
-  --color-bg: #1e293b;           /* Slight bluish main background */
+  --color-primary: #ff8058;
+  --color-white: #f5f5f5;
+  --color-secondary: #f5f5f5; /* White */
+  --color-gray-dark: #0f172a; /* Dark bluish background */
+  --color-gray: #1f2937; /* Gray for cards / table */
+  --color-gray-light: #4b5563; /* Light gray for text / borders */
+  --color-success: #10b981; /* Green */
+  --color-error: #ef4444; /* Red */
+  --color-info: #3b82f6; /* Blue accent if needed */
+  --color-warning: #f59e0b; /* Amber */
+  --color-bg: #1e293b; /* Slight bluish main background */
 }

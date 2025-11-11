@@ -10,27 +10,40 @@ const Todo = sequelize.define(
       allowNull: false,
     },
     description: DataTypes.TEXT,
+
     date: {
       type: DataTypes.DATE,
       allowNull: false,
     },
+
     category: {
       type: DataTypes.ENUM('Work', 'Personal', 'Other'),
     },
+
     priority: {
       type: DataTypes.ENUM('Low', 'Moderate', 'High'),
       defaultValue: 'Moderate',
     },
+
     notes: DataTypes.STRING,
+
     status: {
       type: DataTypes.ENUM('inProgress', 'pending', 'completed'),
       defaultValue: 'pending',
+    },
+    reminded: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+    },
+    reminderBeforeMinutes: {
+      type: DataTypes.INTEGER,
+      defaultValue: 10,
     },
   },
   {
     tableName: 'todos',
     timestamps: true,
-    paranoid: true, // ✅ Soft delete
+    paranoid: true,
     deletedAt: 'deletedAt',
   }
 );
