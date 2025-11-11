@@ -30,11 +30,14 @@ const AddTodo = () => {
     },
   });
 
+  // 🧠 Handle editing mode (convert backend ISO datetime to "YYYY-MM-DDTHH:mm")
   useEffect(() => {
     if (editTodo) {
       Object.entries(editTodo).forEach(([key, value]) => {
         if (key === 'date' && value) {
-          setValue('date', value.split('T')[0]);
+          const localDate = new Date(value);
+          const formatted = localDate.toISOString().slice(0, 16); // "YYYY-MM-DDTHH:mm"
+          setValue('date', formatted);
         } else if (value !== undefined) {
           setValue(key, value);
         }
@@ -44,11 +47,14 @@ const AddTodo = () => {
     }
   }, [editTodo, setValue, reset]);
 
+  // 🧩 Form submit handler
   const onSubmitHandler = async (formData) => {
     try {
-      const todoData = { ...formData };
-      let response;
+      // Convert local datetime to UTC before sending (optional but good for reminders)
+      const utcDate = new Date(formData.date);
+      const todoData = { ...formData, date: utcDate.toISOString() };
 
+      let response;
       if (editTodo) {
         response = await updateTodo(editTodo.id, todoData);
       } else {
@@ -70,7 +76,6 @@ const AddTodo = () => {
     }
   };
 
-  // ✅ Cancel edit
   const onCancelHandler = () => {
     reset();
     setEditTodo(null);
@@ -86,12 +91,6 @@ const AddTodo = () => {
         <h2 className="text-2xl font-bold mb-6 border-b border-gray-700 pb-2">
           {editTodo ? 'Edit Todo' : 'Add New Todo'}
         </h2>
-
-        {editTodo && (
-          <div className="mb-4 p-3 bg-blue-500/10 border border-blue-500/30 rounded text-blue-400 text-sm">
-            ✏️ Editing: <strong>{editTodo.title}</strong>
-          </div>
-        )}
 
         {/* Title */}
         <div className="mb-6">
@@ -139,14 +138,14 @@ const AddTodo = () => {
           />
         </div>
 
-        {/* Date */}
+        {/* Date-Time Picker */}
         <div className="mb-6">
           <label className="block text-secondary/90 mb-2 font-medium">
-            Date <span className="text-red-500">*</span>
+            Date & Time <span className="text-red-500">*</span>
           </label>
           <Input
-            type="date"
-            {...register('date', { required: 'Date is required' })}
+            type="datetime-local"
+            {...register('date', { required: 'Date and time are required' })}
           />
           {errors.date && (
             <p className="text-red-500 text-sm mt-1">{errors.date.message}</p>

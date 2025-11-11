@@ -1,5 +1,5 @@
 require('dotenv').config();
-
+require('./schedulers/reminderScheduler');
 const express = require('express');
 const cors = require('cors');
 const sequelize = require('./config/db');
@@ -7,7 +7,6 @@ const corsOptions = require('./config/cors');
 const logger = require('./utils/logger.js');
 const errorHandler = require('./middlewares/errorHandler.js');
 
-// Routers
 const authRouter = require('./routes/authRouter.js');
 const todosRouter = require('./routes/todoRouter.js');
 const analyticsRouter = require('./routes/analyticsRouter.js');
