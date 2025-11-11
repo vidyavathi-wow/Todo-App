@@ -108,7 +108,7 @@ cd todo-management-system
 ### ⚙️ 2️⃣ Backend Setup
 
 ```bash
-cd backend
+cd server
 npm install
 ```
 
@@ -127,7 +127,7 @@ npm run server
 ### 💻 3️⃣ Frontend Setup
 
 ```bash
-cd ../frontend
+cd ../client
 npm install
 ```
 
