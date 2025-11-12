@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
 import Input from '../../components/common/Input';
 import Button from '../../components/common/Button';
@@ -8,36 +9,25 @@ import { registerUser } from '../../services/auth';
 
 export default function Signup() {
   const navigate = useNavigate();
-
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    password: '',
-    role: 'user',
-  });
-
   const [loading, setLoading] = useState(false);
 
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
+  // Setup react-hook-form
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    reset,
+  } = useForm({
+    defaultValues: { name: '', email: '', password: '', role: 'user' },
+  });
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (
-      !formData.name.trim() ||
-      !formData.email.trim() ||
-      !formData.password.trim()
-    ) {
-      return toast.error('All fields are required');
-    }
-
+  const onSubmit = async (formData) => {
     setLoading(true);
     try {
-      const data = await registerUser(formData); // ✅ using service
+      const data = await registerUser(formData);
       if (data.success) {
         toast.success(data.message || 'Account created successfully!');
-        setFormData({ name: '', email: '', password: '', role: 'user' });
+        reset();
         navigate('/login');
       } else {
         toast.error(data.message || 'Signup failed');
@@ -61,63 +51,88 @@ export default function Signup() {
           Create an Account
         </h2>
 
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+          {/* Name */}
           <div>
             <label className="block mb-1 text-sm">Full Name</label>
             <Input
               type="text"
-              name="name"
-              value={formData.name}
-              onChange={handleChange}
-              required
-              noDefault
               placeholder="Enter your name"
               className="w-full p-3 rounded bg-gray-700 border border-gray-600 focus:ring-2 focus:ring-primary outline-none"
+              {...register('name', {
+                required: 'Name is required',
+                minLength: {
+                  value: 2,
+                  message: 'Name must be at least 2 characters',
+                },
+              })}
             />
+            {errors.name && (
+              <p className="text-red-400 text-sm mt-1">{errors.name.message}</p>
+            )}
           </div>
 
+          {/* Email */}
           <div>
             <label className="block mb-1 text-sm">Email Address</label>
             <Input
               type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              required
-              noDefault
               placeholder="Enter your email"
               className="w-full p-3 rounded bg-gray-700 border border-gray-600 focus:ring-2 focus:ring-primary outline-none"
+              {...register('email', {
+                required: 'Email is required',
+                pattern: {
+                  value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+                  message: 'Enter a valid email address',
+                },
+              })}
             />
+            {errors.email && (
+              <p className="text-red-400 text-sm mt-1">
+                {errors.email.message}
+              </p>
+            )}
           </div>
 
+          {/* Password */}
           <div>
             <label className="block mb-1 text-sm">Password</label>
             <Input
               type="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              required
-              noDefault
               placeholder="Enter your password"
               className="w-full p-3 rounded bg-gray-700 border border-gray-600 focus:ring-2 focus:ring-primary outline-none"
+              {...register('password', {
+                required: 'Password is required',
+                minLength: {
+                  value: 6,
+                  message: 'Password must be at least 6 characters long',
+                },
+              })}
             />
+            {errors.password && (
+              <p className="text-red-400 text-sm mt-1">
+                {errors.password.message}
+              </p>
+            )}
           </div>
 
+          {/* Role */}
           <div>
             <label className="block mb-1 text-sm">Role</label>
             <Select
-              name="role"
-              value={formData.role}
-              onChange={handleChange}
+              {...register('role', { required: 'Role is required' })}
               options={[
                 { label: 'User', value: 'user' },
                 { label: 'Admin', value: 'admin' },
               ]}
-              required
+              className="w-full p-3 rounded bg-gray-700 border border-gray-600 outline-none"
             />
+            {errors.role && (
+              <p className="text-red-400 text-sm mt-1">{errors.role.message}</p>
+            )}
           </div>
 
+          {/* Submit Button */}
           <Button
             type="submit"
             disabled={loading}

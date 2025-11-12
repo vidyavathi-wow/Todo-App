@@ -15,7 +15,7 @@ const UsersList = () => {
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      const data = await getAllUsers(page, 5);
+      const data = await getAllUsers(page, 3);
       if (data.success) {
         setUsers(data.users || []);
         setTotalPages(data.totalPages || 1);
