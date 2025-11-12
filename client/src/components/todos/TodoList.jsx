@@ -13,6 +13,7 @@ const normalize = (v) => (typeof v === 'string' ? v.trim().toLowerCase() : '');
 export default function TodoList() {
   const { todos, fetchTodos, user } = useContext(AppContext);
   const [filterStatus, setFilterStatus] = useState('');
+  const [adminView, setAdminView] = useState('my');
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
 
@@ -21,12 +22,41 @@ export default function TodoList() {
     const q = normalize(searchQuery);
     let results = Array.isArray(todos) ? todos : [];
 
+    // 🔹 ADMIN FILTER LOGIC
+    if (user?.role === 'admin') {
+      switch (adminView) {
+        case 'my':
+          results = results.filter(
+            (todo) =>
+              todo.userId === user.id || todo.assignedToUserId === user.id
+          );
+          break;
+
+        case 'assignedToMe':
+          results = results.filter((todo) => todo.assignedToUserId === user.id);
+          break;
+
+        case 'assignedByMe':
+          results = results.filter(
+            (todo) =>
+              todo.userId === user.id && todo.assignedToUserId !== user.id
+          );
+          break;
+
+        case 'all':
+        default:
+          break;
+      }
+    }
+
+    // 🔹 STATUS FILTER
     if (statusFilter) {
       results = results.filter(
         (todo) => normalize(todo?.status) === statusFilter
       );
     }
 
+    // 🔹 SEARCH FILTER
     if (q) {
       results = results.filter(
         (todo) =>
@@ -36,7 +66,7 @@ export default function TodoList() {
     }
 
     return results;
-  }, [todos, filterStatus, searchQuery]);
+  }, [todos, filterStatus, searchQuery, adminView, user]);
 
   useEffect(() => {
     const t = setTimeout(() => setLoading(false), 300);
@@ -46,6 +76,7 @@ export default function TodoList() {
   const handleResetFilters = () => {
     setFilterStatus('');
     setSearchQuery('');
+    setAdminView('my');
   };
 
   const handleToggleCompleted = async (todo) => {
@@ -73,6 +104,7 @@ export default function TodoList() {
 
   return (
     <div className="overflow-y-auto max-h-[80vh] pr-2 transition-colors duration-300">
+      {/* 🔍 Search Bar */}
       <div className="w-full mb-3">
         <SearchTodo
           value={searchQuery}
@@ -83,7 +115,9 @@ export default function TodoList() {
         />
       </div>
 
-      <div className="flex flex-col sm:flex-row justify-between items-center gap-3 mb-4">
+      {/* 🧩 Filters Row */}
+      <div className="flex flex-col sm:flex-row justify-between items-center gap-3 mb-4 flex-wrap">
+        {/* Status Filter */}
         <Select
           noDefault
           value={filterStatus}
@@ -99,11 +133,36 @@ export default function TodoList() {
           className="w-full sm:w-48 h-11 px-3 text-sm border border-gray-600 dark:border-gray-400 rounded-md bg-gray-900 dark:bg-gray-100 text-gray-200 dark:text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary leading-tight truncate transition-colors duration-300"
         />
 
+        {/* 👑 Admin Filter (Visible only to admins) */}
+        {user?.role === 'admin' && (
+          <Select
+            noDefault
+            value={adminView}
+            onChange={(val) =>
+              setAdminView(val?.target ? val.target.value : val)
+            }
+            options={[
+              { value: 'all', label: 'All Todos' },
+              { value: 'my', label: 'My Todos' },
+              { value: 'assignedToMe', label: 'Assigned To Me' },
+              { value: 'assignedByMe', label: 'Assigned By Me' },
+            ]}
+            className="w-full sm:w-56 h-11 px-3 text-sm border border-gray-600 dark:border-gray-400 rounded-md bg-gray-900 dark:bg-gray-100 text-gray-200 dark:text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary leading-tight truncate transition-colors duration-300"
+          />
+        )}
+
+        {/* Reset Filters */}
         <button
           onClick={handleResetFilters}
-          disabled={!normalize(filterStatus) && !normalize(searchQuery)}
+          disabled={
+            !normalize(filterStatus) &&
+            !normalize(searchQuery) &&
+            (!user?.role || adminView === 'my')
+          }
           className={`w-full sm:w-auto px-4 h-11 text-sm rounded-md transition-all duration-300 ${
-            !normalize(filterStatus) && !normalize(searchQuery)
+            !normalize(filterStatus) &&
+            !normalize(searchQuery) &&
+            (!user?.role || adminView === 'my')
               ? 'bg-gray-700 dark:bg-gray-300 text-gray-400 dark:text-gray-600 cursor-not-allowed'
               : 'bg-primary text-white hover:bg-primary/80 dark:hover:bg-primary/70'
           }`}
@@ -112,6 +171,7 @@ export default function TodoList() {
         </button>
       </div>
 
+      {/* 📋 Todo List */}
       <div className="space-y-4 mt-4">
         {filteredTodos.length > 0 ? (
           filteredTodos.map((todo) => (
