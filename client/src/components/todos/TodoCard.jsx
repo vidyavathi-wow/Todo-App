@@ -1,4 +1,3 @@
-import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { STATUS_COLORS } from '../../utils/Constants';
 
@@ -6,6 +5,11 @@ export default function TodoCard({ todo, onToggleCompleted }) {
   const navigate = useNavigate();
   const status = (todo.status || '').toLowerCase();
   const isCompleted = status === 'completed';
+
+  // Assignee Display Logic
+  const assigneeName =
+    todo?.assignee?.name ||
+    (todo?.assignedToUserId ? `User #${todo.assignedToUserId}` : 'Unassigned');
 
   return (
     <div
@@ -21,6 +25,7 @@ export default function TodoCard({ todo, onToggleCompleted }) {
             onChange={() => onToggleCompleted(todo)}
             className="mt-1 w-4 h-4 accent-primary cursor-pointer"
           />
+
           <div>
             <h3
               className={`text-lg font-semibold cursor-pointer transition-colors duration-300 ${
@@ -32,6 +37,7 @@ export default function TodoCard({ todo, onToggleCompleted }) {
             >
               {todo.title}
             </h3>
+
             {todo.description && (
               <p
                 className={`text-sm mt-1 transition-colors duration-300 ${
@@ -43,9 +49,18 @@ export default function TodoCard({ todo, onToggleCompleted }) {
                 {todo.description}
               </p>
             )}
+
+            {/* ✅ Assigned To */}
+            <p className="text-xs text-gray-400 dark:text-gray-600 mt-1">
+              Assigned To:{' '}
+              <span className="font-medium text-gray-400 dark:text-gray-500">
+                {assigneeName}
+              </span>
+            </p>
           </div>
         </div>
 
+        {/* Task Status Badge */}
         <span
           className={`px-3 py-1 rounded-full text-xs font-medium text-white ${
             STATUS_COLORS[status] || 'bg-gray-light text-secondary/70'
@@ -55,16 +70,18 @@ export default function TodoCard({ todo, onToggleCompleted }) {
         </span>
       </div>
 
+      {/* Footer */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between text-sm text-secondary/70 dark:text-gray-700 gap-2">
         <div className="flex flex-wrap items-center gap-4">
           <span>Priority: {todo.priority}</span>
           <span>
-            Created At:{' '}
+            Created:{' '}
             {todo.createdAt
               ? new Date(todo.createdAt).toLocaleDateString()
               : '-'}
           </span>
         </div>
+
         {isCompleted && <span className="text-xs text-success">✅ Done</span>}
       </div>
     </div>

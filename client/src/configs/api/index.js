@@ -6,6 +6,10 @@ export const API = {
     resetPassword: '/api/v1/auth/reset-password',
   },
 
+  users: {
+    base: '/api/v1/users',
+  },
+
   todos: {
     base: '/api/v1/todos',
     byId: (id) => `/api/v1/todos/${id}`,
@@ -28,6 +32,6 @@ export const API = {
   },
 
   activitylogs: {
-    base: 'api/v1/activitylogs',
+    base: '/api/v1/activitylogs',
   },
 };
