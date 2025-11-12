@@ -8,6 +8,7 @@ import {
   FiBarChart2,
   FiClock,
   FiUsers,
+  FiCalendar 
 } from 'react-icons/fi';
 import { User } from 'lucide-react';
 
@@ -18,6 +19,7 @@ const Sidebar = () => {
   const menuItems = [
     { name: 'Dashboard', path: '/', icon: <FiHome />, end: true },
     { name: 'Add Todo', path: '/addTodo', icon: <FiPlusCircle /> },
+    { name: 'Calendar', path: '/calendar', icon: <FiCalendar /> },
     { name: 'Latest Todos', path: '/latesttodos', icon: <FiList /> },
     { name: 'Analytics', path: '/analytics', icon: <FiBarChart2 /> },
     { name: 'Activity Logs', path: '/activity-logs', icon: <FiClock /> },
