@@ -15,8 +15,9 @@ import LatestTodos from './pages/LatestTodos';
 import Analytics from './pages/Analytics';
 import UpdateProfile from './pages/auth/UpdateProfile';
 import ActivityLogs from './pages/ActivityLogs';
+import CalendarPage from './pages/CalendarPage'; 
 import AdminDashboard from './pages/AdminDashboard';
-import CalendarPage from './pages/CalendarPage';
+
 
 function App() {
   const { token, loading, user } = useContext(AppContext);
@@ -43,7 +44,9 @@ function App() {
           <Route index element={<Dashboard />} />
           <Route path="addTodo" element={<AddTodo />} />
           <Route path="latesttodos" element={<LatestTodos />} />
+
           <Route path="calendar" element={<CalendarPage />} />
+
           <Route path="analytics" element={<Analytics />} />
           <Route path="todo/:todoId" element={<TodoItem />} />
           <Route path="profile" element={<UpdateProfile />} />

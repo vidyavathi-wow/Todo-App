@@ -1,6 +1,7 @@
-// src/pages/CalendarPage.jsx
+
 import React, { useEffect, useState } from 'react';
 import { Calendar, dateFnsLocalizer, Views } from 'react-big-calendar';
+
 import format from 'date-fns/format';
 import parse from 'date-fns/parse';
 import startOfWeek from 'date-fns/startOfWeek';
@@ -21,9 +22,11 @@ const localizer = dateFnsLocalizer({
   format,
   parse,
   startOfWeek,
+
   getDay,
   locales,
 });
+
 
 export default function CalendarPage() {
   const [events, setEvents] = useState([]);
@@ -171,6 +174,7 @@ export default function CalendarPage() {
 
       {/* Calendar itself */}
       <div className="bg-gray rounded-xl p-2 md:p-4 shadow-inner border border-gray-light/30">
+
         <Calendar
           localizer={localizer}
           events={events}
@@ -190,3 +194,4 @@ export default function CalendarPage() {
     </div>
   );
 }
+
