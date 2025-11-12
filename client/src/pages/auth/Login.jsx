@@ -5,6 +5,7 @@ import AppContext from '../../context/AppContext';
 import Input from '../../components/common/Input';
 import Button from '../../components/common/Button';
 import { loginUser } from '../../services/auth';
+import { FcGoogle } from 'react-icons/fc';
 
 export default function Login() {
   const { navigate, setToken } = useContext(AppContext);
@@ -46,6 +47,13 @@ export default function Login() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleGoogleLogin = () => {
+    const url = `${import.meta.env.VITE_BASE_URL}/api/v1/auth/google`;
+    console.log('Opening Google login at:', url);
+    window.open(url, '_self');
+    // window.open(`${import.meta.env.VITE_BASE_URL}/api/v1/auth/google`, '_self');
   };
 
   return (
@@ -102,6 +110,23 @@ export default function Login() {
             {loading ? 'Logging in...' : 'Login'}
           </Button>
         </form>
+
+        {/* ✅ Google login button */}
+        <div className="mt-6">
+          <div className="flex items-center justify-center mb-3">
+            <span className="h-px bg-gray-600 w-1/3"></span>
+            <span className="text-sm mx-2 text-gray-400">or</span>
+            <span className="h-px bg-gray-600 w-1/3"></span>
+          </div>
+
+          <button
+            onClick={handleGoogleLogin}
+            className="w-full flex items-center justify-center gap-2 border border-gray-600 py-3 rounded-md hover:bg-gray-700 transition"
+          >
+            <FcGoogle size={22} />
+            <span className="text-sm font-medium">Continue with Google</span>
+          </button>
+        </div>
 
         <p className="text-sm text-center mt-6">
           Don’t have an account?{' '}

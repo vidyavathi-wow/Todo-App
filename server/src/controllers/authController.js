@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const sendEmail = require('../config/emailServeice');
 const ActivityLog = require('../models/ActivityLog');
+const { Op } = require('sequelize');
 
 exports.register = async (req, res) => {
   try {
@@ -184,5 +185,28 @@ exports.resetPassword = async (req, res) => {
     res
       .status(400)
       .json({ success: false, message: 'Invalid or expired token' });
+  }
+};
+
+exports.googleCallback = async (req, res) => {
+  try {
+    const user = req.user;
+    if (!user) {
+      return res.redirect(`${process.env.FRONTEND_URL}/login?error=no_user`);
+    }
+
+    const token = jwt.sign(
+      { id: user.id, email: user.email, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+
+    const redirectUrl = `${process.env.FRONTEND_URL}/login?token=${token}`;
+    return res.redirect(redirectUrl);
+  } catch (error) {
+    console.error('Google OAuth callback error:', error);
+    return res.redirect(
+      `${process.env.FRONTEND_URL}/login?error=google_auth_failed`
+    );
   }
 };

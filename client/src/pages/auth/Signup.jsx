@@ -5,6 +5,7 @@ import Input from '../../components/common/Input';
 import Button from '../../components/common/Button';
 import Select from '../../components/common/Select';
 import { registerUser } from '../../services/auth';
+import { FcGoogle } from 'react-icons/fc'; // 👈 Google icon
 
 export default function Signup() {
   const navigate = useNavigate();
@@ -34,7 +35,7 @@ export default function Signup() {
 
     setLoading(true);
     try {
-      const data = await registerUser(formData); // ✅ using service
+      const data = await registerUser(formData);
       if (data.success) {
         toast.success(data.message || 'Account created successfully!');
         setFormData({ name: '', email: '', password: '', role: 'user' });
@@ -54,8 +55,14 @@ export default function Signup() {
     }
   };
 
+  // ✅ Google signup/login handler
+  const handleGoogleSignup = () => {
+    window.open(`${import.meta.env.VITE_BASE_URL}/api/v1/auth/google`, '_self');
+    // e.g., http://localhost:5000/api/auth/google
+  };
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-dark text-gray-light px-4">
+    <div className="min-h-screen flex items-center justify-center bg-gray-dark text-gray-light px-4 py-10">
       <div className="w-full max-w-md bg-gray-800 p-8 rounded-2xl shadow-md">
         <h2 className="text-2xl text-primary font-semibold text-center mb-6">
           Create an Account
@@ -127,6 +134,23 @@ export default function Signup() {
             {loading ? 'Creating Account...' : 'Sign Up'}
           </Button>
         </form>
+
+        {/* ✅ Google Signup/Login Button */}
+        <div className="mt-6">
+          <div className="flex items-center justify-center mb-3">
+            <span className="h-px bg-gray-600 w-1/3"></span>
+            <span className="text-sm mx-2 text-gray-400">or</span>
+            <span className="h-px bg-gray-600 w-1/3"></span>
+          </div>
+
+          <button
+            onClick={handleGoogleSignup}
+            className="w-full flex items-center justify-center gap-2 border border-gray-600 py-3 rounded-md hover:bg-gray-700 transition"
+          >
+            <FcGoogle size={22} />
+            <span className="text-sm font-medium">Continue with Google</span>
+          </button>
+        </div>
 
         <p className="text-sm text-center mt-6">
           Already have an account?{' '}

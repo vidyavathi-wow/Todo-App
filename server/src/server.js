@@ -1,5 +1,4 @@
 require('dotenv').config();
-require('./schedulers/reminderScheduler');
 const express = require('express');
 const cors = require('cors');
 const sequelize = require('./config/db');
@@ -45,8 +44,9 @@ app.use(errorHandler);
   try {
     await sequelize.authenticate();
     logger.info('Database connected successfully');
-    await sequelize.sync({ alter: true });
+    await sequelize.sync();
     logger.info('✅ Database synced successfully (soft delete enabled)');
+    require('./schedulers/reminderScheduler');
     app.listen(PORT, () => {
       logger.info(`🚀 Server running at http://localhost:${PORT}`);
     });
