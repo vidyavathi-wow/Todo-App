@@ -20,7 +20,6 @@ const Sidebar = () => {
     { name: 'Add Todo', path: '/addTodo', icon: <FiPlusCircle /> },
     { name: 'Latest Todos', path: '/latesttodos', icon: <FiList /> },
     { name: 'Analytics', path: '/analytics', icon: <FiBarChart2 /> },
-    { name: 'Profile', path: '/profile', icon: <User /> },
     { name: 'Activity Logs', path: '/activity-logs', icon: <FiClock /> },
   ];
 

@@ -9,7 +9,10 @@ const Todo = sequelize.define(
       type: DataTypes.STRING,
       allowNull: false,
     },
-    description: DataTypes.TEXT,
+
+    description: {
+      type: DataTypes.TEXT,
+    },
 
     date: {
       type: DataTypes.DATE,
@@ -25,19 +28,20 @@ const Todo = sequelize.define(
       defaultValue: 'Moderate',
     },
 
-    notes: DataTypes.STRING,
+    notes: {
+      type: DataTypes.STRING,
+    },
 
     status: {
       type: DataTypes.ENUM('inProgress', 'pending', 'completed'),
       defaultValue: 'pending',
     },
-    reminded: {
-      type: DataTypes.BOOLEAN,
-      defaultValue: false,
-    },
-    reminderBeforeMinutes: {
+
+    // Assigned user column
+    assignedToUserId: {
       type: DataTypes.INTEGER,
-      defaultValue: 10,
+      allowNull: true,
+      references: { model: 'users', key: 'id' },
     },
   },
   {
@@ -48,7 +52,14 @@ const Todo = sequelize.define(
   }
 );
 
-User.hasMany(Todo, { foreignKey: 'userId', onDelete: 'CASCADE' });
-Todo.belongsTo(User, { foreignKey: 'userId' });
+// Associations
+
+// Task creator
+Todo.belongsTo(User, { foreignKey: 'userId', as: 'owner' });
+User.hasMany(Todo, { foreignKey: 'userId', as: 'createdTodos' });
+
+// User assigned to this task
+Todo.belongsTo(User, { foreignKey: 'assignedToUserId', as: 'assignee' });
+User.hasMany(Todo, { foreignKey: 'assignedToUserId', as: 'assignedTodos' });
 
 module.exports = Todo;

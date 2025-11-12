@@ -35,6 +35,6 @@ const ActivityLog = sequelize.define(
 );
 
 User.hasMany(ActivityLog, { foreignKey: 'userId', onDelete: 'CASCADE' });
-ActivityLog.belongsTo(User, { foreignKey: 'userId' });
+ActivityLog.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
 module.exports = ActivityLog;
