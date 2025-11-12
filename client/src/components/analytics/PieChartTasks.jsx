@@ -1,4 +1,4 @@
-import React from 'react';
+import { memo } from 'react';
 import {
   PieChart,
   Pie,
@@ -8,11 +8,7 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 
-export default function PieChartTasks({
-  completed = 0,
-  inProgress = 0,
-  notStarted = 0,
-}) {
+function PieChartTasks({ completed = 0, inProgress = 0, notStarted = 0 }) {
   const data = [
     { name: 'Completed', value: completed },
     { name: 'In Progress', value: inProgress },
@@ -71,3 +67,5 @@ export default function PieChartTasks({
     </div>
   );
 }
+
+export default memo(PieChartTasks);

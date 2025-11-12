@@ -3,7 +3,6 @@ import TodoCard from './TodoCard';
 import SearchTodo from './SearchTodo';
 import AppContext from '../../context/AppContext';
 import EmptyState from '../common/EmptyState';
-import Button from '../common/Button';
 import Select from '../common/Select';
 import toast from 'react-hot-toast';
 import Loader from '../common/Loader';
@@ -12,7 +11,7 @@ import { updateTodoStatus } from '../../services/todos';
 const normalize = (v) => (typeof v === 'string' ? v.trim().toLowerCase() : '');
 
 export default function TodoList() {
-  const { todos, fetchTodos } = useContext(AppContext);
+  const { todos, fetchTodos, user } = useContext(AppContext);
   const [filterStatus, setFilterStatus] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
@@ -20,7 +19,6 @@ export default function TodoList() {
   const filteredTodos = useMemo(() => {
     const statusFilter = normalize(filterStatus);
     const q = normalize(searchQuery);
-
     let results = Array.isArray(todos) ? todos : [];
 
     if (statusFilter) {
@@ -30,11 +28,11 @@ export default function TodoList() {
     }
 
     if (q) {
-      results = results.filter((todo) => {
-        const title = normalize(todo?.title);
-        const desc = normalize(todo?.description);
-        return title.includes(q) || desc.includes(q);
-      });
+      results = results.filter(
+        (todo) =>
+          normalize(todo?.title).includes(q) ||
+          normalize(todo?.description).includes(q)
+      );
     }
 
     return results;
@@ -98,21 +96,11 @@ export default function TodoList() {
             { value: 'inProgress', label: 'In Progress' },
             { value: 'completed', label: 'Completed' },
           ]}
-          className="w-full sm:w-48 h-11 px-3 text-sm border border-gray-600 dark:border-gray-400 
-                     rounded-md bg-gray-900 dark:bg-gray-100 
-                     text-gray-200 dark:text-gray-900 
-                     focus:outline-none focus:ring-2 focus:ring-primary appearance-none leading-tight truncate transition-colors duration-300"
-          style={{
-            lineHeight: '1.5rem',
-            whiteSpace: 'nowrap',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-          }}
+          className="w-full sm:w-48 h-11 px-3 text-sm border border-gray-600 dark:border-gray-400 rounded-md bg-gray-900 dark:bg-gray-100 text-gray-200 dark:text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary leading-tight truncate transition-colors duration-300"
         />
 
-        <Button
+        <button
           onClick={handleResetFilters}
-          noDefault
           disabled={!normalize(filterStatus) && !normalize(searchQuery)}
           className={`w-full sm:w-auto px-4 h-11 text-sm rounded-md transition-all duration-300 ${
             !normalize(filterStatus) && !normalize(searchQuery)
@@ -121,16 +109,16 @@ export default function TodoList() {
           }`}
         >
           Reset Filters
-        </Button>
+        </button>
       </div>
 
-      {/* 🧾 Todo List */}
       <div className="space-y-4 mt-4">
         {filteredTodos.length > 0 ? (
           filteredTodos.map((todo) => (
             <TodoCard
               key={todo.id}
               todo={todo}
+              currentUser={user}
               onToggleCompleted={handleToggleCompleted}
             />
           ))

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { getTodos } from '../services/todos';
 import { getProfile } from '../services/profile';
+import { getUsers } from '../services/users';
 import axiosInstance from '../configs/axiosInstance';
 
 const AppContext = createContext();
@@ -15,6 +16,7 @@ export const AppProvider = ({ children }) => {
   const [editTodo, setEditTodo] = useState(null);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState(null);
+  const [users, setUsers] = useState([]);
 
   useEffect(() => {
     const storedToken = localStorage.getItem('token');
@@ -26,6 +28,7 @@ export const AppProvider = ({ children }) => {
     if (token) {
       fetchUserProfile();
       fetchTodos();
+      fetchUsers();
     }
   }, [token]);
 
@@ -57,6 +60,15 @@ export const AppProvider = ({ children }) => {
     }
   };
 
+  const fetchUsers = async () => {
+    try {
+      const data = await getUsers();
+      if (data.success) setUsers(data.users || []);
+    } catch (e) {
+      toast.error(e.response?.data?.message || 'Failed to fetch users');
+    }
+  };
+
   const value = {
     axios: axiosInstance,
     navigate,
@@ -71,6 +83,7 @@ export const AppProvider = ({ children }) => {
     fetchTodos,
     loading,
     user,
+    users, // expose to UI
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

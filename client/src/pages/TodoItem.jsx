@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useContext } from 'react';
+import { useEffect, useState, useContext } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Edit, Trash } from 'lucide-react';
 import AppContext from '../context/AppContext';
@@ -67,7 +67,7 @@ export default function TodoItem() {
       if (data.success) {
         toast.success('Todo deleted');
         fetchTodos();
-        navigate(-1); // go back
+        navigate(-1);
       } else {
         toast.error(data.message || 'Delete failed');
       }
@@ -87,6 +87,21 @@ export default function TodoItem() {
           updatingStatus={updatingStatus}
           onStatusChange={(e) => updateStatus(e.target.value)}
         />
+
+        {/* NEW: Assignee chip */}
+        <div className="mt-3">
+          <span className="text-sm text-secondary/80">
+            Assigned To:{' '}
+            <span className="inline-flex items-center px-2 py-1 rounded-full bg-gray-700 border border-gray-600">
+              {todo?.assignee?.name
+                ? `${todo.assignee.name} (${todo.assignee.email})`
+                : todo?.assignedToUserId
+                  ? `User #${todo.assignedToUserId}`
+                  : 'Unassigned'}
+            </span>
+          </span>
+        </div>
+
         <div className="mt-6 bg-linear-to-br from-gray-800 via-gray-900 to-black border border-gray-700 rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 relative">
           <TodoContent todo={todo} />
           <div className="flex justify-end gap-4 mt-8">

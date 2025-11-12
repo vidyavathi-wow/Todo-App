@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useContext } from 'react';
+import React, { useEffect, useState, useContext, useCallback } from 'react';
 import { PieChartBox } from '../components/analytics/wrappers/PieChartBox';
 import { BarChartBox } from '../components/analytics/wrappers/BarChartBox';
 import AnalyticsCard from '../components/analytics/wrappers/AnalyticsCard';
@@ -9,27 +9,38 @@ import EmptyState from '../components/common/EmptyState';
 import { getAnalytics } from '../services/analytics.js';
 
 export default function Analytics() {
-  const { fetchTodos, todos } = useContext(AppContext);
+  const { fetchTodos } = useContext(AppContext);
+
   const [analytics, setAnalytics] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // ✅ Only fetch analytics data here
+  const fetchAnalyticsData = useCallback(async () => {
+    try {
+      setLoading(true);
+      const data = await getAnalytics();
+      if (data.success) {
+        setAnalytics(data);
+      }
+    } catch (error) {
+      console.error('Analytics fetch error:', error.message);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // ✅ Run once when component mounts
   useEffect(() => {
-    const fetchAnalyticsData = async () => {
+    const loadData = async () => {
       try {
-        const data = await getAnalytics();
-        if (data.success) {
-          fetchTodos();
-          setAnalytics(data);
-        }
+        await Promise.all([fetchTodos(), fetchAnalyticsData()]);
       } catch (error) {
-        console.error('Analytics fetch error:', error.message);
-      } finally {
-        setLoading(false);
+        console.error('Load data error:', error);
       }
     };
-    fetchAnalyticsData();
-  }, [todos]);
-
+    loadData();
+  }, []);
+  // ✅ Prevents render issues
   if (loading) return <Loader />;
   if (!analytics) return <EmptyState message="No Analytics Data" />;
 
@@ -43,6 +54,7 @@ export default function Analytics() {
         Todo Analytics
       </h2>
 
+      {/* Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
         <AnalyticsCard
           title="Total Todos"
@@ -61,6 +73,7 @@ export default function Analytics() {
         />
       </div>
 
+      {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 auto-rows-[minmax(320px,auto)]">
         <PieChartBox
           title="Status Distribution"

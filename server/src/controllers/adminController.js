@@ -42,6 +42,7 @@ exports.getActivityLogs = async (req, res) => {
       include: [
         {
           model: User,
+          as: 'user',
           attributes: ['id', 'name', 'email', 'role'],
           paranoid: false,
         },
