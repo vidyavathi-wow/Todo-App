@@ -1,9 +1,5 @@
 require('dotenv').config();
-
-require('./models/User.js');
-require('./models/Todo.js');
-// require('./models/ActivityLog.js');
-
+require('./schedulers/reminderScheduler');
 const express = require('express');
 const cors = require('cors');
 const sequelize = require('./config/db');
