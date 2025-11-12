@@ -3,7 +3,7 @@ import moonicon from '../assets/moon_icon.svg';
 import sunicon from '../assets/sun_icon.svg';
 
 const ThemeToggleBtn = ({ theme, setTheme }) => {
-  // Load theme preference
+  // Load saved theme or system preference
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme');
     if (savedTheme) {
@@ -16,11 +16,11 @@ const ThemeToggleBtn = ({ theme, setTheme }) => {
     }
   }, [setTheme]);
 
-  // Apply theme and save to localStorage
+  // Apply theme globally
   useEffect(() => {
     if (theme === 'dark') {
       document.documentElement.classList.add('dark');
-      document.documentElement.style.backgroundColor = '#0f172a'; // smoother load
+      document.documentElement.style.backgroundColor = '#0f172a';
     } else {
       document.documentElement.classList.remove('dark');
       document.documentElement.style.backgroundColor = '#f5f5f5';
@@ -34,19 +34,19 @@ const ThemeToggleBtn = ({ theme, setTheme }) => {
       aria-label={
         theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'
       }
-      className="transition hover:opacity-80"
+      className="transition hover:scale-105 focus:outline-none"
     >
       {theme === 'dark' ? (
         <img
-          src={sunicon}
-          alt="Light Mode"
-          className="w-8 h-8 p-1.5 border border-gray-500 rounded-full bg-white"
+          src={moonicon}
+          alt="Switch to Light Mode"
+          className="w-8 h-8 p-1.5 rounded-full border border-gray-400 shadow-md"
         />
       ) : (
         <img
-          src={moonicon}
-          alt="Dark Mode"
-          className="w-8 h-8 p-1.5 border border-gray-500 rounded-full bg-gray-800"
+          src={sunicon}
+          alt="Switch to Dark Mode"
+          className="w-8 h-8 p-1.5 rounded-full border border-gray-600 bg-gray-900 hover:bg-gray-800 shadow-md"
         />
       )}
     </button>

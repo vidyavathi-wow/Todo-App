@@ -24,7 +24,7 @@ export const PieChartBox = ({ title, data = [], colors = [] }) => {
 
       {hasData ? (
         <div className="w-full flex-1 min-h-[240px]">
-          <ResponsiveContainer width="100%" height="100%">
+          <ResponsiveContainer width="99%" height="100%">
             <PieChart>
               <Pie
                 data={data}
