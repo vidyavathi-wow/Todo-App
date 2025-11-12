@@ -16,6 +16,12 @@ exports.validateTodo = [
     .isIn(['Work', 'Personal', 'Other'])
     .withMessage('Invalid category'),
   body('notes').optional().isString(),
+
+  // inside validateTodo rules:
+  body('assignedToUserId')
+    .optional({ nullable: true })
+    .isInt({ min: 1 })
+    .withMessage('assignedToUserId must be a valid user id'),
   (req, res, next) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {

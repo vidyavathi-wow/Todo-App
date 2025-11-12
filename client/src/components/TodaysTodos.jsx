@@ -46,21 +46,36 @@ export default function TodaysTodos() {
             const status = (todo.status || '').toLowerCase();
             const colorClass = COLORS[status] || 'bg-gray-500';
 
+            const assignee =
+              todo?.assignee?.name ||
+              (todo?.assignedToUserId
+                ? `User #${todo.assignedToUserId}`
+                : 'Unassigned');
+
             return (
               <div
                 key={todo.id}
                 className="flex items-center justify-between bg-gray-700 dark:bg-gray-100 p-3 rounded hover:bg-gray-600 dark:hover:bg-gray-200 transition-colors duration-200"
               >
-                <div className="flex items-center gap-2">
-                  <span className={`w-3 h-3 rounded-full ${colorClass}`} />
-                  <span
-                    className={`${
-                      todo.status === 'completed'
-                        ? 'line-through text-gray-400 dark:text-gray-500'
-                        : ''
-                    }`}
-                  >
-                    {todo.title}
+                <div className="flex flex-col">
+                  <div className="flex items-center gap-2">
+                    <span className={`w-3 h-3 rounded-full ${colorClass}`} />
+                    <span
+                      className={`${
+                        todo.status === 'completed'
+                          ? 'line-through text-gray-400 dark:text-gray-500'
+                          : ''
+                      }`}
+                    >
+                      {todo.title}
+                    </span>
+                  </div>
+
+                  <span className="text-xs text-gray-400 dark:text-gray-600 mt-1">
+                    Assigned To:{' '}
+                    <span className="font-medium text-gray-400 dark:text-gray-500">
+                      {assignee}
+                    </span>
                   </span>
                 </div>
 
@@ -71,11 +86,6 @@ export default function TodaysTodos() {
                       ? 'hover:bg-green-600 dark:hover:bg-green-400'
                       : 'hover:bg-blue-600 dark:hover:bg-blue-400'
                   }`}
-                  title={
-                    todo.status === 'completed'
-                      ? 'Mark as pending'
-                      : 'Mark as completed'
-                  }
                 >
                   <FiCheckCircle className="text-white dark:text-gray-900" />
                 </button>

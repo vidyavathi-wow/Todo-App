@@ -99,6 +99,10 @@ const LatestTodos = () => {
                     Title
                   </th>
                   <th scope="col" className="px-3 py-4 xl:px-6 max-sm:hidden">
+                  <th scope="col" className="px-2 py-4 xl:px-6">
+                    Assigned To
+                  </th>
+                  <th scope="col" className="px-2 py-4 xl:px-6 max-sm:hidden">
                     Date
                   </th>
                   <th scope="col" className="px-3 py-4 xl:px-6 max-sm:hidden">

@@ -28,6 +28,8 @@ This UI design was inspired by a Dribbble concept for task management apps.
 ✅ Visual analytics for task insights (bar & pie charts)  
 ✅ Persistent data using REST API integration  
 ✅ Responsive UI built with Tailwind CSS  
+✅ Profile creation used multer and cloudinary for handling and storing profile image
+✅ Email reminders using node-cron
 ✅ Deployed on **Render**
 
 ---
@@ -55,13 +57,13 @@ This UI design was inspired by a Dribbble concept for task management apps.
 
 ## 🔐 Environment Variables
 
-### 🔸 Frontend (`frontend/.env`)
+### 🔸 Frontend (`client/.env`)
 
 ```env
 VITE_BASE_URL=https://tms-backend-5dcu.onrender.com
 ```
 
-### 🔸 Backend (`backend/.env`)
+### 🔸 Backend (`server/.env`)
 
 ```env
 DB_NAME=your_database_name
@@ -108,7 +110,7 @@ cd todo-management-system
 ### ⚙️ 2️⃣ Backend Setup
 
 ```bash
-cd backend
+cd server
 npm install
 ```
 
@@ -127,7 +129,7 @@ npm run server
 ### 💻 3️⃣ Frontend Setup
 
 ```bash
-cd ../frontend
+cd ../client
 npm install
 ```
 

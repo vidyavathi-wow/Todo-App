@@ -1,5 +1,9 @@
 require('dotenv').config();
-require('./schedulers/reminderScheduler');
+
+require('./models/User.js');
+require('./models/Todo.js');
+// require('./models/ActivityLog.js');
+
 const express = require('express');
 const cors = require('cors');
 const sequelize = require('./config/db');
@@ -7,12 +11,14 @@ const corsOptions = require('./config/cors');
 const logger = require('./utils/logger.js');
 const errorHandler = require('./middlewares/errorHandler.js');
 
+// Routers
 const authRouter = require('./routes/authRouter.js');
 const todosRouter = require('./routes/todoRouter.js');
 const analyticsRouter = require('./routes/analyticsRouter.js');
 const activityRouter = require('./routes/activityRouter.js');
 const profileRouter = require('./routes/profileRouter.js');
 const adminRouter = require('./routes/adminRouter.js');
+const usersRouter = require('./routes/usersRouter.js');
 
 const app = express();
 const PORT = parseInt(process.env.PORT || '3000', 10);
@@ -25,13 +31,16 @@ app.get('/', (req, res) => {
   res.status(200).json({ success: true, message: 'API check' });
 });
 
+// Route Mounting
 app.use('/api/v1/auth', authRouter);
 app.use('/api/v1/todos', todosRouter);
 app.use('/api/v1/analytics', analyticsRouter);
 app.use('/api/v1/activitylogs', activityRouter);
 app.use('/api/v1/profile', profileRouter);
 app.use('/api/v1/admin', adminRouter);
+app.use('/api/v1/users', usersRouter);
 
+// 404 Handler
 app.use((req, res) => {
   res.status(404).json({
     success: false,
@@ -39,14 +48,17 @@ app.use((req, res) => {
   });
 });
 
+// Error Middleware
 app.use(errorHandler);
 
+// Server Init + DB Sync
 (async () => {
   try {
     await sequelize.authenticate();
-    logger.info('Database connected successfully');
+    logger.info('Database connected successfully ✅');
     await sequelize.sync({ alter: true });
-    logger.info('✅ Database synced successfully (soft delete enabled)');
+    logger.info('Database synced successfully ✅ (Soft delete enabled)');
+
     app.listen(PORT, () => {
       logger.info(`🚀 Server running at http://localhost:${PORT}`);
     });
