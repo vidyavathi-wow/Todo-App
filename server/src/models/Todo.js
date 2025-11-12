@@ -36,8 +36,14 @@ const Todo = sequelize.define(
       type: DataTypes.ENUM('inProgress', 'pending', 'completed'),
       defaultValue: 'pending',
     },
-
-    // Assigned user column
+    reminded: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+    },
+    reminderBeforeMinutes: {
+      type: DataTypes.INTEGER,
+      defaultValue: 10,
+    },
     assignedToUserId: {
       type: DataTypes.INTEGER,
       allowNull: true,
