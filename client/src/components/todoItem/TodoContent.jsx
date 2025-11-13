@@ -4,7 +4,6 @@ import { motion as m } from 'framer-motion';
 export default function TodoContent({ todo, children }) {
   const [timeLeft, setTimeLeft] = useState('');
 
-  // Function to calculate time left
   const calculateTimeLeft = () => {
     if (!todo?.date) return '';
     const now = new Date();
@@ -22,10 +21,9 @@ export default function TodoContent({ todo, children }) {
     }
   };
 
-  // Update countdown every minute
   useEffect(() => {
     const updateTime = () => setTimeLeft(calculateTimeLeft());
-    updateTime(); // initial
+    updateTime();
     const timer = setInterval(updateTime, 60 * 1000);
     return () => clearInterval(timer);
   }, [todo?.date]);
@@ -37,29 +35,39 @@ export default function TodoContent({ todo, children }) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
     >
-      <div className="bg-gray-900 rounded-lg p-6 sm:p-8 relative shadow-lg border border-gray-700/50">
+      <div
+        className="
+        bg-gray-900 dark:bg-white 
+        text-gray-100 dark:text-gray-900
+        rounded-lg p-6 sm:p-8 
+        shadow-lg border 
+        border-gray-700/50 dark:border-gray-300
+        transition-colors duration-300
+      "
+      >
         {/* HEADER */}
         <div className="flex justify-between items-center mb-6">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-white">
+            <h1 className="text-2xl sm:text-3xl font-bold text-white dark:text-gray-900">
               {todo.title}
             </h1>
 
-            {/* Due date + time left */}
+            {/* Due date */}
             {todo.date && (
               <>
-                <p className="text-sm text-gray-400 mt-1">
+                <p className="text-sm text-gray-400 dark:text-gray-600 mt-1">
                   Due on{' '}
-                  <span className="text-gray-300 font-medium">
+                  <span className="text-gray-300 dark:text-gray-800 font-medium">
                     {new Date(todo.date).toLocaleString()}
                   </span>
                 </p>
+
                 {timeLeft && (
                   <p
                     className={`text-sm mt-1 ${
                       timeLeft.startsWith('Overdue')
                         ? 'text-red-400'
-                        : 'text-green-400'
+                        : 'text-green-500'
                     }`}
                   >
                     🕒 {timeLeft}
@@ -68,20 +76,27 @@ export default function TodoContent({ todo, children }) {
               </>
             )}
           </div>
+
           {children && <div className="shrink-0">{children}</div>}
         </div>
 
         {/* DETAILS GRID */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
           {/* Category */}
-          <div className="bg-gray-800 p-4 rounded-lg border border-gray-700/40">
-            <p className="text-xs uppercase text-gray-400 mb-1">Category</p>
-            <p className="text-gray-200 font-medium">{todo.category || '—'}</p>
+          <div className="bg-gray-800 dark:bg-gray-200 p-4 rounded-lg border border-gray-700 dark:border-gray-300">
+            <p className="text-xs uppercase text-gray-400 dark:text-gray-600 mb-1">
+              Category
+            </p>
+            <p className="text-gray-200 dark:text-gray-900 font-medium">
+              {todo.category || '—'}
+            </p>
           </div>
 
           {/* Priority */}
-          <div className="bg-gray-800 p-4 rounded-lg border border-gray-700/40">
-            <p className="text-xs uppercase text-gray-400 mb-1">Priority</p>
+          <div className="bg-gray-800 dark:bg-gray-200 p-4 rounded-lg border border-gray-700 dark:border-gray-300">
+            <p className="text-xs uppercase text-gray-400 dark:text-gray-600 mb-1">
+              Priority
+            </p>
             <p
               className={`font-medium ${
                 todo.priority === 'High'
@@ -96,15 +111,17 @@ export default function TodoContent({ todo, children }) {
           </div>
 
           {/* Status */}
-          <div className="bg-gray-800 p-4 rounded-lg border border-gray-700/40">
-            <p className="text-xs uppercase text-gray-400 mb-1">Status</p>
+          <div className="bg-gray-800 dark:bg-gray-200 p-4 rounded-lg border border-gray-700 dark:border-gray-300">
+            <p className="text-xs uppercase text-gray-400 dark:text-gray-600 mb-1">
+              Status
+            </p>
             <p
               className={`font-medium ${
                 todo.status === 'completed'
                   ? 'text-green-400'
                   : todo.status === 'inProgress'
                     ? 'text-yellow-400'
-                    : 'text-gray-300'
+                    : 'text-gray-300 dark:text-gray-700'
               }`}
             >
               {todo.status}
@@ -112,25 +129,31 @@ export default function TodoContent({ todo, children }) {
           </div>
 
           {/* Assigned to */}
-          <div className="bg-gray-800 p-4 rounded-lg border border-gray-700/40">
-            <p className="text-xs uppercase text-gray-400 mb-1">Assigned To</p>
-            <p className="text-gray-200 font-medium">
+          <div className="bg-gray-800 dark:bg-gray-200 p-4 rounded-lg border border-gray-700 dark:border-gray-300">
+            <p className="text-xs uppercase text-gray-400 dark:text-gray-600 mb-1">
+              Assigned To
+            </p>
+            <p className="text-gray-200 dark:text-gray-900 font-medium">
               {todo.assignee?.name || 'Not assigned'}
             </p>
           </div>
 
-          {/* Created by */}
-          <div className="bg-gray-800 p-4 rounded-lg border border-gray-700/40">
-            <p className="text-xs uppercase text-gray-400 mb-1">Created By</p>
-            <p className="text-gray-200 font-medium">
+          {/* Created By */}
+          <div className="bg-gray-800 dark:bg-gray-200 p-4 rounded-lg border border-gray-700 dark:border-gray-300">
+            <p className="text-xs uppercase text-gray-400 dark:text-gray-600 mb-1">
+              Created By
+            </p>
+            <p className="text-gray-200 dark:text-gray-900 font-medium">
               {todo.owner?.name || '—'}
             </p>
           </div>
 
           {/* Reminder */}
-          <div className="bg-gray-800 p-4 rounded-lg border border-gray-700/40">
-            <p className="text-xs uppercase text-gray-400 mb-1">Reminder</p>
-            <p className="text-gray-200 font-medium">
+          <div className="bg-gray-800 dark:bg-gray-200 p-4 rounded-lg border border-gray-700 dark:border-gray-300">
+            <p className="text-xs uppercase text-gray-400 dark:text-gray-600 mb-1">
+              Reminder
+            </p>
+            <p className="text-gray-200 dark:text-gray-900 font-medium">
               {todo.reminderBeforeMinutes
                 ? `${todo.reminderBeforeMinutes} min before`
                 : 'No reminder set'}
@@ -142,10 +165,10 @@ export default function TodoContent({ todo, children }) {
         <div className="space-y-6">
           {todo.description && (
             <div>
-              <h2 className="text-lg font-semibold text-gray-100 mb-2">
+              <h2 className="text-lg font-semibold text-gray-100 dark:text-gray-900 mb-2">
                 Description
               </h2>
-              <p className="leading-relaxed text-gray-300">
+              <p className="leading-relaxed text-gray-300 dark:text-gray-700">
                 {todo.description}
               </p>
             </div>
@@ -153,11 +176,17 @@ export default function TodoContent({ todo, children }) {
 
           {todo.notes && (
             <div>
-              <h2 className="text-lg font-semibold text-gray-100 mb-2">
+              <h2 className="text-lg font-semibold text-gray-100 dark:text-gray-900 mb-2">
                 Notes
               </h2>
-              <div className="bg-gray-800 rounded-lg p-5 sm:p-6 border border-gray-700/40">
-                <p className="max-w-none leading-relaxed text-gray-200 whitespace-pre-line">
+              <div
+                className="
+                bg-gray-800 dark:bg-gray-200 
+                rounded-lg p-5 sm:p-6 
+                border border-gray-700 dark:border-gray-300
+              "
+              >
+                <p className="leading-relaxed text-gray-200 dark:text-gray-900 whitespace-pre-line">
                   {todo.notes}
                 </p>
               </div>

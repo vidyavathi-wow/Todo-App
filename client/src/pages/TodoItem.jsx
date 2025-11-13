@@ -80,7 +80,12 @@ export default function TodoItem() {
   if (!todo) return <EmptyState message="Todo not found" />;
 
   return (
-    <div className="flex-1 bg-gray-dark text-secondary h-full overflow-scroll p-6">
+    <div
+      className="
+        flex-1 bg-gray-dark text-secondary h-full overflow-scroll p-6
+        dark:bg-gray-50 dark:text-gray-900
+      "
+    >
       <div className="flex flex-col overflow-auto">
         <TodoHeader
           todo={todo}
@@ -88,11 +93,17 @@ export default function TodoItem() {
           onStatusChange={(e) => updateStatus(e.target.value)}
         />
 
-        {/* NEW: Assignee chip */}
+        {/* Assignee chip */}
         <div className="mt-3">
-          <span className="text-sm text-secondary/80">
+          <span className="text-sm text-secondary/80 dark:text-gray-700">
             Assigned To:{' '}
-            <span className="inline-flex items-center px-2 py-1 rounded-full bg-gray-700 border border-gray-600">
+            <span
+              className="
+                inline-flex items-center px-2 py-1 rounded-full 
+                bg-gray-700 border border-gray-600
+                dark:bg-gray-200 dark:border-gray-300 dark:text-gray-900
+              "
+            >
               {todo?.assignee?.name
                 ? `${todo.assignee.name} (${todo.assignee.email})`
                 : todo?.assignedToUserId
@@ -102,13 +113,27 @@ export default function TodoItem() {
           </span>
         </div>
 
-        <div className="mt-6 bg-linear-to-br from-gray-800 via-gray-900 to-black border border-gray-700 rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 relative">
+        {/* Main card */}
+        <div
+          className="
+            mt-6 bg-linear-to-br from-gray-800 via-gray-900 to-black 
+            border border-gray-700 rounded-2xl p-8 shadow-lg 
+            hover:shadow-xl transition-all duration-300 relative
+            dark:from-white dark:via-gray-100 dark:to-gray-200 
+            dark:border-gray-300
+          "
+        >
           <TodoContent todo={todo} />
+
           <div className="flex justify-end gap-4 mt-8">
             <Button
               onClick={handleEdit}
               noDefault
-              className="flex items-center gap-2 bg-blue-500 hover:bg-blue-400 text-white text-sm font-medium px-4 py-2 rounded-lg shadow-md transition"
+              className="
+                flex items-center gap-2 bg-blue-500 hover:bg-blue-400 
+                text-white text-sm font-medium px-4 py-2 rounded-lg 
+                shadow-md transition
+              "
             >
               <Edit size={18} />
               Edit
@@ -117,7 +142,11 @@ export default function TodoItem() {
             <Button
               noDefault
               onClick={handleDelete}
-              className="flex items-center gap-2 bg-red-500 hover:bg-red-400 text-white text-sm font-medium px-4 py-2 rounded-lg shadow-md transition"
+              className="
+                flex items-center gap-2 bg-red-500 hover:bg-red-400 
+                text-white text-sm font-medium px-4 py-2 rounded-lg 
+                shadow-md transition
+              "
             >
               <Trash size={18} />
               Delete
