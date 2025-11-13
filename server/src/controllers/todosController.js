@@ -40,6 +40,7 @@ exports.createTodo = async (req, res) => {
       action: 'CREATE_TODO',
       details: `Todo created: ${title}${assignedToUserId ? ` (assigned to #${assignedToUserId})` : ''}`,
     });
+
     const createdTodo = await Todo.findByPk(todo.id, {
       include: [
         { model: User, as: 'owner', attributes: ['id', 'name', 'email'] },
@@ -173,7 +174,7 @@ exports.updateTodoStatus = async (req, res) => {
   }
 };
 
-// DELETE TODO
+// ✅ DELETE TODO
 exports.deleteTodo = async (req, res) => {
   try {
     await Todo.destroy({ where: { id: req.params.id, userId: req.user.id } });
@@ -183,7 +184,7 @@ exports.deleteTodo = async (req, res) => {
   }
 };
 
-// DASHBOARD
+// ✅ DASHBOARD
 exports.getDashboardData = async (req, res) => {
   try {
     const isAdmin = req.user.role === 'admin';
@@ -220,5 +221,88 @@ exports.getDashboardData = async (req, res) => {
   } catch (err) {
     logger.error(err);
     res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// ✅ GET TODOS BY DATE
+exports.getTodosByDate = async (req, res) => {
+  try {
+    const { date } = req.query;
+    const isAdmin = req.user.role === 'admin';
+    const userId = req.user.id;
+
+    if (!date)
+      return res
+        .status(400)
+        .json({ success: false, message: 'Date is required' });
+
+    const start = new Date(date);
+    const end = new Date(date);
+    end.setHours(23, 59, 59, 999);
+
+    const where = isAdmin
+      ? { date: { [Op.between]: [start, end] } }
+      : {
+          [Op.and]: [
+            { date: { [Op.between]: [start, end] } },
+            { [Op.or]: [{ userId }, { assignedToUserId: userId }] },
+          ],
+        };
+
+    const todos = await Todo.findAll({
+      where,
+      include: [
+        { model: User, as: 'owner', attributes: ['id', 'name', 'email'] },
+        { model: User, as: 'assignee', attributes: ['id', 'name', 'email'] },
+      ],
+      order: [['createdAt', 'DESC']],
+    });
+
+    res.status(200).json({ success: true, todos });
+  } catch (error) {
+    logger.error('getTodosByDate error:', error);
+    res
+      .status(500)
+      .json({ success: false, message: 'Failed to fetch todos by date' });
+  }
+};
+
+// ✅ GET TODOS BY DATE RANGE (for calendar dots)
+exports.getTodosByDateRange = async (req, res) => {
+  try {
+    const { start, end } = req.query;
+    const isAdmin = req.user.role === 'admin';
+    const userId = req.user.id;
+
+    if (!start || !end)
+      return res
+        .status(400)
+        .json({ success: false, message: 'Start and end dates required' });
+
+    const where = isAdmin
+      ? { date: { [Op.between]: [new Date(start), new Date(end)] } }
+      : {
+          [Op.and]: [
+            { date: { [Op.between]: [new Date(start), new Date(end)] } },
+            { [Op.or]: [{ userId }, { assignedToUserId: userId }] },
+          ],
+        };
+
+    const todos = await Todo.findAll({
+      where,
+      attributes: ['id', 'date', 'status'],
+      raw: true,
+    });
+
+    const taskSummary = todos.reduce((acc, todo) => {
+      const date = todo.date.toISOString().split('T')[0];
+      if (!acc[date]) acc[date] = [];
+      acc[date].push(todo);
+      return acc;
+    }, {});
+
+    res.status(200).json({ success: true, taskSummary });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
   }
 };

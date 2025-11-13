@@ -25,29 +25,38 @@ export default function Dashboard() {
 
   return (
     <div
-      className="flex-1 h-full overflow-scroll p-4 sm:p-6 md:p-8 
-                 grid grid-cols-1 lg:grid-cols-3 gap-6 
+      className="flex-1 h-full overflow-y-auto p-4 sm:p-6 md:p-8 
                  bg-gray-dark dark:bg-gray-100 
                  text-white dark:text-gray-900 
                  transition-colors duration-300 ease-in-out"
     >
-      <div className="lg:col-span-2 transition-transform duration-500 ease-in-out hover:scale-[1.01]">
-        <div className="lg:col-span-3 mb-4 flex justify-between items-center">
-          <h2 className="text-2xl sm:text-3xl font-bold text-white dark:text-gray-900">
-            👋 Welcome back,{' '}
-            <span className="text-primary">{user?.name || 'User'}</span>!
-          </h2>
-        </div>
+      <div
+        className="grid grid-cols-1 lg:grid-cols-3 gap-6 
+                   max-w-full min-h-full"
+      >
+        {/* ✅ Left Section (Todo List) */}
+        <div className="lg:col-span-2 transition-transform duration-500 ease-in-out hover:scale-[1.01]">
+          <div className="mb-4 flex justify-between items-center">
+            <h2 className="text-2xl sm:text-3xl font-bold text-white dark:text-gray-900">
+              👋 Welcome back,{' '}
+              <span className="text-primary">{user?.name || 'User'}</span>!
+            </h2>
+          </div>
 
-        <TodoList todos={todos} onUpdateStatus={handleUpdateStatus} />
-      </div>
-
-      <div className="lg:col-span-1 overflow-y-auto max-h-[80vh] pr-2 space-y-6">
-        <div className="transition-transform duration-500 ease-in-out hover:scale-[1.02]">
-          <Calendar />
+          <TodoList todos={todos} onUpdateStatus={handleUpdateStatus} />
         </div>
-        <div className="transition-transform duration-500 ease-in-out hover:scale-[1.02]">
-          <TodaysTodos />
+        <div
+          className="lg:col-span-1 flex flex-col gap-6 
+                     overflow-visible lg:overflow-y-auto 
+                     max-h-full sm:max-h-[80vh] 
+                     transition-transform duration-500 ease-in-out"
+        >
+          <div className="transition-transform duration-500 ease-in-out hover:scale-[1.02]">
+            <Calendar />
+          </div>
+          <div className="transition-transform duration-500 ease-in-out hover:scale-[1.02]">
+            <TodaysTodos />
+          </div>
         </div>
       </div>
     </div>

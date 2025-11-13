@@ -57,7 +57,12 @@
   }
 
   .rbc-today {
-    background-color: rgba(255, 128, 88, 0.15) !important; /* light orange tint */
+    background-color: rgba(
+      255,
+      128,
+      88,
+      0.15
+    ) !important; /* light orange tint */
     border-left: 3px solid #ff8058 !important;
   }
 
