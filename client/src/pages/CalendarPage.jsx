@@ -88,14 +88,26 @@ export default function CalendarPage() {
   const label = format(currentDate, 'MMMM yyyy'); // e.g. November 2025
 
   return (
-    <div className="flex-1 bg-gray-dark text-secondary h-full overflow-y-auto p-4 sm:p-6 transition-colors duration-300">
+<div
+  className="
+    flex-1 h-full overflow-y-auto p-4 sm:p-6 transition-colors duration-300
+    bg-gray-dark text-secondary 
+    dark:bg-gray-100 dark:text-gray-900
+  "
+>
       <div className="flex items-center gap-3 mb-6 border-b border-gray-light/50 pb-3">
         <FiCalendar className="text-2xl text-primary" />
         <h2 className="text-2xl font-bold">Task Calendar</h2>
       </div>
 
       {/* Custom toolbar (fully functional) */}
-      <div className="bg-gray p-4 rounded-xl md:p-6 shadow-md border border-gray-light/40 mb-4">
+<div
+  className="
+    p-4 rounded-xl md:p-6 shadow-md mb-4 
+    bg-gray dark:bg-gray-100
+    border border-gray-light/40 dark:border-gray-300
+  "
+>
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div className="flex items-center gap-2">
             <button
@@ -173,7 +185,13 @@ export default function CalendarPage() {
       </div>
 
       {/* Calendar itself */}
-      <div className="bg-gray rounded-xl p-2 md:p-4 shadow-inner border border-gray-light/30">
+<div
+  className="
+    rounded-xl p-2 md:p-4 shadow-inner 
+    bg-gray dark:bg-gray-100
+    border border-gray-light/30 dark:border-gray-300
+  "
+>
 
         <Calendar
           localizer={localizer}
