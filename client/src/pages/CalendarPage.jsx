@@ -133,7 +133,15 @@ export default function CalendarPage() {
             </button>
           </div>
 
-          <div className="text-center text-lg font-semibold text-white">{label}</div>
+          <div
+  className="
+    text-center text-lg font-semibold
+    text-white dark:text-gray-900
+  "
+>
+  {label}
+</div>
+
 
           <div className="flex items-center gap-2">
             <button
@@ -194,18 +202,24 @@ export default function CalendarPage() {
 >
 
         <Calendar
-          localizer={localizer}
-          events={events}
-          startAccessor="start"
-          endAccessor="end"
-          date={currentDate}
-          view={currentView}
-          onNavigate={(date) => setCurrentDate(date)} // keeps controlled state synced if user interacts directly
-          onView={(view) => setCurrentView(view)}
-          popup
-          toolbar={false}
-          style={{ height: '75vh' }}
-        />
+  localizer={localizer}
+  events={events}
+  startAccessor="start"
+  endAccessor="end"
+  date={currentDate}
+  view={currentView}
+  onNavigate={(date) => setCurrentDate(date)}
+  onView={(view) => setCurrentView(view)}
+  popup
+  toolbar={false}
+  formats={{
+    eventTimeRangeFormat: ({ start }) => format(start, 'p'),
+    eventTimeRangeStartFormat: ({ start }) => format(start, 'p'),
+    eventTimeRangeEndFormat: () => '',
+  }}
+  style={{ height: '75vh' }}
+/>
+
       </div>
 
       <div className="h-10" />
