@@ -9,6 +9,8 @@ import {
   CartesianGrid,
 } from 'recharts';
 
+import { CHART_COLORS } from '../../../theme/colors';
+
 export const BarChartBox = ({ title, data, barColor }) => (
   <div
     className="bg-gray-800 dark:bg-white p-4 rounded-lg shadow border border-gray-light dark:border-gray-300 
@@ -21,15 +23,17 @@ export const BarChartBox = ({ title, data, barColor }) => (
         <BarChart data={data}>
           <CartesianGrid
             strokeDasharray="3 3"
-            stroke="#444"
+            stroke={CHART_COLORS.grid}
             className="dark:stroke-gray-300"
           />
+
           <XAxis
             dataKey="name"
-            stroke="#ccc"
+            stroke={CHART_COLORS.axis}
             className="dark:stroke-gray-700"
           />
-          <YAxis stroke="#ccc" className="dark:stroke-gray-700" />
+          <YAxis stroke={CHART_COLORS.axis} className="dark:stroke-gray-700" />
+
           <Tooltip
             contentStyle={{
               backgroundColor: 'var(--tooltip-bg)',
@@ -37,11 +41,13 @@ export const BarChartBox = ({ title, data, barColor }) => (
               color: 'var(--tooltip-text)',
             }}
             wrapperStyle={{
-              '--tooltip-bg': '#1f2937',
-              '--tooltip-text': '#fff',
+              '--tooltip-bg': CHART_COLORS.tooltip.lightBg,
+              '--tooltip-text': CHART_COLORS.tooltip.lightText,
             }}
-            className="dark:[--tooltip-bg:#f9fafb] dark:[--tooltip-text:#111]"
+            className={`dark:[--tooltip-bg:${CHART_COLORS.tooltip.darkBg}] 
+                        dark:[--tooltip-text:${CHART_COLORS.tooltip.darkText}]`}
           />
+
           <Bar dataKey="value" fill={barColor} radius={[8, 8, 0, 0]} />
         </BarChart>
       </ResponsiveContainer>
