@@ -1,38 +1,7 @@
-import React, { useContext, useState } from 'react';
+import React from 'react';
 import { ArrowLeft } from 'lucide-react';
-import toast from 'react-hot-toast';
-import AppContext from '../../context/AppContext';
-import { updateTodo } from '../../services/todos';
 
-export default function TodoHeader({ todo, onStatusUpdated }) {
-  const { fetchTodos } = useContext(AppContext);
-  const [updatingStatus, setUpdatingStatus] = useState(false);
-
-  const handleStatusChange = async (newStatus) => {
-    if (!todo?.id) return;
-    setUpdatingStatus(true);
-
-    try {
-      const data = await updateTodo(todo.id, { status: newStatus });
-
-      if (data.success) {
-        toast.success('Status updated successfully!');
-        if (onStatusUpdated) onStatusUpdated(data);
-        fetchTodos();
-      } else {
-        toast.error(data.message || 'Failed to update status');
-      }
-    } catch (error) {
-      if (error.response?.data?.errors) {
-        error.response.data.errors.forEach((err) => toast.error(err.msg));
-      } else {
-        toast.error(error.response?.data?.message || 'Failed to update status');
-      }
-    } finally {
-      setUpdatingStatus(false);
-    }
-  };
-
+export default function TodoHeader({ todo }) {
   return (
     <div
       className="
@@ -43,7 +12,6 @@ export default function TodoHeader({ todo, onStatusUpdated }) {
         transition-colors duration-300
       "
     >
-      {/* Go Back */}
       <button
         onClick={() => window.history.back()}
         className="
@@ -66,34 +34,6 @@ export default function TodoHeader({ todo, onStatusUpdated }) {
             {todo.priority}
           </span>
         </div>
-
-        <div className="hidden sm:block h-4 w-px bg-gray-700 dark:bg-gray-300" />
-
-        {/* Status Dropdown */}
-        <div className="flex items-center gap-2 shrink-0 min-w-[140px]">
-          <span className="text-gray-300 dark:text-gray-700">Status: </span>
-
-          <select
-            value={todo.status}
-            disabled={updatingStatus}
-            onChange={(e) => handleStatusChange(e.target.value)}
-            className="
-              w-full px-3 py-1 rounded
-              border border-gray-600 dark:border-gray-300
-              bg-gray-800 dark:bg-gray-100
-              text-white dark:text-gray-900
-              focus:outline-none focus:ring-2 focus:ring-primary
-              cursor-pointer
-              transition-colors duration-300
-            "
-          >
-            <option value="pending">Pending</option>
-            <option value="inProgress">In Progress</option>
-            <option value="completed">Completed</option>
-          </select>
-        </div>
-
-        <div className="hidden sm:block h-4 w-px bg-gray-700 dark:bg-gray-300" />
       </div>
     </div>
   );

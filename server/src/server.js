@@ -1,5 +1,4 @@
 require('dotenv').config();
-require('./schedulers/reminderScheduler');
 const express = require('express');
 const cors = require('cors');
 const sequelize = require('./config/db');
@@ -7,7 +6,10 @@ const corsOptions = require('./config/cors');
 const logger = require('./utils/logger.js');
 const errorHandler = require('./middlewares/errorHandler.js');
 
-// Routers
+// Load models BEFORE sync
+require('./models/User');
+require('./models/Todo');
+
 const authRouter = require('./routes/authRouter.js');
 const todosRouter = require('./routes/todoRouter.js');
 const analyticsRouter = require('./routes/analyticsRouter.js');
@@ -27,7 +29,7 @@ app.get('/', (req, res) => {
   res.status(200).json({ success: true, message: 'API check' });
 });
 
-// Route Mounting
+// routes
 app.use('/api/v1/auth', authRouter);
 app.use('/api/v1/todos', todosRouter);
 app.use('/api/v1/analytics', analyticsRouter);
@@ -36,7 +38,6 @@ app.use('/api/v1/profile', profileRouter);
 app.use('/api/v1/admin', adminRouter);
 app.use('/api/v1/users', usersRouter);
 
-// 404 Handler
 app.use((req, res) => {
   res.status(404).json({
     success: false,
@@ -44,16 +45,21 @@ app.use((req, res) => {
   });
 });
 
-// Error Middleware
+// Error middleware
 app.use(errorHandler);
 
-// Server Init + DB Sync
+// Initialize DB + Server
 (async () => {
   try {
     await sequelize.authenticate();
     logger.info('Database connected successfully ✅');
+
+    // Sync DB - ensures new columns like reminded are added
     await sequelize.sync({ alter: true });
-    logger.info('Database synced successfully ✅ (Soft delete enabled)');
+    logger.info('Database synced successfully ✅');
+
+    // 👉 NOW start the reminder scheduler (AFTER sync)
+    require('./schedulers/reminderScheduler');
 
     app.listen(PORT, () => {
       logger.info(`🚀 Server running at http://localhost:${PORT}`);
