@@ -177,8 +177,39 @@ exports.updateTodoStatus = async (req, res) => {
 // ✅ DELETE TODO
 exports.deleteTodo = async (req, res) => {
   try {
-    await Todo.destroy({ where: { id: req.params.id, userId: req.user.id } });
-    res.json({ success: true, message: 'Todo deleted' });
+    const { id } = req.params;
+    const isAdmin = req.user.role === 'admin';
+    const userId = req.user.id;
+
+    let where;
+
+    if (isAdmin) {
+      // Admin can delete ANY todo
+      where = { id };
+    } else {
+      // User: can delete own todos OR todos assigned to them
+      where = {
+        id,
+        [Op.or]: [
+          { userId },               // created by them
+          { assignedToUserId: userId } // assigned to them
+        ]
+      };
+    }
+
+    const deleted = await Todo.destroy({ where });
+
+    if (!deleted) {
+      return res.status(404).json({
+        success: false,
+        message: 'Todo not found or you do not have permission to delete it',
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Todo deleted successfully (soft deleted)',
+    });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
