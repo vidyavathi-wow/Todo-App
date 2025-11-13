@@ -58,8 +58,7 @@ const LatestTodos = () => {
   ];
 
   return (
-    <div className="flex-1 p-4 md:p-10 bg-gray-900 dark:bg-gray-50 text-gray-200 dark:text-gray-900 transition-colors duration-300">
-      {/* ✅ Stats Overview */}
+    <div className="flex-1 p-4 md:p-10 bg-gray-900 dark:bg-gray-50 text-gray-200 dark:text-gray-900 transition-colors duration-300 overflow-y-auto">
       <div className="flex flex-wrap gap-4 mb-8">
         {stats.map(({ icon, label, value }) => (
           <div
@@ -70,52 +69,37 @@ const LatestTodos = () => {
           >
             {icon}
             <div>
-              <p className="text-2xl font-semibold text-gray-100 dark:text-gray-800">
-                {value}
-              </p>
-              <p className="text-gray-400 dark:text-gray-600 font-light">
-                {label}
-              </p>
+              <p className="text-2xl font-semibold text-gray-100 dark:text-gray-800">{value}</p>
+              <p className="text-gray-400 dark:text-gray-600 font-light">{label}</p>
             </div>
           </div>
         ))}
       </div>
 
-      {/* ✅ Latest Todos Section */}
       <div>
         <div className="flex items-center m-4 mt-6 gap-3 text-gray-200 dark:text-gray-800">
           <FiList className="text-xl text-primary" />
           <p className="text-lg font-semibold">Latest Todos</p>
         </div>
 
-        <div
-          className="relative max-w-4xl overflow-x-auto shadow-lg rounded-lg scrollbar-hide 
-                        bg-gray-800 dark:bg-white border border-gray-700 dark:border-gray-200 
-                        transition-colors duration-300"
-        >
+        <div className="relative w-full overflow-x-auto shadow-lg rounded-lg scrollbar-hide bg-gray-800 dark:bg-white border border-gray-700 dark:border-gray-200 transition-colors duration-300 max-h-[500px] sm:max-h-[600px] md:max-h-none overflow-y-auto">
           {loading ? (
             <Loader />
           ) : overviewData.recentTodos.length === 0 ? (
             <EmptyState message="No recent todos found" />
           ) : (
             <table className="w-full text-sm text-gray-200 dark:text-gray-800">
-              <thead
-                className="text-gray-400 dark:text-gray-600 text-left uppercase 
-                                 border-b border-gray-700 dark:border-gray-300 
-                                 bg-gray-900/70 dark:bg-gray-100/60"
-              >
+              <thead className="text-gray-400 dark:text-gray-600 text-left uppercase border-b border-gray-700 dark:border-gray-300 bg-gray-900/70 dark:bg-gray-100/60 sticky top-0">
                 <tr>
-                  <th className="px-3 py-4 xl:px-6"></th>
-                  <th className="px-3 py-4 xl:px-6">Title</th>
-                  <th className="px-3 py-4 xl:px-6 max-sm:hidden"></th>
-                  <th className="px-2 py-4 xl:px-6">Assigned To</th>
-                  <th className="px-2 py-4 xl:px-6 max-sm:hidden">Date</th>
-                  <th className="px-3 py-4 xl:px-6 max-sm:hidden">Status</th>
-                  <th className="px-3 py-4">Delete</th>
+                  <th scope="col" className="px-3 py-4 xl:px-6">#</th>
+                  <th scope="col" className="px-3 py-4 xl:px-6">Title</th>
+                  <th scope="col" className="px-2 py-4 xl:px-6 max-sm:hidden">Assigned To</th>
+                  <th scope="col" className="px-2 py-4 xl:px-6 max-sm:hidden">Date</th>
+                  <th scope="col" className="px-3 py-4 xl:px-6 max-sm:hidden">Status</th>
+                  <th scope="col" className="px-3 py-4">Delete</th>
                 </tr>
               </thead>
-
-              <tbody className="divide-y divide-gray-700 dark:divide-gray-200">
+              <tbody className="divide-y divide-gray-700 dark:divide-gray-200 overflow-y-auto dark:[&_tr:hover]:bg-transparent">
                 {overviewData.recentTodos.map((todo, index) => (
                   <TodoTableItem
                     key={todo.id}

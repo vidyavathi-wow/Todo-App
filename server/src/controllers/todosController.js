@@ -5,7 +5,6 @@ const logger = require('../utils/logger');
 const { fn, col, Op } = require('sequelize');
 const sequelize = require('../config/db');
 
-// ✅ CREATE TODO
 exports.createTodo = async (req, res) => {
   try {
     const {
@@ -55,7 +54,6 @@ exports.createTodo = async (req, res) => {
   }
 };
 
-// ✅ GET ALL TODOS (Admin → all | User → owned + assigned)
 exports.getAllTodos = async (req, res) => {
   try {
     const isAdmin = req.user.role === 'admin';
@@ -81,7 +79,6 @@ exports.getAllTodos = async (req, res) => {
   }
 };
 
-// ✅ GET TODO BY ID
 exports.getTodo = async (req, res) => {
   try {
     const { id } = req.params;
@@ -112,7 +109,6 @@ exports.getTodo = async (req, res) => {
   }
 };
 
-// ✅ UPDATE TODO
 exports.updateTodo = async (req, res) => {
   const t = await sequelize.transaction();
   try {
@@ -153,7 +149,6 @@ exports.updateTodo = async (req, res) => {
   }
 };
 
-// ✅ UPDATE STATUS
 exports.updateTodoStatus = async (req, res) => {
   try {
     const { status } = req.body;

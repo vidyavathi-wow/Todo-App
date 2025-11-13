@@ -28,6 +28,9 @@ export const API = {
     base: '/api/v1/admin',
     users: '/api/v1/admin/users',
     activityLogs: '/api/v1/admin/activitylogs',
+    promote: (id) => `/api/v1/admin/users/${id}/promote`,
+    demote: (id) => `/api/v1/admin/users/${id}/demote`,
+    restore: (id) => `/api/v1/admin/users/${id}/restore`,
   },
 
   analytics: {
