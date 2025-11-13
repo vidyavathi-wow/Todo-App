@@ -15,6 +15,9 @@ export const API = {
     byId: (id) => `/api/v1/todos/${id}`,
     statusById: (id) => `/api/v1/todos/${id}/status`,
     dashboard: '/api/v1/todos/data/dashboard',
+    byDate: (date) => `/api/v1/todos/by-date?date=${date}`,
+    byDateRange: (start, end) =>
+      `/api/v1/todos/by-date-range?start=${start}&end=${end}`,
   },
 
   profile: {

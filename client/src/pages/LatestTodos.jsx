@@ -14,6 +14,7 @@ const LatestTodos = () => {
     pending: 0,
     recentTodos: [],
   });
+
   const [loading, setLoading] = useState(true);
 
   const fetchDashboard = async () => {
@@ -63,7 +64,9 @@ const LatestTodos = () => {
         {stats.map(({ icon, label, value }) => (
           <div
             key={label}
-            className="flex items-center gap-4 bg-gray-800 dark:bg-white shadow-md hover:shadow-lg min-w-[180px] p-5 rounded-lg border border-gray-700 dark:border-gray-200 cursor-pointer hover:scale-[1.03] transition-all duration-200"
+            className="flex items-center gap-4 bg-gray-800 dark:bg-white shadow-md hover:shadow-lg 
+                       min-w-[180px] p-5 rounded-lg border border-gray-700 dark:border-gray-200 
+                       cursor-pointer hover:scale-[1.03] transition-all duration-200"
           >
             {icon}
             <div>
@@ -85,34 +88,33 @@ const LatestTodos = () => {
           <p className="text-lg font-semibold">Latest Todos</p>
         </div>
 
-        <div className="relative max-w-4xl overflow-x-auto shadow-lg rounded-lg scrollbar-hide bg-gray-800 dark:bg-white border border-gray-700 dark:border-gray-200 transition-colors duration-300">
+        <div
+          className="relative max-w-4xl overflow-x-auto shadow-lg rounded-lg scrollbar-hide 
+                        bg-gray-800 dark:bg-white border border-gray-700 dark:border-gray-200 
+                        transition-colors duration-300"
+        >
           {loading ? (
             <Loader />
           ) : overviewData.recentTodos.length === 0 ? (
             <EmptyState message="No recent todos found" />
           ) : (
             <table className="w-full text-sm text-gray-200 dark:text-gray-800">
-              <thead className="text-gray-400 dark:text-gray-600 text-left uppercase border-b border-gray-700 dark:border-gray-300 bg-gray-900/70 dark:bg-gray-100/60">
+              <thead
+                className="text-gray-400 dark:text-gray-600 text-left uppercase 
+                                 border-b border-gray-700 dark:border-gray-300 
+                                 bg-gray-900/70 dark:bg-gray-100/60"
+              >
                 <tr>
-                  <th scope="col" className="px-3 py-4 xl:px-6"></th>
-                  <th scope="col" className="px-3 py-4 xl:px-6">
-                    Title
-                  </th>
-                  <th scope="col" className="px-3 py-4 xl:px-6 max-sm:hidden">
-                  <th scope="col" className="px-2 py-4 xl:px-6">
-                    Assigned To
-                  </th>
-                  <th scope="col" className="px-2 py-4 xl:px-6 max-sm:hidden">
-                    Date
-                  </th>
-                  <th scope="col" className="px-3 py-4 xl:px-6 max-sm:hidden">
-                    Status
-                  </th>
-                  <th scope="col" className="px-3 py-4">
-                    Delete
-                  </th>
+                  <th className="px-3 py-4 xl:px-6"></th>
+                  <th className="px-3 py-4 xl:px-6">Title</th>
+                  <th className="px-3 py-4 xl:px-6 max-sm:hidden"></th>
+                  <th className="px-2 py-4 xl:px-6">Assigned To</th>
+                  <th className="px-2 py-4 xl:px-6 max-sm:hidden">Date</th>
+                  <th className="px-3 py-4 xl:px-6 max-sm:hidden">Status</th>
+                  <th className="px-3 py-4">Delete</th>
                 </tr>
               </thead>
+
               <tbody className="divide-y divide-gray-700 dark:divide-gray-200">
                 {overviewData.recentTodos.map((todo, index) => (
                   <TodoTableItem

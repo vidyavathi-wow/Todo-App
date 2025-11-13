@@ -8,6 +8,8 @@ const {
   deleteTodo,
   getDashboardData,
   updateTodoStatus,
+  getTodosByDate,
+  getTodosByDateRange,
 } = require('../controllers/todosController');
 
 const verifyToken = require('../middlewares/verifyToken');
@@ -18,11 +20,15 @@ const {
 
 router.post('/', verifyToken, validateTodo, createTodo);
 
-router.get('/:id', verifyToken, validateTodoIdParam, getTodo);
+router.get('/', verifyToken, getAllTodos);
 
 router.get('/data/dashboard', verifyToken, getDashboardData);
 
-router.get('/', verifyToken, getAllTodos);
+router.get('/by-date', verifyToken, getTodosByDate);
+
+router.get('/by-date-range', verifyToken, getTodosByDateRange);
+
+router.get('/:id', verifyToken, validateTodoIdParam, getTodo);
 
 router.put('/:id', verifyToken, validateTodoIdParam, validateTodo, updateTodo);
 
