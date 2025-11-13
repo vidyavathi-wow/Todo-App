@@ -8,6 +8,17 @@ import Button from '../components/common/Button';
 import Select from '../components/common/Select';
 import { createTodo, updateTodo } from '../services/todos';
 
+const getLocalDateTimeMin = () => {
+  const now = new Date();
+  now.setSeconds(0);
+  now.setMilliseconds(0);
+
+  const offset = now.getTimezoneOffset();
+  const local = new Date(now.getTime() - offset * 60000);
+
+  return local.toISOString().slice(0, 16);
+};
+
 const AddTodo = () => {
   const { editTodo, setEditTodo, fetchTodos, users, user } =
     useContext(AppContext);
@@ -33,18 +44,15 @@ const AddTodo = () => {
     },
   });
 
-  const [minDateTime, setMinDateTime] = useState(
-    new Date().toISOString().slice(0, 16)
-  );
+  const [minDateTime, setMinDateTime] = useState(getLocalDateTimeMin());
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setMinDateTime(new Date().toISOString().slice(0, 16));
+      setMinDateTime(getLocalDateTimeMin());
     }, 60000);
     return () => clearInterval(interval);
   }, []);
 
-  // --- FIX DATE IN EDIT MODE (UTC → Local)
   useEffect(() => {
     if (editTodo) {
       Object.entries(editTodo).forEach(([key, value]) => {
@@ -105,19 +113,19 @@ const AddTodo = () => {
       onSubmit={handleSubmit(onSubmitHandler)}
       className="
         flex-1 bg-gray-dark text-secondary h-full overflow-scroll p-4
-        dark:bg-gray-50 dark:text-gray-900  /* ⭐ added */
+        dark:bg-gray-50 dark:text-gray-900
       "
     >
       <div
         className="
           bg-gray-dark w-full max-w-3xl p-6 md:p-10 shadow-lg rounded-lg mx-auto border border-gray-light
-          dark:bg-white dark:border-gray-300 /* ⭐ added */
+          dark:bg-white dark:border-gray-300
         "
       >
         <h2
           className="
             text-2xl font-bold mb-6 border-b border-gray-700 pb-2
-            dark:text-gray-900 dark:border-gray-300 /* ⭐ added */
+            dark:text-gray-900 dark:border-gray-300
           "
         >
           {editTodo ? 'Edit Todo' : 'Add New Todo'}
@@ -125,13 +133,13 @@ const AddTodo = () => {
 
         {/* Title */}
         <div className="mb-6">
-          <label className="block text-secondary/90 mb-2 font-medium dark:text-gray-700 /* ⭐ */">
+          <label className="block text-secondary/90 mb-2 font-medium dark:text-gray-700">
             Title <span className="text-red-500">*</span>
           </label>
           <Input
             type="text"
             placeholder="Enter todo title"
-            className="dark:bg-gray-100 dark:text-gray-900 dark:border-gray-300 /* ⭐ */"
+            className="dark:bg-gray-100 dark:text-gray-900 dark:border-gray-300"
             {...register('title', { required: 'Title is required' })}
           />
           {errors.title && (
@@ -141,13 +149,13 @@ const AddTodo = () => {
 
         {/* Description */}
         <div className="mb-6">
-          <label className="block text-secondary/90 mb-2 font-medium dark:text-gray-700 /* ⭐ */">
+          <label className="block text-secondary/90 mb-2 font-medium dark:text-gray-700">
             Description <span className="text-red-500">*</span>
           </label>
           <Input
             type="text"
             placeholder="Enter description"
-            className="dark:bg-gray-100 dark:text-gray-900 dark:border-gray-300 /* ⭐ */"
+            className="dark:bg-gray-100 dark:text-gray-900 dark:border-gray-300"
             {...register('description', {
               required: 'Description is required',
             })}
@@ -161,13 +169,13 @@ const AddTodo = () => {
 
         {/* Notes */}
         <div className="mb-6">
-          <label className="block text-secondary/90 mb-2 font-medium dark:text-gray-700 /* ⭐ */">
+          <label className="block text-secondary/90 mb-2 font-medium dark:text-gray-700">
             Notes
           </label>
           <textarea
             className="
               w-full p-2 border border-gray-300 rounded bg-gray-dark text-text min-h-[150px]
-              dark:bg-gray-100 dark:text-gray-900 dark:border-gray-300 /* ⭐ */
+              dark:bg-gray-100 dark:text-gray-900 dark:border-gray-300
             "
             placeholder="Enter notes"
             {...register('notes')}
@@ -176,21 +184,31 @@ const AddTodo = () => {
 
         {/* Date & Time */}
         <div className="mb-6">
-          <label className="block text-secondary/90 mb-2 font-medium dark:text-gray-700 /* ⭐ */">
+          <label className="block text-secondary/90 mb-2 font-medium dark:text-gray-700">
             Date & Time <span className="text-red-500">*</span>
           </label>
 
-          {/* ⭐ Make datetime-local interactive & visible */}
           <Input
             type="datetime-local"
             min={minDateTime}
+            onClick={(e) => e.target.showPicker()}
+            onChange={(e) => e.target.blur()}
             className="
-              cursor-pointer 
-              dark:bg-gray-100 dark:text-gray-900 dark:border-gray-300 
-              hover:border-primary hover:ring-1 hover:ring-primary 
-              focus:ring-primary focus:border-primary /* ⭐ */
-            "
-            {...register('date', { required: 'Date & time are required' })}
+    cursor-pointer
+    dark:bg-gray-100 dark:text-gray-900 dark:border-gray-300
+    hover:border-primary hover:ring-1 hover:ring-primary
+    focus:ring-primary focus:border-primary
+  "
+            {...register('date', {
+              required: 'Date & time are required',
+              validate: (value) => {
+                const selected = new Date(value).getTime();
+                const now = new Date().getTime();
+
+                if (selected < now) return 'Cannot select a past time';
+                return true;
+              },
+            })}
           />
 
           {errors.date && (
@@ -200,11 +218,11 @@ const AddTodo = () => {
 
         {/* Reminder */}
         <div className="mb-6">
-          <label className="block text-secondary/90 mb-2 font-medium dark:text-gray-700 /* ⭐ */">
+          <label className="block text-secondary/90 mb-2 font-medium dark:text-gray-700">
             Remind Me Before
           </label>
           <Select
-            className="dark:bg-gray-100 dark:text-gray-900 dark:border-gray-300 /* ⭐ */"
+            className="dark:bg-gray-100 dark:text-gray-900 dark:border-gray-300"
             {...register('reminderBeforeMinutes')}
             options={[
               { label: '10 minutes', value: 10 },
@@ -218,7 +236,7 @@ const AddTodo = () => {
         <div className="mb-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
           <Select
             {...register('category')}
-            className="dark:bg-gray-100 dark:text-gray-900 dark:border-gray-300 /* ⭐ */"
+            className="dark:bg-gray-100 dark:text-gray-900 dark:border-gray-300"
             label="Category"
             options={[
               { label: 'Work', value: 'Work' },
@@ -228,7 +246,7 @@ const AddTodo = () => {
           />
           <Select
             {...register('priority')}
-            className="dark:bg-gray-100 dark:text-gray-900 dark:border-gray-300 /* ⭐ */"
+            className="dark:bg-gray-100 dark:text-gray-900 dark:border-gray-300"
             label="Priority"
             options={[
               { label: 'Low', value: 'Low' },
@@ -238,7 +256,7 @@ const AddTodo = () => {
           />
           <Select
             {...register('status')}
-            className="dark:bg-gray-100 dark:text-gray-900 dark:border-gray-300 /* ⭐ */"
+            className="dark:bg-gray-100 dark:text-gray-900 dark:border-gray-300"
             label="Status"
             options={[
               { label: 'Pending', value: 'pending' },
@@ -250,11 +268,11 @@ const AddTodo = () => {
 
         {/* Assigned To */}
         <div className="mb-6">
-          <label className="block text-secondary/90 mb-2 font-medium dark:text-gray-700 /* ⭐ */">
+          <label className="block text-secondary/90 mb-2 font-medium dark:text-gray-700">
             Assigned To
           </label>
           <Select
-            className="dark:bg-gray-100 dark:text-gray-900 dark:border-gray-300 /* ⭐ */"
+            className="dark:bg-gray-100 dark:text-gray-900 dark:border-gray-300"
             {...register('assignedToUserId')}
             options={[
               { label: 'Unassigned', value: '' },
@@ -275,7 +293,7 @@ const AddTodo = () => {
             <Button
               type="button"
               onClick={onCancelHandler}
-              className="bg-gray-700 dark:bg-gray-200 dark:text-gray-900 /* ⭐ */"
+              className="bg-gray-700 dark:bg-gray-200 dark:text-gray-900"
             >
               Cancel
             </Button>
