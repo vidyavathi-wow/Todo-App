@@ -184,14 +184,18 @@ const AddTodo = () => {
           <Input
             type="datetime-local"
             min={minDateTime}
+            {...register('date', {
+              required: 'Date & time are required',
+              onChange: (e) => e.target.blur(), 
+            })}
             className="
               cursor-pointer 
               dark:bg-gray-100 dark:text-gray-900 dark:border-gray-300 
               hover:border-primary hover:ring-1 hover:ring-primary 
-              focus:ring-primary focus:border-primary /* ⭐ */
+              focus:ring-primary focus:border-primary
             "
-            {...register('date', { required: 'Date & time are required' })}
           />
+
 
           {errors.date && (
             <p className="text-red-500 text-sm mt-1">{errors.date.message}</p>
