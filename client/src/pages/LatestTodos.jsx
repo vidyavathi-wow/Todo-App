@@ -94,7 +94,9 @@ const LatestTodos = () => {
             <table className="w-full text-sm text-gray-200 dark:text-gray-800">
               <thead className="text-gray-400 dark:text-gray-600 text-left uppercase border-b border-gray-700 dark:border-gray-300 bg-gray-900/70 dark:bg-gray-100/60 sticky top-0">
                 <tr>
-                  <th scope="col" className="px-3 py-4 xl:px-6"></th>
+                  <th scope="col" className="px-3 py-4 xl:px-6">
+                    #
+                  </th>
                   <th scope="col" className="px-3 py-4 xl:px-6">
                     Title
                   </th>
