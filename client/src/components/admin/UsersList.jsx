@@ -136,67 +136,72 @@ const UsersList = () => {
                 </p>
               </div>
 
-              {/* Buttons */}
+              {/* ACTION BUTTONS */}
               <div
-                className="mt-3 sm:mt-0 flex-shrink-0 w-full sm:w-auto 
-                flex flex-wrap justify-end sm:justify-center gap-3"
+                className="
+                  mt-3 sm:mt-0
+                  flex flex-wrap 
+                  w-full sm:w-auto 
+                  justify-between sm:justify-center md:justify-end 
+                  gap-3
+                "
               >
-                {/* Restore if deleted */}
+                {/* Restore */}
                 {u.deletedAt ? (
                   <button
                     onClick={() => handleRestore(u.id)}
-                    className="flex items-center justify-center gap-2 text-green-500 hover:text-green-400 
-                    bg-gray-700 dark:bg-gray-200 dark:hover:bg-gray-300 sm:bg-transparent 
-                    px-3 py-2 rounded-lg sm:rounded-none w-full sm:w-auto transition"
+                    className="
+                      flex items-center gap-2 px-4 py-2 rounded-lg 
+                      w-full sm:w-auto text-sm font-medium 
+                      bg-gray-700 dark:bg-gray-200 hover:opacity-80
+                      text-green-500 dark:text-gray-900
+                    "
                   >
-                    <UserCheck size={18} />
-                    <span className="text-sm font-medium sm:block">
-                      Restore
-                    </span>
+                    <UserCheck size={18} /> Restore
                   </button>
                 ) : (
                   <>
-                    {/* Promote (user → admin) */}
+                    {/* Promote */}
                     {u.role !== 'admin' && (
                       <button
                         onClick={() => handlePromote(u.id)}
-                        className="flex items-center justify-center gap-2 text-blue-400 hover:text-blue-300 
-                        bg-gray-700 dark:bg-gray-200 dark:hover:bg-gray-300 sm:bg-transparent
-                        px-3 py-2 rounded-lg sm:rounded-none w-full sm:w-auto transition"
+                        className="
+                          flex items-center gap-2 px-4 py-2 rounded-lg 
+                          w-full sm:w-auto text-sm font-medium 
+                          bg-gray-700 dark:bg-gray-200 hover:opacity-80
+                          text-blue-400 dark:text-gray-900
+                        "
                       >
-                        <ArrowUpCircle size={18} />
-                        <span className="text-sm font-medium sm:block">
-                          Promote
-                        </span>
+                        <ArrowUpCircle size={18} /> Promote
                       </button>
                     )}
 
-                    {/* Demote (admin → user) */}
+                    {/* Demote */}
                     {u.role === 'admin' && (
                       <button
                         onClick={() => handleDemote(u.id)}
-                        className="flex items-center justify-center gap-2 text-yellow-400 hover:text-yellow-300 
-                        bg-gray-700 dark:bg-gray-200 dark:hover:bg-gray-300 sm:bg-transparent
-                        px-3 py-2 rounded-lg sm:rounded-none w-full sm:w-auto transition"
+                        className="
+                          flex items-center gap-2 px-4 py-2 rounded-lg 
+                          w-full sm:w-auto text-sm font-medium 
+                          bg-gray-700 dark:bg-gray-200 hover:opacity-80
+                          text-yellow-400 dark:text-gray-900
+                        "
                       >
-                        <ArrowDownCircle size={18} />
-                        <span className="text-sm font-medium sm:block">
-                          Demote
-                        </span>
+                        <ArrowDownCircle size={18} /> Demote
                       </button>
                     )}
 
                     {/* Deactivate */}
                     <button
                       onClick={() => handleDeactivate(u.id)}
-                      className="flex items-center justify-center gap-2 text-red-500 hover:text-red-400 
-                      bg-gray-700 dark:bg-gray-200 dark:hover:bg-gray-300 sm:bg-transparent 
-                      px-3 py-2 rounded-lg sm:rounded-none w-full sm:w-auto transition"
+                      className="
+                        flex items-center gap-2 px-4 py-2 rounded-lg 
+                        w-full sm:w-auto text-sm font-medium 
+                        bg-gray-700 dark:bg-gray-200 hover:opacity-80
+                        text-red-500 dark:text-gray-900
+                      "
                     >
-                      <UserX size={18} />
-                      <span className="text-sm font-medium sm:block">
-                        Deactivate
-                      </span>
+                      <UserX size={18} /> Deactivate
                     </button>
                   </>
                 )}
