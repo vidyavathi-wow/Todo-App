@@ -2,7 +2,8 @@ const sequelize = require('../config/db');
 const User = require('../models/User');
 const ActivityLog = require('../models/ActivityLog');
 const Todo = require('../models/Todo');
-
+const logger = require('../utils/logger');
+const sendEmail = require('../config/emailServeice');
 exports.getAllUsers = async (req, res) => {
   try {
     let { page = 1, limit = 10, includeDeleted } = req.query;
@@ -147,6 +148,144 @@ exports.restoreUserByAdmin = async (req, res) => {
   } catch (error) {
     await t.rollback();
     console.error('restoreUserByAdmin error:', error);
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+exports.promoteUserByAdmin = async (req, res) => {
+  const t = await sequelize.transaction();
+
+  try {
+    const { id } = req.params;
+
+    const user = await User.findByPk(id, { transaction: t });
+
+    if (!user) {
+      await t.rollback();
+      return res
+        .status(404)
+        .json({ success: false, message: 'User not found' });
+    }
+
+    if (user.role === 'admin') {
+      await t.rollback();
+      return res
+        .status(400)
+        .json({ success: false, message: 'User is already an admin' });
+    }
+
+    await user.update({ role: 'admin' }, { transaction: t });
+
+    await ActivityLog.create(
+      {
+        userId: req.user?.id,
+        action: 'PROMOTE_USER',
+        details: `Admin ${req.user.email} promoted ${user.email} to admin.`,
+        timestamp: new Date(),
+      },
+      { transaction: t }
+    );
+
+    await t.commit();
+
+    // 🎉 Send promotion email (NO rollback if email fails)
+    try {
+      await sendEmail(
+        user.email,
+        '🎉 You’ve been promoted to Admin',
+        `Hello ${user.name || user.email},
+
+Good news! You have been *promoted to Admin*.
+
+Promoted by: ${req.user.email}
+
+You can now manage users, todos, and system activities.
+
+If you think this action was not intended, please contact support.
+
+Regards,
+To-Do App Team`
+      );
+    } catch (emailErr) {
+      logger.error('Promotion email failed:', emailErr);
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: `User '${user.email}' promoted to admin`,
+    });
+  } catch (error) {
+    await t.rollback();
+    logger.error('promoteUserByAdmin error:', error);
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+exports.demoteUserByAdmin = async (req, res) => {
+  const t = await sequelize.transaction();
+
+  try {
+    const { id } = req.params;
+
+    const user = await User.findByPk(id, { transaction: t });
+
+    if (!user) {
+      await t.rollback();
+      return res
+        .status(404)
+        .json({ success: false, message: 'User not found' });
+    }
+
+    if (user.role !== 'admin') {
+      await t.rollback();
+      return res
+        .status(400)
+        .json({ success: false, message: 'User is already a normal user' });
+    }
+
+    await user.update({ role: 'user' }, { transaction: t });
+
+    await ActivityLog.create(
+      {
+        userId: req.user?.id,
+        action: 'DEMOTE_USER',
+        details: `Admin ${req.user.email} demoted ${user.email} from admin.`,
+        timestamp: new Date(),
+      },
+      { transaction: t }
+    );
+
+    await t.commit();
+
+    // 📩 Send demotion email (NO rollback if email fails)
+    try {
+      await sendEmail(
+        user.email,
+        '⚠️ Your Admin Privileges Have Been Updated',
+        `Hello ${user.name || user.email},
+
+Your admin privileges have been revoked by the administrator:
+
+Changed by: ${req.user.email}
+
+You are now a normal user. You still have full access to your todos and profile.
+
+If this wasn’t expected, please reach out to support.
+
+Regards,
+To-Do App Team`
+      );
+    } catch (emailErr) {
+      logger.error('Demotion email failed:', emailErr);
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: `Admin '${user.email}' demoted to user`,
+    });
+  } catch (error) {
+    await t.rollback();
+    logger.error('demoteUserByAdmin error:', error);
     return res.status(500).json({ success: false, message: error.message });
   }
 };

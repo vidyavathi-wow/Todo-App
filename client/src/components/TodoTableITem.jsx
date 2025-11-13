@@ -43,11 +43,10 @@ const TodoTableItem = ({ todo, fetchTodos, index }) => {
     <tr className="border-b border-gray-700 hover:bg-gray-800 transition-all">
       <td className="px-2 py-4 xl:px-6 text-gray-400">{index}</td>
 
-      <td className="px-2 py-4 xl:px-6 font-medium text-gray-100">
+      <td className="px-2 dark:text-gray-900 py-4 xl:px-6 font-medium text-gray-100">
         {todo.title}
       </td>
 
-      {/* NEW Assigned To column */}
       <td className="px-2 py-4 xl:px-6 max-sm:hidden">
         <span className="text-primary">{assignee}</span>
       </td>
@@ -58,7 +57,7 @@ const TodoTableItem = ({ todo, fetchTodos, index }) => {
         {todo.status}
       </td>
 
-      <td className="px-2 py-4 text-right">
+      <td className="px-2 py-4 xl:px-6">
         <button
           onClick={handleDelete}
           className="text-red-400 hover:text-red-500 transition"

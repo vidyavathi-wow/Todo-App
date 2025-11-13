@@ -19,3 +19,105 @@
   --color-warning: #f59e0b; /* Amber */
   --color-bg: #1e293b; /* Slight bluish main background */
 }
+
+@layer components {
+  /* === React Big Calendar Theming === */
+
+  /* 🌞 LIGHT MODE */
+  .rbc-calendar {
+    @apply bg-gray-50 text-gray-900 rounded-xl overflow-hidden;
+  }
+
+  .rbc-toolbar {
+    @apply bg-gray-100 text-gray-800 rounded-lg p-3 mb-4 flex flex-wrap justify-between items-center border border-gray-300;
+  }
+
+  .rbc-toolbar button {
+    @apply bg-white border border-gray-300 text-gray-700 px-3 py-2 rounded-md hover:bg-gray-200 transition;
+  }
+
+  .rbc-toolbar button.rbc-active {
+    @apply bg-primary border-primary text-white;
+  }
+
+  .rbc-header {
+    @apply bg-gray-100 text-gray-700 uppercase text-xs font-semibold border-b border-gray-300 py-2 tracking-wide;
+  }
+
+  .rbc-date-cell {
+    @apply text-gray-800 text-sm pr-1 text-right;
+  }
+
+  .rbc-off-range .rbc-date-cell {
+    @apply text-gray-400;
+  }
+
+  .rbc-event {
+    @apply bg-primary text-white rounded-md px-2 py-1 text-xs font-medium hover:opacity-90 transition;
+  }
+
+  .rbc-today {
+    background-color: rgba(
+      255,
+      128,
+      88,
+      0.15
+    ) !important; /* light orange tint */
+    border-left: 3px solid #ff8058 !important;
+  }
+
+  .rbc-show-more {
+    @apply text-primary text-xs cursor-pointer font-semibold hover:underline;
+  }
+
+  /* 🌙 DARK MODE */
+  .dark .rbc-calendar {
+    @apply bg-gray-dark text-gray-200;
+  }
+
+  .dark .rbc-toolbar {
+    @apply bg-gray text-gray-100 border-gray-light/30;
+  }
+
+  .dark .rbc-toolbar button {
+    @apply bg-gray-700 border-gray-light text-gray-100 hover:bg-gray-600;
+  }
+
+  .dark .rbc-toolbar button.rbc-active {
+    @apply bg-primary border-primary text-white;
+  }
+
+  .dark .rbc-header {
+    @apply bg-gray text-gray-100 border-gray-light;
+  }
+
+  .dark .rbc-date-cell {
+    @apply text-gray-200;
+  }
+
+  .dark .rbc-off-range .rbc-date-cell {
+    @apply text-gray-500;
+  }
+
+  .dark .rbc-event {
+    @apply bg-primary text-white rounded-md px-2 py-1 text-xs font-medium hover:opacity-90;
+  }
+
+  .dark .rbc-today {
+    background-color: rgba(255, 128, 88, 0.15) !important;
+    border-left: 3px solid #ff8058 !important;
+  }
+
+  .dark .rbc-show-more {
+    @apply text-primary;
+  }
+
+  .dark .rbc-month-view,
+  .dark .rbc-day-bg {
+    border-color: #374151 !important;
+  }
+
+  .dark .rbc-off-range-bg {
+    background-color: #0f172a !important;
+  }
+}

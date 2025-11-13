@@ -6,83 +6,77 @@ export default function TodoCard({ todo, onToggleCompleted }) {
   const status = (todo.status || '').toLowerCase();
   const isCompleted = status === 'completed';
 
-  // Assignee Display Logic
   const assigneeName =
     todo?.assignee?.name ||
     (todo?.assignedToUserId ? `User #${todo.assignedToUserId}` : 'Unassigned');
 
   return (
     <div
-      className={`bg-gray dark:bg-white border border-gray-light dark:border-gray-300 rounded-lg p-4 hover:shadow-lg transition-all duration-300 ${
-        isCompleted ? 'opacity-75' : ''
+      className={`bg-gray-900 dark:bg-white border border-gray-700 dark:border-gray-300 rounded-xl p-5 shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer ${
+        isCompleted ? 'opacity-70' : ''
       }`}
+      onClick={() => navigate(`/todo/${todo.id}`)}
     >
-      <div className="flex justify-between items-center gap-3 mb-3">
-        <div className="flex items-start gap-3">
+      {/* HEADER */}
+      <div className="flex justify-between items-start mb-3">
+        <div className="flex items-center gap-3">
           <input
             type="checkbox"
             checked={isCompleted}
-            onChange={() => onToggleCompleted(todo)}
-            className="mt-1 w-4 h-4 accent-primary cursor-pointer"
+            onClick={(e) => e.stopPropagation()}
+            onChange={(e) => {
+              e.stopPropagation();
+              onToggleCompleted(todo);
+            }}
+            className="w-5 h-5 accent-green-500 cursor-pointer translate-y-[1px]"
           />
 
-          <div>
-            <h3
-              className={`text-lg font-semibold cursor-pointer transition-colors duration-300 ${
-                isCompleted
-                  ? 'line-through text-gray-500 dark:text-gray-400'
-                  : 'text-primary hover:underline'
-              }`}
-              onClick={() => navigate(`/todo/${todo.id}`)}
-            >
-              {todo.title}
-            </h3>
-
-            {todo.description && (
-              <p
-                className={`text-sm mt-1 transition-colors duration-300 ${
-                  isCompleted
-                    ? 'text-secondary/50 dark:text-gray-500 line-through'
-                    : 'text-secondary/70 dark:text-gray-700'
-                }`}
-              >
-                {todo.description}
-              </p>
-            )}
-
-            {/* ✅ Assigned To */}
-            <p className="text-xs text-gray-400 dark:text-gray-600 mt-1">
-              Assigned To:{' '}
-              <span className="font-medium text-gray-400 dark:text-gray-500">
-                {assigneeName}
-              </span>
-            </p>
-          </div>
+          <h3
+            className={` text-primary text-lg font-semibold transition-colors duration-300 leading-tight ${
+              isCompleted
+                ? 'line-through text-gray-500 dark:text-gray-400'
+                : 'dark:text-gray-900 hover:text-blue-400 dark:hover:text-blue-600'
+            }`}
+          >
+            {todo.title}
+          </h3>
         </div>
 
-        {/* Task Status Badge */}
         <span
-          className={`px-3 py-1 rounded-full text-xs font-medium text-white ${
-            STATUS_COLORS[status] || 'bg-gray-light text-secondary/70'
+          className={`px-3 py-1 rounded-full text-xs font-medium capitalize ${
+            STATUS_COLORS[status] ||
+            'bg-gray-700 dark:bg-gray-200 text-gray-300 dark:text-gray-700'
           }`}
         >
           {todo.status}
         </span>
       </div>
 
-      {/* Footer */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between text-sm text-secondary/70 dark:text-gray-700 gap-2">
-        <div className="flex flex-wrap items-center gap-4">
-          <span>Priority: {todo.priority}</span>
-          <span>
-            Created:{' '}
-            {todo.createdAt
-              ? new Date(todo.createdAt).toLocaleDateString()
-              : '-'}
+      {/* FOOTER */}
+      <div className="mt-3 flex flex-wrap justify-between items-center text-sm text-gray-400 dark:text-gray-600 gap-2">
+        <div className="flex flex-wrap items-center gap-3">
+          <span
+            className={`font-medium ${
+              todo.priority === 'High'
+                ? 'text-red-400 dark:text-red-600'
+                : todo.priority === 'Moderate'
+                  ? 'text-yellow-400 dark:text-yellow-600'
+                  : 'text-green-400 dark:text-green-600'
+            }`}
+          >
+            {todo.priority} Priority
           </span>
+
+          {todo.date && (
+            <span className="text-gray-400 dark:text-gray-600">
+              📅 {new Date(todo.date).toLocaleDateString()}
+            </span>
+          )}
         </div>
 
-        {isCompleted && <span className="text-xs text-success">✅ Done</span>}
+        <p className="text-xs text-gray-500 dark:text-gray-700">
+          👤 {assigneeName}
+        </p>
       </div>
     </div>
   );

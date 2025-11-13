@@ -44,12 +44,16 @@ const AddTodo = () => {
     return () => clearInterval(interval);
   }, []);
 
+  // --- FIX DATE IN EDIT MODE (UTC → Local)
   useEffect(() => {
     if (editTodo) {
       Object.entries(editTodo).forEach(([key, value]) => {
         if (key === 'date' && value) {
-          const formatted = new Date(value).toISOString().slice(0, 16);
-          setValue('date', formatted);
+          const d = new Date(value);
+          const local = new Date(d.getTime() - d.getTimezoneOffset() * 60000)
+            .toISOString()
+            .slice(0, 16);
+          setValue('date', local);
         } else if (key === 'assignee' && value) {
           setValue('assignedToUserId', value.id);
         } else if (value !== undefined) {
@@ -99,21 +103,35 @@ const AddTodo = () => {
   return (
     <form
       onSubmit={handleSubmit(onSubmitHandler)}
-      className="flex-1 bg-gray-dark text-secondary h-full overflow-scroll p-4"
+      className="
+        flex-1 bg-gray-dark text-secondary h-full overflow-scroll p-4
+        dark:bg-gray-50 dark:text-gray-900  /* ⭐ added */
+      "
     >
-      <div className="bg-gray-dark w-full max-w-3xl p-6 md:p-10 shadow-lg rounded-lg mx-auto border border-gray-light">
-        <h2 className="text-2xl font-bold mb-6 border-b border-gray-700 pb-2">
+      <div
+        className="
+          bg-gray-dark w-full max-w-3xl p-6 md:p-10 shadow-lg rounded-lg mx-auto border border-gray-light
+          dark:bg-white dark:border-gray-300 /* ⭐ added */
+        "
+      >
+        <h2
+          className="
+            text-2xl font-bold mb-6 border-b border-gray-700 pb-2
+            dark:text-gray-900 dark:border-gray-300 /* ⭐ added */
+          "
+        >
           {editTodo ? 'Edit Todo' : 'Add New Todo'}
         </h2>
 
         {/* Title */}
         <div className="mb-6">
-          <label className="block text-secondary/90 mb-2 font-medium">
+          <label className="block text-secondary/90 mb-2 font-medium dark:text-gray-700 /* ⭐ */">
             Title <span className="text-red-500">*</span>
           </label>
           <Input
             type="text"
             placeholder="Enter todo title"
+            className="dark:bg-gray-100 dark:text-gray-900 dark:border-gray-300 /* ⭐ */"
             {...register('title', { required: 'Title is required' })}
           />
           {errors.title && (
@@ -123,12 +141,13 @@ const AddTodo = () => {
 
         {/* Description */}
         <div className="mb-6">
-          <label className="block text-secondary/90 mb-2 font-medium">
+          <label className="block text-secondary/90 mb-2 font-medium dark:text-gray-700 /* ⭐ */">
             Description <span className="text-red-500">*</span>
           </label>
           <Input
             type="text"
             placeholder="Enter description"
+            className="dark:bg-gray-100 dark:text-gray-900 dark:border-gray-300 /* ⭐ */"
             {...register('description', {
               required: 'Description is required',
             })}
@@ -142,11 +161,14 @@ const AddTodo = () => {
 
         {/* Notes */}
         <div className="mb-6">
-          <label className="block text-secondary/90 mb-2 font-medium">
+          <label className="block text-secondary/90 mb-2 font-medium dark:text-gray-700 /* ⭐ */">
             Notes
           </label>
           <textarea
-            className="w-full p-2 border border-gray-300 rounded bg-gray-dark text-text min-h-[150px]"
+            className="
+              w-full p-2 border border-gray-300 rounded bg-gray-dark text-text min-h-[150px]
+              dark:bg-gray-100 dark:text-gray-900 dark:border-gray-300 /* ⭐ */
+            "
             placeholder="Enter notes"
             {...register('notes')}
           />
@@ -154,25 +176,38 @@ const AddTodo = () => {
 
         {/* Date & Time */}
         <div className="mb-6">
-          <label className="block text-secondary/90 mb-2 font-medium">
+          <label className="block text-secondary/90 mb-2 font-medium dark:text-gray-700 /* ⭐ */">
             Date & Time <span className="text-red-500">*</span>
           </label>
+
+          {/* ⭐ Make datetime-local interactive & visible */}
           <Input
             type="datetime-local"
             min={minDateTime}
-            {...register('date', { required: 'Date & time are required' })}
+            {...register('date', {
+              required: 'Date & time are required',
+              onChange: (e) => e.target.blur(),
+            })}
+            className="
+              cursor-pointer 
+              dark:bg-gray-100 dark:text-gray-900 dark:border-gray-300 
+              hover:border-primary hover:ring-1 hover:ring-primary 
+              focus:ring-primary focus:border-primary
+            "
           />
+
           {errors.date && (
             <p className="text-red-500 text-sm mt-1">{errors.date.message}</p>
           )}
         </div>
 
-        {/* Reminder Before */}
+        {/* Reminder */}
         <div className="mb-6">
-          <label className="block text-secondary/90 mb-2 font-medium">
+          <label className="block text-secondary/90 mb-2 font-medium dark:text-gray-700 /* ⭐ */">
             Remind Me Before
           </label>
           <Select
+            className="dark:bg-gray-100 dark:text-gray-900 dark:border-gray-300 /* ⭐ */"
             {...register('reminderBeforeMinutes')}
             options={[
               { label: '10 minutes', value: 10 },
@@ -183,10 +218,10 @@ const AddTodo = () => {
           />
         </div>
 
-        {/* Dropdowns */}
         <div className="mb-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
           <Select
             {...register('category')}
+            className="dark:bg-gray-100 dark:text-gray-900 dark:border-gray-300 /* ⭐ */"
             label="Category"
             options={[
               { label: 'Work', value: 'Work' },
@@ -196,6 +231,7 @@ const AddTodo = () => {
           />
           <Select
             {...register('priority')}
+            className="dark:bg-gray-100 dark:text-gray-900 dark:border-gray-300 /* ⭐ */"
             label="Priority"
             options={[
               { label: 'Low', value: 'Low' },
@@ -205,6 +241,7 @@ const AddTodo = () => {
           />
           <Select
             {...register('status')}
+            className="dark:bg-gray-100 dark:text-gray-900 dark:border-gray-300 /* ⭐ */"
             label="Status"
             options={[
               { label: 'Pending', value: 'pending' },
@@ -216,10 +253,11 @@ const AddTodo = () => {
 
         {/* Assigned To */}
         <div className="mb-6">
-          <label className="block text-secondary/90 mb-2 font-medium">
+          <label className="block text-secondary/90 mb-2 font-medium dark:text-gray-700 /* ⭐ */">
             Assigned To
           </label>
           <Select
+            className="dark:bg-gray-100 dark:text-gray-900 dark:border-gray-300 /* ⭐ */"
             {...register('assignedToUserId')}
             options={[
               { label: 'Unassigned', value: '' },
@@ -231,7 +269,6 @@ const AddTodo = () => {
           />
         </div>
 
-        {/* Buttons */}
         <div className="flex gap-3">
           <Button type="submit" disabled={isSubmitting}>
             {isSubmitting ? 'Saving...' : editTodo ? 'Update Todo' : 'Add Todo'}
@@ -241,7 +278,7 @@ const AddTodo = () => {
             <Button
               type="button"
               onClick={onCancelHandler}
-              className="bg-gray-700"
+              className="bg-gray-700 dark:bg-gray-200 dark:text-gray-900 /* ⭐ */"
             >
               Cancel
             </Button>
