@@ -211,6 +211,7 @@ const AddTodo = () => {
             })}
           />
 
+
           {errors.date && (
             <p className="text-red-500 text-sm mt-1">{errors.date.message}</p>
           )}
