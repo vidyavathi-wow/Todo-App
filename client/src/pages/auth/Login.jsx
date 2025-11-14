@@ -58,7 +58,9 @@ export default function Login() {
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
           {/* Email Field */}
           <div>
-            <label className="block mb-1 text-sm">Email Address</label>
+            <label className="block mb-1 text-sm text-white">
+              Email Address
+            </label>
             <Input
               type="email"
               placeholder="Enter your email"
@@ -78,9 +80,8 @@ export default function Login() {
             )}
           </div>
 
-          {/* Password Field */}
           <div>
-            <label className="block mb-1 text-sm">Password</label>
+            <label className="block mb-1 text-sm text-white">Password</label>
             <Input
               type="password"
               placeholder="Enter your password"
@@ -120,7 +121,7 @@ export default function Login() {
           </Button>
         </form>
 
-        <p className="text-sm text-center mt-6">
+        <p className="text-sm text-center mt-6 text-white">
           Don’t have an account?{' '}
           <Link to="/signup" className="text-primary hover:underline">
             Sign Up

@@ -6,7 +6,6 @@ const corsOptions = require('./config/cors');
 const logger = require('./utils/logger.js');
 const errorHandler = require('./middlewares/errorHandler.js');
 
-// Load models BEFORE sync
 require('./models/User');
 require('./models/Todo');
 

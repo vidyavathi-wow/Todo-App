@@ -1,26 +1,29 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useSearchParams, Link, useNavigate } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
 import Input from '../../components/common/Input';
 import Button from '../../components/common/Button';
-import { resetPassword } from '../../services/auth'; // ✅ new import
+import { resetPassword } from '../../services/auth';
 
 export default function ResetPassword() {
   const [searchParams] = useSearchParams();
   const token = searchParams.get('token');
   const navigate = useNavigate();
 
-  const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm({
+    defaultValues: { password: '' },
+  });
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!password.trim()) return toast.error('Enter a new password');
+  const onSubmit = async ({ password }) => {
     if (!token) return toast.error('Invalid or missing reset token');
 
-    setLoading(true);
     try {
-      const data = await resetPassword(token, password); // ✅ using authService
+      const data = await resetPassword(token, password);
 
       if (data.success) {
         toast.success('Password reset successfully');
@@ -30,13 +33,7 @@ export default function ResetPassword() {
       }
     } catch (error) {
       const res = error.response?.data;
-      if (res?.errors?.length) {
-        res.errors.forEach((err) => toast.error(err.msg));
-      } else {
-        toast.error(res?.message || 'Failed to reset password');
-      }
-    } finally {
-      setLoading(false);
+      toast.error(res?.message || 'Failed to reset password');
     }
   };
 
@@ -44,7 +41,7 @@ export default function ResetPassword() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-dark text-gray-light">
         <div className="text-center">
-          <p className="mb-4">Invalid or expired reset link</p>
+          <p className="mb-4 text-white">Invalid or expired reset link</p>
           <Link to="/login" className="text-primary hover:underline">
             Back to Login
           </Link>
@@ -60,32 +57,40 @@ export default function ResetPassword() {
           Reset Password
         </h2>
 
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
           <div>
-            <label className="block mb-1 text-sm">New Password</label>
+            <label className="block mb-1 text-sm text-white">
+              New Password
+            </label>
             <Input
               type="password"
-              name="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              noDefault
               placeholder="Enter new password"
               className="w-full p-3 rounded bg-gray-700 border border-gray-600 focus:ring-2 focus:ring-primary outline-none"
+              {...register('password', {
+                required: 'Password is required',
+                minLength: {
+                  value: 6,
+                  message: 'Password must be at least 6 characters',
+                },
+              })}
             />
+            {errors.password && (
+              <p className="text-red-400 text-sm mt-1">
+                {errors.password.message}
+              </p>
+            )}
           </div>
 
           <Button
             type="submit"
-            disabled={loading}
             noDefault
-            className="w-full bg-primary text-white py-3 rounded-md font-medium hover:bg-primary/80 transition disabled:opacity-50"
+            className="w-full bg-primary text-white py-3 rounded-md font-medium hover:bg-primary/80 transition"
           >
-            {loading ? 'Resetting...' : 'Reset Password'}
+            Reset Password
           </Button>
         </form>
 
-        <p className="text-sm text-center mt-6">
+        <p className="text-sm text-center mt-6 text-white">
           <Link to="/login" className="text-primary hover:underline">
             Back to Login
           </Link>
