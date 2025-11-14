@@ -1,37 +1,34 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
 import Input from '../../components/common/Input';
 import Button from '../../components/common/Button';
 import { sendForgotPasswordLink } from '../../services/auth';
 
 export default function ForgotPassword() {
-  const [email, setEmail] = useState('');
-  const [loading, setLoading] = useState(false);
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+    reset,
+  } = useForm({
+    defaultValues: { email: '' },
+  });
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!email.trim()) return toast.error('Enter your email');
-    setLoading(true);
-
+  const onSubmit = async ({ email }) => {
     try {
       const data = await sendForgotPasswordLink(email);
 
       if (data.success) {
         toast.success('Reset link sent to your email');
-        setEmail('');
+        reset();
       } else {
         toast.error(data.message || 'Failed to send reset link');
       }
     } catch (error) {
       const res = error.response?.data;
-      if (res?.errors?.length) {
-        res.errors.forEach((err) => toast.error(err.msg));
-      } else {
-        toast.error(res?.message || 'Something went wrong');
-      }
-    } finally {
-      setLoading(false);
+      toast.error(res?.message || 'Something went wrong');
     }
   };
 
@@ -42,29 +39,42 @@ export default function ForgotPassword() {
           Forgot Password
         </h2>
 
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
           <div>
-            <label className="block mb-1 text-sm text-text">
+            <label className="block mb-1 text-sm text-gray-300">
               Email Address
             </label>
+
             <Input
               type="email"
-              name="email"
-              value={email}
               placeholder="Enter your registered email"
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              noDefault
               className="w-full p-3 rounded bg-gray-700 border border-gray-600 focus:ring-2 focus:ring-primary outline-none"
+              {...register('email', {
+                required: 'Email is required',
+                pattern: {
+                  value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+                  message: 'Enter a valid email',
+                },
+              })}
             />
+
+            {errors.email && (
+              <p className="text-red-400 text-sm mt-1">
+                {errors.email.message}
+              </p>
+            )}
           </div>
 
-          <Button type="submit" disabled={loading} className="w-full h-11 mt-2">
-            {loading ? 'Sending...' : 'Send Reset Link'}
+          <Button
+            type="submit"
+            disabled={isSubmitting}
+            className="w-full h-11 mt-2"
+          >
+            {isSubmitting ? 'Sending...' : 'Send Reset Link'}
           </Button>
         </form>
 
-        <p className="text-sm text-center mt-6 text-secondary/70">
+        <p className="text-sm text-center mt-6 text-gray-400">
           <Link to="/login" className="text-primary hover:underline">
             Back to Login
           </Link>

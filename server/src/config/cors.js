@@ -1,19 +1,10 @@
 require('dotenv').config();
-const cors = require('cors');
 
-const allowedOrigins = [
-  process.env.FRONTEND_URL,
-  'http://localhost:5173',
-].filter(Boolean);
+const allowedOrigins = [process.env.FRONTEND_URL, 'http://localhost:5173'];
 
 const corsOptions = {
   origin: (origin, callback) => {
-    if (
-      !origin ||
-      allowedOrigins.some(
-        (o) => o.replace(/\/$/, '') === origin.replace(/\/$/, '')
-      )
-    ) {
+    if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));
@@ -24,4 +15,4 @@ const corsOptions = {
   allowedHeaders: ['Content-Type', 'Authorization'],
 };
 
-module.exports = cors(corsOptions);
+module.exports = corsOptions;

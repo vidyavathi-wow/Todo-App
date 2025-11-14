@@ -4,27 +4,25 @@ import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
 import Input from '../../components/common/Input';
 import Button from '../../components/common/Button';
-import Select from '../../components/common/Select';
 import { registerUser } from '../../services/auth';
 
 export default function Signup() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
 
-  // Setup react-hook-form
   const {
     register,
     handleSubmit,
     formState: { errors },
     reset,
   } = useForm({
-    defaultValues: { name: '', email: '', password: '', role: 'user' },
+    defaultValues: { name: '', email: '', password: '' }, // removed role
   });
 
   const onSubmit = async (formData) => {
     setLoading(true);
     try {
-      const data = await registerUser(formData);
+      const data = await registerUser(formData); // role no longer sent
       if (data.success) {
         toast.success(data.message || 'Account created successfully!');
         reset();
@@ -54,7 +52,7 @@ export default function Signup() {
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
           {/* Name */}
           <div>
-            <label className="block mb-1 text-sm">Full Name</label>
+            <label className="block mb-1 text-sm text-white">Full Name</label>
             <Input
               type="text"
               placeholder="Enter your name"
@@ -74,7 +72,9 @@ export default function Signup() {
 
           {/* Email */}
           <div>
-            <label className="block mb-1 text-sm">Email Address</label>
+            <label className="block mb-1 text-sm text-white">
+              Email Address
+            </label>
             <Input
               type="email"
               placeholder="Enter your email"
@@ -96,7 +96,7 @@ export default function Signup() {
 
           {/* Password */}
           <div>
-            <label className="block mb-1 text-sm">Password</label>
+            <label className="block mb-1 text-sm text-white">Password</label>
             <Input
               type="password"
               placeholder="Enter your password"
@@ -116,22 +116,6 @@ export default function Signup() {
             )}
           </div>
 
-          {/* Role */}
-          <div>
-            <label className="block mb-1 text-sm">Role</label>
-            <Select
-              {...register('role', { required: 'Role is required' })}
-              options={[
-                { label: 'User', value: 'user' },
-                { label: 'Admin', value: 'admin' },
-              ]}
-              className="w-full p-3 rounded bg-gray-700 border border-gray-600 outline-none"
-            />
-            {errors.role && (
-              <p className="text-red-400 text-sm mt-1">{errors.role.message}</p>
-            )}
-          </div>
-
           {/* Submit Button */}
           <Button
             type="submit"
@@ -143,7 +127,7 @@ export default function Signup() {
           </Button>
         </form>
 
-        <p className="text-sm text-center mt-6">
+        <p className="text-sm text-center mt-6 text-white">
           Already have an account?{' '}
           <Link to="/login" className="text-primary hover:underline">
             Login

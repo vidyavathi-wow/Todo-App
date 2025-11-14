@@ -8,15 +8,45 @@ exports.register = async (req, res) => {
   try {
     const { name, email, password, role } = req.body;
 
-    const existingUser = await User.findOne({ where: { email } });
+    const existingUser = await User.findOne({
+      where: { email },
+      paranoid: false,
+    });
+
+    if (existingUser && existingUser.deletedAt) {
+      await existingUser.restore();
+      existingUser.name = name || existingUser.name;
+      existingUser.password = await bcrypt.hash(password, 10);
+      existingUser.role = role || 'user';
+      await existingUser.save();
+
+      await ActivityLog.create({
+        userId: existingUser.id,
+        action: 'USER_RESTORED',
+        details: `User ${existingUser.email} restored via re-registration.`,
+      });
+
+      return res.status(200).json({
+        success: true,
+        message: 'Account restored and updated successfully',
+        user: {
+          id: existingUser.id,
+          name: existingUser.name,
+          email: existingUser.email,
+          role: existingUser.role,
+        },
+      });
+    }
+
     if (existingUser) {
       return res
         .status(400)
-        .json({ success: false, message: 'User already exists' });
+        .json({ success: false, message: 'Email is already registered.' });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const user = await User.create({
+
+    const newUser = await User.create({
       name,
       email,
       password: hashedPassword,
@@ -27,37 +57,39 @@ exports.register = async (req, res) => {
       await sendEmail(
         email,
         'Welcome to Your To-Do App!',
-        `Hi ${name},\n\nWelcome to your To-Do App! 🎉\nYou can now create, edit, and manage your daily tasks easily.\n\nThanks for joining us!\n\n– The To-Do App Team`
+        `Hi ${name},\n\nWelcome to your To-Do App! 🎉`
       );
-    } catch (error) {
-      console.error('Email error:', error.message);
-    }
+    } catch {}
 
     await ActivityLog.create({
-      userId: user.id,
-      action: 'User Registered',
-      details: `User ${user.email} signed up.`,
+      userId: newUser.id,
+      action: 'USER_REGISTERED',
+      details: `User ${newUser.email} signed up.`,
     });
 
     return res.status(201).json({
       success: true,
       message: 'User registered successfully',
       user: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
+        id: newUser.id,
+        name: newUser.name,
+        email: newUser.email,
+        role: newUser.role,
       },
     });
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Server error' });
+    return res.status(500).json({ success: false, message: error.message });
   }
 };
 
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
-    const user = await User.findOne({ where: { email } });
+
+    const user = await User.findOne({
+      where: { email },
+      paranoid: false,
+    });
 
     if (!user) {
       return res
@@ -73,6 +105,7 @@ exports.login = async (req, res) => {
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
+
     if (!isMatch) {
       return res
         .status(400)
@@ -87,7 +120,7 @@ exports.login = async (req, res) => {
 
     await ActivityLog.create({
       userId: user.id,
-      action: 'User Logged In',
+      action: 'USER_LOGGED_IN',
       details: `User ${user.email} logged in.`,
     });
 
@@ -103,31 +136,36 @@ exports.login = async (req, res) => {
       },
     });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    return res.status(500).json({ success: false, message: error.message });
   }
 };
 
 exports.logout = async (req, res) => {
   try {
-    const userId = req.user?.id;
-    if (userId) {
+    if (req.user?.id) {
       await ActivityLog.create({
-        userId,
-        action: 'User Logged Out',
+        userId: req.user.id,
+        action: 'USER_LOGGED_OUT',
         details: `User logged out.`,
       });
     }
 
-    res.status(200).json({ success: true, message: 'Logged out successfully' });
+    return res
+      .status(200)
+      .json({ success: true, message: 'Logged out successfully' });
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Server error' });
+    return res.status(500).json({ success: false, message: error.message });
   }
 };
 
 exports.forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
-    const user = await User.findOne({ where: { email } });
+
+    const user = await User.findOne({
+      where: { email },
+      paranoid: false,
+    });
 
     if (!user) {
       return res.status(400).json({
@@ -136,26 +174,31 @@ exports.forgotPassword = async (req, res) => {
       });
     }
 
+    if (user.deletedAt) {
+      return res.status(403).json({
+        success: false,
+        message: 'Your account is deactivated. Contact admin.',
+      });
+    }
+
     const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, {
       expiresIn: '1d',
     });
 
-    const link = `${process.env.FRONTEND_URL}/reset-password?token=${encodeURIComponent(
+    const resetLink = `${process.env.FRONTEND_URL}/reset-password?token=${encodeURIComponent(
       token
     )}`;
 
     try {
-      await sendEmail(email, 'Reset Password', `Reset link: ${link}`);
-    } catch (err) {
-      console.error('Email error:', err.message);
-    }
+      await sendEmail(email, 'Reset Password', `Reset link: ${resetLink}`);
+    } catch {}
 
-    res
-      .status(200)
-      .json({ success: true, message: 'If registered, reset link sent' });
+    return res.status(200).json({
+      success: true,
+      message: 'If registered, reset link sent',
+    });
   } catch (err) {
-    console.error('Forgot password error:', err.message);
-    res.status(500).json({ success: false, message: 'Server error' });
+    return res.status(500).json({ success: false, message: 'Server error' });
   }
 };
 
@@ -165,24 +208,26 @@ exports.resetPassword = async (req, res) => {
     const { password } = req.body;
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findByPk(decoded.userId);
 
-    if (!user) {
-      return res
-        .status(400)
-        .json({ success: false, message: 'Invalid or expired token' });
+    const user = await User.findByPk(decoded.userId, { paranoid: false });
+
+    if (!user || user.deletedAt) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid or expired token',
+      });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
-    user.password = hashedPassword;
+    user.password = await bcrypt.hash(password, 10);
     await user.save();
 
-    res
+    return res
       .status(200)
       .json({ success: true, message: 'Password reset successful' });
   } catch {
-    res
-      .status(400)
-      .json({ success: false, message: 'Invalid or expired token' });
+    return res.status(400).json({
+      success: false,
+      message: 'Invalid or expired token',
+    });
   }
 };

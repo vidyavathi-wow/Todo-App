@@ -17,10 +17,10 @@ export const sendForgotPasswordLink = async (email) => {
 };
 
 export const resetPassword = async (token, newPassword) => {
-  const { data } = await axiosInstance.post(API.auth.resetPassword, {
-    token,
-    password: newPassword,
-  });
+  const { data } = await axiosInstance.post(
+    `${API.auth.resetPassword}?token=${encodeURIComponent(token)}`,
+    { password: newPassword }
+  );
   return data;
 };
 
