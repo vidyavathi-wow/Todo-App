@@ -38,3 +38,15 @@ export const getDashboardData = async () => {
   const { data } = await axiosInstance.get(API.todos.dashboard);
   return data;
 };
+
+// Get todos for a specific date
+export const getTodosByDate = async (date) => {
+  const { data } = await axiosInstance.get(API.todos.byDate(date));
+  return data;
+};
+
+// Get todos for a date range (calendar summary)
+export const getTodosByDateRange = async (start, end) => {
+  const { data } = await axiosInstance.get(API.todos.byDateRange(start, end));
+  return data;
+};

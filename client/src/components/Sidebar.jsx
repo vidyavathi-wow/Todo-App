@@ -8,7 +8,7 @@ import {
   FiBarChart2,
   FiClock,
   FiUsers,
-  FiCalendar 
+  FiCalendar,
 } from 'react-icons/fi';
 import { User } from 'lucide-react';
 
