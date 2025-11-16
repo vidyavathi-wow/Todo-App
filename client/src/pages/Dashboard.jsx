@@ -30,18 +30,16 @@ export default function Dashboard() {
                  text-white dark:text-gray-900 
                  transition-colors duration-300 ease-in-out"
     >
-      <div
-        className="grid grid-cols-1 lg:grid-cols-3 gap-6 
-                   max-w-full min-h-full"
-      >
-        {/* ✅ Left Section (Todo List) */}
-        <div className="lg:col-span-2 transition-transform duration-500 ease-in-out hover:scale-[1.01]">
-          <div className="mb-4 flex justify-between items-center">
-            <h2 className="text-2xl sm:text-3xl font-bold text-white dark:text-gray-900">
-              👋 Welcome back,{' '}
-              <span className="text-primary">{user?.name || 'User'}</span>!
-            </h2>
-          </div>
+      <div className="lg:col-span-2 transition-transform duration-500 ease-in-out hover:scale-[1.01]">
+        <div className="lg:col-span-3 mb-4 flex justify-between items-center">
+          <h2 className="text-2xl sm:text-3xl font-bold text-white dark:text-gray-900">
+            👋 Welcome,{' '}
+            <span className="text-primary">{user?.name || 'User'}</span>!
+          </h2>
+        </div>
+
+        <TodoList todos={todos} onUpdateStatus={handleUpdateStatus} />
+      </div>
 
           <TodoList todos={todos} onUpdateStatus={handleUpdateStatus} />
         </div>

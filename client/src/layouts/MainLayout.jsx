@@ -7,9 +7,8 @@ import { FiLogOut, FiUser } from 'react-icons/fi';
 import { FaChevronDown } from 'react-icons/fa';
 
 const Layout = () => {
-  const { token, axios, user } = useContext(AppContext);
+  const { token, axios, user, theme, setTheme } = useContext(AppContext);
   const navigate = useNavigate();
-  const [theme, setTheme] = useState('light');
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
 
@@ -19,7 +18,6 @@ const Layout = () => {
     navigate('/login');
   };
 
-  // ✅ Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
@@ -32,9 +30,7 @@ const Layout = () => {
 
   return (
     <>
-      {/* ✅ Header */}
       <div className="flex items-center justify-between py-2 h-[70px] px-4 sm:px-10 bg-gray-900 dark:bg-gray-100 border-b border-gray-700 dark:border-gray-300 transition-colors duration-300">
-        {/* Logo (Left) */}
         <Link
           to="/"
           className="cursor-pointer text-3xl font-bold text-white dark:text-gray-900 select-none"
@@ -42,10 +38,8 @@ const Layout = () => {
           <span className="text-primary">To</span>-Do
         </Link>
 
-        {/* Right side: theme toggle + profile */}
         {token && user && (
           <div className="flex items-center gap-5">
-            {/* ✅ Theme Toggle (moved right next to profile) */}
             <ThemeToggleBtn theme={theme} setTheme={setTheme} />
 
             {/* ✅ Profile Dropdown */}
@@ -94,7 +88,6 @@ const Layout = () => {
                     <span>Profile</span>
                   </button>
 
-                  {/* Logout button */}
                   <button
                     onClick={logout}
                     className="w-full text-left px-4 py-2 flex items-center gap-3 text-gray-200 dark:text-gray-800 hover:bg-gray-700 dark:hover:bg-gray-300 transition"
@@ -109,7 +102,6 @@ const Layout = () => {
         )}
       </div>
 
-      {/* ✅ Main Layout */}
       <div className="flex h-[calc(100vh-70px)] bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 transition-colors duration-300">
         <Sidebar />
         <Outlet />

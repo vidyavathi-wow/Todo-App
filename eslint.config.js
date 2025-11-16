@@ -23,12 +23,14 @@ export default [
       },
     },
     plugins: { react: reactPlugin },
+
     rules: {
       'react/react-in-jsx-scope': 'off',
       'react/jsx-uses-react': 'off',
       semi: ['error', 'always'],
       quotes: ['error', 'double'],
       indent: ['error', 2],
+      'no-console': ['error', { allow: ['warn', 'error'] }],
       ...prettierConfig.rules,
     },
   },

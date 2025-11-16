@@ -194,11 +194,11 @@ const AddTodo = () => {
             onClick={(e) => e.target.showPicker()}
             onChange={(e) => e.target.blur()}
             className="
-    cursor-pointer
-    dark:bg-gray-100 dark:text-gray-900 dark:border-gray-300
-    hover:border-primary hover:ring-1 hover:ring-primary
-    focus:ring-primary focus:border-primary
-  "
+              cursor-pointer w-full
+              dark:bg-gray-100 dark:text-gray-900 dark:border-gray-300
+              hover:border-primary hover:ring-1 hover:ring-primary
+              focus:ring-primary focus:border-primary
+            "
             {...register('date', {
               required: 'Date & time are required',
               validate: (value) => {
@@ -210,18 +210,15 @@ const AddTodo = () => {
               },
             })}
           />
-
           {errors.date && (
             <p className="text-red-500 text-sm mt-1">{errors.date.message}</p>
           )}
         </div>
 
-        {/* Reminder */}
+        {/* Reminder Before */}
         <div className="mb-6">
-          <label className="block text-secondary/90 mb-2 font-medium dark:text-gray-700">
-            Remind Me Before
-          </label>
           <Select
+            label="Remind Me Before"
             className="dark:bg-gray-100 dark:text-gray-900 dark:border-gray-300"
             {...register('reminderBeforeMinutes')}
             options={[
@@ -233,31 +230,34 @@ const AddTodo = () => {
           />
         </div>
 
+        {/* Category, Priority, Status */}
         <div className="mb-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
           <Select
+            label="Category"
             {...register('category')}
             className="dark:bg-gray-100 dark:text-gray-900 dark:border-gray-300"
-            label="Category"
             options={[
               { label: 'Work', value: 'Work' },
               { label: 'Personal', value: 'Personal' },
               { label: 'Other', value: 'Other' },
             ]}
           />
+
           <Select
+            label="Priority"
             {...register('priority')}
             className="dark:bg-gray-100 dark:text-gray-900 dark:border-gray-300"
-            label="Priority"
             options={[
               { label: 'Low', value: 'Low' },
               { label: 'Moderate', value: 'Moderate' },
               { label: 'High', value: 'High' },
             ]}
           />
+
           <Select
+            label="Status"
             {...register('status')}
             className="dark:bg-gray-100 dark:text-gray-900 dark:border-gray-300"
-            label="Status"
             options={[
               { label: 'Pending', value: 'pending' },
               { label: 'In Progress', value: 'inProgress' },
@@ -268,10 +268,8 @@ const AddTodo = () => {
 
         {/* Assigned To */}
         <div className="mb-6">
-          <label className="block text-secondary/90 mb-2 font-medium dark:text-gray-700">
-            Assigned To
-          </label>
           <Select
+            label="Assigned To"
             className="dark:bg-gray-100 dark:text-gray-900 dark:border-gray-300"
             {...register('assignedToUserId')}
             options={[
@@ -284,6 +282,7 @@ const AddTodo = () => {
           />
         </div>
 
+        {/* Buttons */}
         <div className="flex gap-3">
           <Button type="submit" disabled={isSubmitting}>
             {isSubmitting ? 'Saving...' : editTodo ? 'Update Todo' : 'Add Todo'}

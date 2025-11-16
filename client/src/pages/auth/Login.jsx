@@ -11,7 +11,6 @@ export default function Login() {
   const { navigate, setToken } = useContext(AppContext);
   const [loading, setLoading] = useState(false);
 
-  // React Hook Form setup
   const {
     register,
     handleSubmit,
@@ -36,12 +35,10 @@ export default function Login() {
       }
     } catch (error) {
       const res = error.response?.data;
-      if (res?.errors && Array.isArray(res.errors)) {
+      if (res?.errors?.length) {
         res.errors.forEach((err) => toast.error(err.msg));
-      } else if (res?.message) {
-        toast.error(res.message);
       } else {
-        toast.error('Login failed');
+        toast.error(res?.message || 'Login failed');
       }
     } finally {
       setLoading(false);
@@ -49,85 +46,103 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-dark text-gray-light px-4">
-      <div className="w-full max-w-md bg-gray-800 p-8 rounded-2xl shadow-md">
-        <h2 className="text-2xl font-semibold text-center mb-6 text-primary">
-          Welcome Back
-        </h2>
+    <div className="w-full max-w-md bg-gray-800 dark:bg-white p-8 rounded-2xl shadow-md border border-gray-700 dark:border-gray-300 transition-colors duration-300">
+      <h2 className="text-2xl font-semibold text-center mb-6 text-primary">
+        Welcome Back
+      </h2>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-          {/* Email Field */}
-          <div>
-            <label className="block mb-1 text-sm text-white">
-              Email Address
-            </label>
-            <Input
-              type="email"
-              placeholder="Enter your email"
-              className="w-full p-3 rounded bg-gray-700 border border-gray-600 focus:ring-2 focus:ring-primary outline-none"
-              {...register('email', {
-                required: 'Email is required',
-                pattern: {
-                  value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-                  message: 'Enter a valid email address',
-                },
-              })}
-            />
-            {errors.email && (
-              <p className="text-red-400 text-sm mt-1">
-                {errors.email.message}
-              </p>
-            )}
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+        {/* Email */}
+        <div>
+          <label className="block mb-1 text-sm text-white dark:text-gray-900">
+            Email Address
+          </label>
+
+          <Input
+            type="email"
+            placeholder="Enter your email"
+            {...register('email', {
+              required: 'Email is required',
+              pattern: {
+                value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+                message: 'Enter a valid email address',
+              },
+            })}
+            className="
+              w-full p-3 rounded
+              bg-gray-700 dark:bg-gray-200
+              border border-gray-600 dark:border-gray-300
+              focus:ring-2 focus:ring-primary
+              text-gray-light dark:text-gray-900
+            "
+          />
+
+          {errors.email && (
+            <p className="text-red-400 dark:text-red-500 text-sm mt-1">
+              {errors.email.message}
+            </p>
+          )}
+        </div>
+
+        {/* Password */}
+        <div>
+          <label className="block mb-1 text-sm text-white dark:text-gray-900">
+            Password
+          </label>
+
+          <Input
+            type="password"
+            placeholder="Enter your password"
+            {...register('password', {
+              required: 'Password is required',
+              minLength: {
+                value: 6,
+                message: 'Password must be at least 6 characters long',
+              },
+            })}
+            className="
+              w-full p-3 rounded
+              bg-gray-700 dark:bg-gray-200
+              border border-gray-600 dark:border-gray-300
+              focus:ring-2 focus:ring-primary
+              text-gray-light dark:text-gray-900
+            "
+          />
+
+          {errors.password && (
+            <p className="text-red-400 dark:text-red-500 text-sm mt-1">
+              {errors.password.message}
+            </p>
+          )}
+
+          <div className="text-right mt-2">
+            <Link
+              to="/forgot-password"
+              className="text-sm text-primary hover:underline"
+            >
+              Forgot Password?
+            </Link>
           </div>
+        </div>
 
-          <div>
-            <label className="block mb-1 text-sm text-white">Password</label>
-            <Input
-              type="password"
-              placeholder="Enter your password"
-              className="w-full p-3 rounded bg-gray-700 border border-gray-600 focus:ring-2 focus:ring-primary outline-none"
-              {...register('password', {
-                required: 'Password is required',
-                minLength: {
-                  value: 6,
-                  message: 'Password must be at least 6 characters long',
-                },
-              })}
-            />
-            {errors.password && (
-              <p className="text-red-400 text-sm mt-1">
-                {errors.password.message}
-              </p>
-            )}
+        {/* Submit */}
+        <Button
+          type="submit"
+          disabled={loading}
+          className="w-full bg-primary text-white py-3 rounded-md font-medium
+            hover:bg-primary/80 transition disabled:opacity-50"
+          noDefault
+        >
+          {loading ? 'Logging in...' : 'Login'}
+        </Button>
+      </form>
 
-            <div className="text-right mt-2">
-              <Link
-                to="/forgot-password"
-                className="text-sm text-primary hover:underline"
-              >
-                Forgot Password?
-              </Link>
-            </div>
-          </div>
-
-          {/* Submit Button */}
-          <Button
-            type="submit"
-            disabled={loading}
-            noDefault
-            className="w-full bg-primary text-white py-3 rounded-md font-medium hover:bg-primary/80 transition disabled:opacity-50"
-          >
-            {loading ? 'Logging in...' : 'Login'}
-          </Button>
-        </form>
-
-        <p className="text-sm text-center mt-6 text-white">
-          Don’t have an account?{' '}
-          <Link to="/signup" className="text-primary hover:underline">
-            Sign Up
-          </Link>
-        </p>
-      </div>
+      <p className="text-sm text-center mt-6 text-gray-400 dark:text-gray-700">
+        Don’t have an account?{' '}
+        <Link to="/signup" className="text-primary hover:underline">
+          Sign Up
+        </Link>
+      </p>
     </div>
   );
 }
