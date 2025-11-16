@@ -30,19 +30,21 @@ export default function Dashboard() {
                  text-white dark:text-gray-900 
                  transition-colors duration-300 ease-in-out"
     >
-      <div className="lg:col-span-2 transition-transform duration-500 ease-in-out hover:scale-[1.01]">
-        <div className="lg:col-span-3 mb-4 flex justify-between items-center">
-          <h2 className="text-2xl sm:text-3xl font-bold text-white dark:text-gray-900">
-            👋 Welcome,{' '}
-            <span className="text-primary">{user?.name || 'User'}</span>!
-          </h2>
-        </div>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 w-full">
+        {/* LEFT SIDE – Todo list */}
+        <div className="lg:col-span-2 transition-transform duration-500 ease-in-out hover:scale-[1.01]">
+          <div className="lg:col-span-3 mb-4 flex justify-between items-center">
+            <h2 className="text-2xl sm:text-3xl font-bold text-white dark:text-gray-900">
+              👋 Welcome,{' '}
+              <span className="text-primary">{user?.name || 'User'}</span>!
+            </h2>
+          </div>
 
-        <TodoList todos={todos} onUpdateStatus={handleUpdateStatus} />
-      </div>
-
+          {/* Only ONE TodoList */}
           <TodoList todos={todos} onUpdateStatus={handleUpdateStatus} />
         </div>
+
+        {/* RIGHT SIDE – Calendar + Today's Todos */}
         <div
           className="lg:col-span-1 flex flex-col gap-6 
                      overflow-visible lg:overflow-y-auto 
@@ -52,6 +54,7 @@ export default function Dashboard() {
           <div className="transition-transform duration-500 ease-in-out hover:scale-[1.02]">
             <Calendar />
           </div>
+
           <div className="transition-transform duration-500 ease-in-out hover:scale-[1.02]">
             <TodaysTodos />
           </div>
