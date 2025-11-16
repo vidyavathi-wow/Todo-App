@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import {
   format,
   startOfMonth,
@@ -12,10 +12,61 @@ import {
   isSameDay,
 } from 'date-fns';
 import { FiChevronLeft, FiChevronRight } from 'react-icons/fi';
+import AppContext from '../context/AppContext';
+import toast from 'react-hot-toast';
+
+import { getTodosByDate, getTodosByDateRange } from '../services/todos';
 
 export default function Calendar() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(new Date());
+  const [tasksByDate, setTasksByDate] = useState({});
+  const { setTodos, user } = useContext(AppContext);
+
+  // Fetch monthly task summary
+  const fetchMonthTasks = async () => {
+    try {
+      const monthStart = format(startOfMonth(currentMonth), 'yyyy-MM-dd');
+      const monthEnd = format(endOfMonth(currentMonth), 'yyyy-MM-dd');
+
+      const data = await getTodosByDateRange(monthStart, monthEnd);
+
+      if (data.success && data.taskSummary) {
+        setTasksByDate(data.taskSummary);
+      }
+    } catch (error) {
+      console.error('Month tasks fetch error:', error);
+    }
+  };
+
+  // Fetch todos for selected date
+  const fetchTodosForDate = async (date) => {
+    try {
+      const formattedDate = format(date, 'yyyy-MM-dd');
+
+      const data = await getTodosByDate(formattedDate);
+
+      if (data.success) {
+        setTodos(data.todos || []);
+        toast.success(
+          user?.role === 'admin'
+            ? `Showing all tasks for ${formattedDate}`
+            : `Showing your tasks for ${formattedDate}`
+        );
+      }
+    } catch (error) {
+      toast.error(`Failed to fetch tasks: ${error}`);
+    }
+  };
+
+  const handleDateClick = (day) => {
+    setSelectedDate(day);
+    fetchTodosForDate(day);
+  };
+
+  useEffect(() => {
+    fetchMonthTasks();
+  }, [currentMonth]);
 
   const renderHeader = () => (
     <div className="flex justify-between items-center mb-2 px-2 text-secondary dark:text-gray-800">
@@ -67,27 +118,47 @@ export default function Calendar() {
         const cloneDay = day;
         const inactive = !isSameMonth(day, monthStart);
         const selected = isSameDay(day, selectedDate);
+        const formattedDate = format(day, 'yyyy-MM-dd');
+
+        const tasks = tasksByDate[formattedDate] || [];
+        const hasTasks = tasks.length > 0;
+
+        const statusColor = hasTasks
+          ? tasks.some((t) => t.status === 'completed')
+            ? 'bg-green-400'
+            : tasks.some((t) => t.status === 'inProgress')
+              ? 'bg-yellow-400'
+              : 'bg-red-400'
+          : '';
 
         days.push(
           <div
             key={day}
-            onClick={() => setSelectedDate(cloneDay)}
-            className={`flex items-center justify-center cursor-pointer rounded-full transition-colors
+            onClick={() => handleDateClick(cloneDay)}
+            className={`flex flex-col items-center justify-center cursor-pointer rounded-full transition-colors 
               ${
                 inactive
                   ? 'text-gray-light dark:text-gray-400'
                   : 'text-secondary dark:text-gray-900'
-              }
+              } 
               ${
                 selected
                   ? 'bg-primary text-white'
                   : 'hover:bg-gray-700 dark:hover:bg-gray-300'
-              }`}
+              }
+            `}
             style={{ aspectRatio: '1 / 1' }}
           >
-            {format(day, 'd')}
+            <span>{format(day, 'd')}</span>
+
+            {hasTasks && (
+              <span
+                className={`mt-0.5 w-1.5 h-1.5 rounded-full ${statusColor}`}
+              ></span>
+            )}
           </div>
         );
+
         day = addDays(day, 1);
       }
 
@@ -100,22 +171,8 @@ export default function Calendar() {
           ))}
         </div>
       );
-      days = [];
-    }
 
-    // Fill empty rows to maintain layout
-    while (rows.length < 6) {
-      const emptyRow = Array.from({ length: 7 }, (_, i) => (
-        <div key={i} className="flex-1 aspect-square"></div>
-      ));
-      rows.push(
-        <div
-          key={`empty-${rows.length}`}
-          className="flex justify-between mb-1 gap-1"
-        >
-          {emptyRow}
-        </div>
-      );
+      days = [];
     }
 
     return <div>{rows}</div>;

@@ -21,8 +21,8 @@ This UI design was inspired by a Dribbble concept for task management apps.
 
 ## 🧩 Features
 
-✅ User authentication (Login, Register, Forgot Password via Nodemailer)  
-✅ JWT-based secure sessions  
+✅ User authentication (Login, Register, Forgot Password via brevo)  
+✅ JWT-based secure Authentication
 ✅ Add, edit, delete, and filter todos  
 ✅ Mark tasks as completed or pending  
 ✅ Visual analytics for task insights (bar & pie charts)  
@@ -30,6 +30,8 @@ This UI design was inspired by a Dribbble concept for task management apps.
 ✅ Responsive UI built with Tailwind CSS  
 ✅ Profile creation used multer and cloudinary for handling and storing profile image
 ✅ Email reminders using node-cron
+✅ Activity logs for both user and admin
+✅ Admin privileges(allowing admin to promote,demote and deactivte user)
 ✅ Deployed on **Render**
 
 ---
@@ -83,6 +85,10 @@ NODE_ENV=development
 
 SENDER_EMAIL=your_email_address
 FRONTEND_URL=your_frontend_deployed_url
+CLOUDINARY_API_SECRET=your_cloudinary_api_secret
+CLOUDINARY_API_KEY=your_cloudinary_api_key
+CLOUDINARY_CLOUD_NAME=your_cloud_name
+
 ```
 
 > ⚠️ **Do not commit `.env` files** to GitHub — keep them private or configure them via Render/Vercel environment settings.
@@ -166,7 +172,8 @@ npm run dev
 3. Add, edit, delete, and filter todos.
 4. Check task analytics charts.
 5. Try forgot password to test email integration.
-
+6. Set reminders and check whether you are receiving mail
+7. Try creating account as admin and check admin privileges
 ---
 
 ### 🧹 6️⃣ Common Commands

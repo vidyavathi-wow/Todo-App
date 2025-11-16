@@ -5,8 +5,8 @@ import App from './App.jsx';
 import { AppProvider } from './context/AppContext.jsx';
 import FunctionalErrorBoundary from './components/common/ErrorBoundary.jsx';
 import './index.css';
-import 'react-big-calendar/lib/css/react-big-calendar.css'; 
-//import './pages/calendar.css'; 
+import 'react-big-calendar/lib/css/react-big-calendar.css';
+//import './pages/calendar.css';
 
 const root = createRoot(document.getElementById('root'));
 
