@@ -1,15 +1,24 @@
 import { createContext, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
+
+import axiosInstance from '../configs/axiosInstance';
 import { getTodos } from '../services/todos';
 import { getProfile } from '../services/profile';
 import { getUsers } from '../services/users';
-import axiosInstance from '../configs/axiosInstance';
 
 const AppContext = createContext();
 
 export const AppProvider = ({ children }) => {
   const navigate = useNavigate();
+
+  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
+
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', theme === 'dark');
+    localStorage.setItem('theme', theme);
+  }, [theme]);
+
   const [token, setToken] = useState(null);
   const [todos, setTodos] = useState([]);
   const [input, setInput] = useState('');
@@ -26,9 +35,14 @@ export const AppProvider = ({ children }) => {
 
   useEffect(() => {
     if (token) {
+      axiosInstance.defaults.headers.common['Authorization'] =
+        `Bearer ${token}`;
       fetchUserProfile();
       fetchTodos();
       fetchUsers();
+    } else {
+      setUser(null);
+      setTodos([]);
     }
   }, [token]);
 
@@ -48,15 +62,7 @@ export const AppProvider = ({ children }) => {
       if (data.success) setTodos(data.todos || []);
       else toast.error(data.message || 'Failed to fetch todos');
     } catch (error) {
-      if (error.response?.data?.errors) {
-        error.response.data.errors.forEach((err) => toast.error(err.msg));
-      } else {
-        toast.error(
-          error.response?.data?.message ||
-            error.message ||
-            'Something went wrong'
-        );
-      }
+      toast.error(error.response?.data?.message || error.message);
     }
   };
 
@@ -83,7 +89,11 @@ export const AppProvider = ({ children }) => {
     fetchTodos,
     loading,
     user,
-    users, // expose to UI
+    setUser,
+    users,
+
+    theme,
+    setTheme,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

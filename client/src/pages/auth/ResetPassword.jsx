@@ -39,63 +39,72 @@ export default function ResetPassword() {
 
   if (!token) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-dark text-gray-light">
-        <div className="text-center">
-          <p className="mb-4 text-white">Invalid or expired reset link</p>
-          <Link to="/login" className="text-primary hover:underline">
-            Back to Login
-          </Link>
-        </div>
+      <div className="w-full max-w-md bg-gray-800 dark:bg-white p-8 rounded-2xl shadow-md border border-gray-700 dark:border-gray-300 transition-colors text-center">
+        <p className="mb-4 text-white dark:text-gray-800">
+          Invalid or expired reset link
+        </p>
+        <Link to="/login" className="text-primary hover:underline">
+          Back to Login
+        </Link>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-dark text-gray-light px-4">
-      <div className="w-full max-w-md bg-gray-800 p-8 rounded-2xl shadow-md">
-        <h2 className="text-2xl font-semibold text-center mb-6 text-primary">
+    <div className="w-full max-w-md bg-gray-800 dark:bg-white p-8 rounded-2xl shadow-md border border-gray-700 dark:border-gray-300 transition-colors">
+      <h2 className="text-2xl font-semibold text-center mb-6 text-primary">
+        Reset Password
+      </h2>
+
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+        <div>
+          <label className="block mb-1 text-sm text-white dark:text-gray-900">
+            New Password
+          </label>
+
+          <Input
+            type="password"
+            placeholder="Enter new password"
+            className="
+              w-full p-3 rounded 
+              bg-gray-700 dark:bg-gray-200
+              border border-gray-600 dark:border-gray-300
+              focus:ring-2 focus:ring-primary outline-none
+              text-gray-light dark:text-gray-900
+            "
+            {...register('password', {
+              required: 'Password is required',
+              minLength: {
+                value: 6,
+                message: 'Password must be at least 6 characters',
+              },
+            })}
+          />
+
+          {errors.password && (
+            <p className="text-red-400 dark:text-red-500 text-sm mt-1">
+              {errors.password.message}
+            </p>
+          )}
+        </div>
+
+        <Button
+          type="submit"
+          noDefault
+          className="
+            w-full bg-primary text-white py-3 rounded-md font-medium 
+            hover:bg-primary/80 transition
+          "
+        >
           Reset Password
-        </h2>
+        </Button>
+      </form>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-          <div>
-            <label className="block mb-1 text-sm text-white">
-              New Password
-            </label>
-            <Input
-              type="password"
-              placeholder="Enter new password"
-              className="w-full p-3 rounded bg-gray-700 border border-gray-600 focus:ring-2 focus:ring-primary outline-none"
-              {...register('password', {
-                required: 'Password is required',
-                minLength: {
-                  value: 6,
-                  message: 'Password must be at least 6 characters',
-                },
-              })}
-            />
-            {errors.password && (
-              <p className="text-red-400 text-sm mt-1">
-                {errors.password.message}
-              </p>
-            )}
-          </div>
-
-          <Button
-            type="submit"
-            noDefault
-            className="w-full bg-primary text-white py-3 rounded-md font-medium hover:bg-primary/80 transition"
-          >
-            Reset Password
-          </Button>
-        </form>
-
-        <p className="text-sm text-center mt-6 text-white">
-          <Link to="/login" className="text-primary hover:underline">
-            Back to Login
-          </Link>
-        </p>
-      </div>
+      <p className="text-sm text-center mt-6 text-white dark:text-gray-700">
+        <Link to="/login" className="text-primary hover:underline">
+          Back to Login
+        </Link>
+      </p>
     </div>
   );
 }

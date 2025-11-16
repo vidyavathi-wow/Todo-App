@@ -5,13 +5,24 @@ const User = require('../models/User');
 const sendEmail = require('../config/emailServeice');
 const logger = require('../utils/logger');
 
-// Run every minute to check upcoming reminders
+let running = false;
+const LIMIT = 200;
+
 cron.schedule('* * * * *', async () => {
+  if (running) {
+    logger.warn(
+      'Reminder job skipped because previous run is still in progress.'
+    );
+    return;
+  }
+
+  running = true;
+  logger.info('Reminder job started');
+
   try {
     const now = new Date();
-    const reminderTime = new Date(now.getTime() + 10 * 60 * 1000); // 10 minutes ahead
+    const reminderTime = new Date(now.getTime() + 10 * 60 * 1000);
 
-    // Fetch todos due within the next 10 minutes
     const upcomingTodos = await Todo.findAll({
       where: {
         date: { [Op.between]: [now, reminderTime] },
@@ -21,42 +32,73 @@ cron.schedule('* * * * *', async () => {
       include: [
         {
           model: User,
-          as: 'assignee', // 👈 Use alias from Todo model association
-          attributes: ['email', 'name'],
+          as: 'assignee',
+          attributes: ['id', 'email', 'name'],
         },
       ],
+      limit: LIMIT,
+      order: [['date', 'ASC']],
     });
 
-    for (const todo of upcomingTodos) {
-      const user = todo.assignee; // 👈 assigned user
-      if (!user?.email) continue;
+    if (!upcomingTodos.length) {
+      running = false;
+      logger.info('No upcoming todos to remind.');
+      return;
+    }
 
-      const subject = `⏰ Reminder: ${todo.title} is due soon!`;
-      const text = `
+    const todoIds = upcomingTodos.map((t) => t.id);
+
+    await Todo.update(
+      { reminded: true },
+      { where: { id: { [Op.in]: todoIds } } }
+    );
+
+    logger.info(`Queued ${todoIds.length} reminders`);
+
+    upcomingTodos.forEach((todo) => {
+      setImmediate(async () => {
+        try {
+          const user = todo.assignee;
+          if (!user?.email) {
+            await Todo.update({ reminded: false }, { where: { id: todo.id } });
+            return;
+          }
+
+          const subject = `⏰ Reminder: ${todo.title} is due soon!`;
+          const text = `
 Hi ${user.name || 'there'},
 
-Your assigned task "${todo.title}" is due at ${todo.date.toLocaleString()}.
+Your assigned task "${todo.title}" is due at ${new Date(todo.date).toLocaleString()}.
 
 Category: ${todo.category}
 Priority: ${todo.priority}
 
-Don't forget to complete it!
-
 – To-Do App
 `;
 
-      // Send email
-      await sendEmail(user.email, subject, text);
-
-      // Mark todo as reminded to avoid duplicate notifications
-      todo.reminded = true;
-      await todo.save();
-
-      logger.info(
-        `Reminder email sent for todo "${todo.title}" to ${user.email}`
-      );
-    }
+          await sendEmail(user.email, subject, text);
+          logger.info(
+            `Reminder email sent for "${todo.title}" to ${user.email}`
+          );
+        } catch (err) {
+          logger.error(`Failed to send reminder for ${todo.id}:`, err);
+          try {
+            await Todo.update({ reminded: false }, { where: { id: todo.id } });
+          } catch (dbErr) {
+            logger.error(
+              `Failed to revert reminded flag for ${todo.id}:`,
+              dbErr
+            );
+          }
+        }
+      });
+    });
   } catch (error) {
     logger.error('Reminder scheduler failed:', error);
+  } finally {
+    setTimeout(() => {
+      running = false;
+      logger.info('Reminder job finished');
+    }, 50);
   }
 });

@@ -1,9 +1,11 @@
 import React, { useEffect } from 'react';
 import moonicon from '../assets/moon_icon.svg';
 import sunicon from '../assets/sun_icon.svg';
+import { useContext } from 'react';
+import AppContext from '../context/AppContext';
 
-const ThemeToggleBtn = ({ theme, setTheme }) => {
-  // Load saved theme or system preference
+const ThemeToggleBtn = () => {
+  const { theme, setTheme } = useContext(AppContext);
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme');
     if (savedTheme) {
