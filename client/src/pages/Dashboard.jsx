@@ -11,7 +11,7 @@ export default function Dashboard() {
 
   const handleUpdateStatus = async (todo) => {
     try {
-      const data = await updateTodoStatus(todo.id, {}); // ✅ cleaner
+      const data = await updateTodoStatus(todo.id, {});
       if (data.success) {
         toast.success('Todo status updated');
         fetchTodos();
