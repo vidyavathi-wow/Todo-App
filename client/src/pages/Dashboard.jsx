@@ -11,7 +11,7 @@ export default function Dashboard() {
 
   const handleUpdateStatus = async (todo) => {
     try {
-      const data = await updateTodoStatus(todo.id, {}); // ✅ cleaner
+      const data = await updateTodoStatus(todo.id, {});
       if (data.success) {
         toast.success('Todo status updated');
         fetchTodos();
@@ -37,24 +37,20 @@ export default function Dashboard() {
             <span className="text-primary">{user?.name || 'User'}</span>!
           </h2>
         </div>
-
         <TodoList todos={todos} onUpdateStatus={handleUpdateStatus} />
       </div>
 
-          <TodoList todos={todos} onUpdateStatus={handleUpdateStatus} />
+      <div
+        className="lg:col-span-1 flex flex-col gap-6 
+                   overflow-visible lg:overflow-y-auto 
+                   max-h-full sm:max-h-[80vh] 
+                   transition-transform duration-500 ease-in-out"
+      >
+        <div className="transition-transform duration-500 ease-in-out hover:scale-[1.02]">
+          <Calendar />
         </div>
-        <div
-          className="lg:col-span-1 flex flex-col gap-6 
-                     overflow-visible lg:overflow-y-auto 
-                     max-h-full sm:max-h-[80vh] 
-                     transition-transform duration-500 ease-in-out"
-        >
-          <div className="transition-transform duration-500 ease-in-out hover:scale-[1.02]">
-            <Calendar />
-          </div>
-          <div className="transition-transform duration-500 ease-in-out hover:scale-[1.02]">
-            <TodaysTodos />
-          </div>
+        <div className="transition-transform duration-500 ease-in-out hover:scale-[1.02]">
+          <TodaysTodos />
         </div>
       </div>
     </div>
