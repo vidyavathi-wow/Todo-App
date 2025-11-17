@@ -3,12 +3,17 @@ import { STATUS_COLORS } from '../../utils/Constants';
 
 export default function TodoCard({ todo, onToggleCompleted, currentUser }) {
   const navigate = useNavigate();
+
+  if (!currentUser || !todo) return null; // prevent crashes
+
+  // Safe values
+  const userId = currentUser?.id;
   const status = (todo.status || '').toLowerCase();
   const isCompleted = status === 'completed';
 
   // Only creator or assigned user can toggle
   const canToggle =
-    todo.userId === currentUser.id || todo.assignedToUserId === currentUser.id;
+    userId && (todo.userId === userId || todo.assignedToUserId === userId);
 
   const assigneeName =
     todo?.assignee?.name ||
@@ -17,7 +22,7 @@ export default function TodoCard({ todo, onToggleCompleted, currentUser }) {
   return (
     <div
       title={canToggle ? '' : 'You can only view this task'}
-      className={`relative bg-gray-900 dark:bg-white border border-gray-700 dark:border-gray-300 rounded-xl p-5 shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer ${
+      className={`relative group bg-gray-900 dark:bg-white border border-gray-700 dark:border-gray-300 rounded-xl p-5 shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer ${
         isCompleted ? 'opacity-70' : ''
       }`}
       onClick={() => navigate(`/todo/${todo.id}`)}
@@ -88,7 +93,7 @@ export default function TodoCard({ todo, onToggleCompleted, currentUser }) {
         </p>
       </div>
 
-      {/* TOOLTIP (visible on hover when user cannot update) */}
+      {/* READ-ONLY TOOLTIP */}
       {!canToggle && (
         <div className="absolute top-2 right-2 text-[10px] bg-gray-700 dark:bg-gray-300 text-white dark:text-gray-900 px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
           Read-only task

@@ -193,7 +193,7 @@ export default function UserDetailsDrawer({
                 <button
                   disabled={actionLoading}
                   onClick={handleDeactivate}
-                  className="px-4 py-2 bg-red-600 rounded-md"
+                  className="px-4 py-2 bg-red-400 rounded-md"
                 >
                   <UserX size={16} /> Deactivate
                 </button>
@@ -203,7 +203,7 @@ export default function UserDetailsDrawer({
                 <button
                   disabled={actionLoading}
                   onClick={handleActivate}
-                  className="px-4 py-2 bg-green-600 rounded-md"
+                  className="px-4 py-2 bg-green-400 rounded-md"
                 >
                   <UserCheck size={16} /> Activate
                 </button>
@@ -215,7 +215,7 @@ export default function UserDetailsDrawer({
                   <button
                     disabled={actionLoading}
                     onClick={handlePromote}
-                    className="px-4 py-2 bg-blue-600 rounded-md"
+                    className="px-4 py-2 bg-blue-400 rounded-md"
                   >
                     <ArrowUpCircle size={16} /> Promote
                   </button>
@@ -227,7 +227,7 @@ export default function UserDetailsDrawer({
                   <button
                     disabled={actionLoading}
                     onClick={handleDemote}
-                    className="px-4 py-2 bg-yellow-500 rounded-md"
+                    className="px-4 py-2 bg-yellow-300 rounded-md"
                   >
                     <ArrowDownCircle size={16} /> Demote
                   </button>

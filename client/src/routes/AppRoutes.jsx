@@ -1,25 +1,24 @@
-// client/src/routes/AppRoutes.jsx
-import { Routes, Route, Navigate, Outlet } from "react-router-dom";
-import { useContext } from "react";
-import AppContext from "../context/AppContext";
+import { Routes, Route, Navigate, Outlet } from 'react-router-dom';
+import { useContext } from 'react';
+import AppContext from '../context/AppContext';
 
-import AuthLayout from "../layouts/AuthLayout";
-import MainLayout from "../layouts/MainLayout";
+import AuthLayout from '../layouts/AuthLayout';
+import MainLayout from '../layouts/MainLayout';
 
-import Login from "../pages/auth/Login";
-import Signup from "../pages/auth/Signup";
-import ForgotPassword from "../pages/auth/ForgotPassword";
-import ResetPassword from "../pages/auth/ResetPassword";
+import Login from '../pages/auth/Login';
+import Signup from '../pages/auth/Signup';
+import ForgotPassword from '../pages/auth/ForgotPassword';
+import ResetPassword from '../pages/auth/ResetPassword';
 
-import Dashboard from "../pages/Dashboard";
-import AddTodo from "../pages/AddTodo";
-import LatestTodos from "../pages/LatestTodos";
-import CalendarPage from "../pages/CalendarPage";
-import Analytics from "../pages/Analytics";
-import TodoItem from "../pages/TodoItem";
-import UpdateProfile from "../pages/auth/UpdateProfile";
-import ActivityLogs from "../pages/ActivityLogs";
-import AdminDashboard from "../pages/AdminDashboard";
+import Dashboard from '../pages/Dashboard';
+import AddTodo from '../pages/AddTodo';
+import LatestTodos from '../pages/LatestTodos';
+import CalendarPage from '../pages/CalendarPage';
+import Analytics from '../pages/Analytics';
+import TodoItem from '../pages/TodoItem';
+import UpdateProfile from '../pages/auth/UpdateProfile';
+import ActivityLogs from '../pages/ActivityLogs';
+import AdminDashboard from '../pages/AdminDashboard';
 
 const ProtectedRoute = () => {
   const { token, authLoading } = useContext(AppContext);
@@ -60,7 +59,7 @@ export default function AppRoutes() {
           <Route
             path="admin"
             element={
-              user?.role === "admin" ? (
+              user?.role === 'admin' ? (
                 <AdminDashboard />
               ) : (
                 <Navigate to="/" replace />

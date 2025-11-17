@@ -1,12 +1,11 @@
-// client/src/context/AppContext.jsx
-import { createContext, useCallback, useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import toast from "react-hot-toast";
+import { createContext, useCallback, useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
 
-import axiosInstance from "../configs/axiosInstance";
-import { getProfile } from "../services/profile";
-import { getTodos } from "../services/todos";
-import { getUsers } from "../services/users";
+import axiosInstance from '../configs/axiosInstance';
+import { getProfile } from '../services/profile';
+import { getTodos } from '../services/todos';
+import { getUsers } from '../services/users';
 
 const AppContext = createContext();
 
@@ -14,11 +13,11 @@ export const AppProvider = ({ children }) => {
   const navigate = useNavigate();
 
   // THEME ------------------------------
-  const [theme, setTheme] = useState(localStorage.getItem("theme") || "light");
+  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
 
   useEffect(() => {
-    document.documentElement.classList.toggle("dark", theme === "dark");
-    localStorage.setItem("theme", theme);
+    document.documentElement.classList.toggle('dark', theme === 'dark');
+    localStorage.setItem('theme', theme);
   }, [theme]);
 
   // AUTH -------------------------------
@@ -28,10 +27,10 @@ export const AppProvider = ({ children }) => {
 
   const setToken = useCallback((val) => {
     if (val) {
-      localStorage.setItem("token", val);
+      localStorage.setItem('token', val);
       setTokenState(val);
     } else {
-      localStorage.removeItem("token");
+      localStorage.removeItem('token');
       setTokenState(null);
     }
   }, []);
@@ -41,21 +40,22 @@ export const AppProvider = ({ children }) => {
     let mounted = true;
 
     const init = async () => {
-      const stored = localStorage.getItem("token");
+      const stored = localStorage.getItem('token');
       if (!stored) {
         if (mounted) setAuthLoading(false);
         return;
       }
 
       try {
-        const res = await axiosInstance.get("/api/v1/auth/me");
+        const res = await axiosInstance.get('/api/v1/auth/me');
         if (res.data?.success && mounted) {
           setTokenState(stored);
           setUser(res.data.user);
         } else {
           setToken(null);
         }
-      } catch {
+      } catch (e) {
+        console.error(e);
         setToken(null);
       } finally {
         if (mounted) setAuthLoading(false);
@@ -70,26 +70,34 @@ export const AppProvider = ({ children }) => {
   const [todos, setTodos] = useState([]);
   const [users, setUsersList] = useState([]);
 
-  // 🔥 THIS WAS MISSING → YOU NEED THIS
+  // Fetch Todos
   const fetchTodos = async () => {
     try {
       const d = await getTodos();
       if (d.success) setTodos(d.todos || []);
-    } catch {}
+    } catch (e) {
+      console.error(e);
+    }
   };
 
+  // Fetch Users
   const fetchUsers = async () => {
     try {
       const d = await getUsers();
       if (d.success) setUsersList(d.users || []);
-    } catch {}
+    } catch (e) {
+      console.error(e);
+    }
   };
 
+  // Fetch Profile
   const fetchProfile = async () => {
     try {
       const d = await getProfile();
       if (d.success) setUser(d.user);
-    } catch {}
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   // FETCH WHEN TOKEN AVAILABLE ----------
@@ -102,20 +110,26 @@ export const AppProvider = ({ children }) => {
     }
 
     (async () => {
-      await Promise.all([fetchProfile(), fetchTodos(), fetchUsers()]);
+      try {
+        await Promise.all([fetchProfile(), fetchTodos(), fetchUsers()]);
+      } catch (e) {
+        console.error(e);
+      }
     })();
   }, [token]);
 
   // LOGOUT ------------------------------
   const logout = async () => {
     try {
-      await axiosInstance.post("/api/v1/auth/logout").catch(() => {});
-    } catch {}
+      await axiosInstance.post('/api/v1/auth/logout').catch(() => {});
+    } catch (e) {
+      console.error(e);
+    }
 
     setToken(null);
     setUser(null);
-    navigate("/login", { replace: true });
-    toast.success("Logged out");
+    navigate('/login', { replace: true });
+    toast.success('Logged out');
   };
 
   // CONTEXT VALUE -----------------------
@@ -135,7 +149,6 @@ export const AppProvider = ({ children }) => {
     setTodos,
     users,
 
-    // 🔥 REQUIRED BY Analytics.jsx
     fetchTodos,
     fetchUsers,
     fetchProfile,
