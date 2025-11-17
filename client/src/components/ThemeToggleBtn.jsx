@@ -18,7 +18,6 @@ const ThemeToggleBtn = () => {
     }
   }, [setTheme]);
 
-  // Apply theme globally
   useEffect(() => {
     if (theme === 'dark') {
       document.documentElement.classList.add('dark');

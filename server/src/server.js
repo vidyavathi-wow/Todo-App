@@ -53,11 +53,9 @@ app.use(errorHandler);
     await sequelize.authenticate();
     logger.info('Database connected successfully ✅');
 
-    // Sync DB - ensures new columns like reminded are added
-    await sequelize.sync({ alter: true });
+    await sequelize.sync();
     logger.info('Database synced successfully ✅');
 
-    // 👉 NOW start the reminder scheduler (AFTER sync)
     require('./schedulers/reminderScheduler');
 
     app.listen(PORT, () => {

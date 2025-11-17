@@ -167,7 +167,6 @@ const AddTodo = () => {
           )}
         </div>
 
-        {/* Notes */}
         <div className="mb-6">
           <label className="block text-secondary/90 mb-2 font-medium dark:text-gray-700">
             Notes

@@ -4,6 +4,9 @@ const ActivityLog = require('../models/ActivityLog');
 const logger = require('../utils/logger');
 const { fn, col, Op } = require('sequelize');
 const sequelize = require('../config/db');
+const sendEmail = require('../config/emailServeice');
+const taskAssignedEmail = require('../emails/taskAssigned');
+const taskUpdatedEmail = require('../emails/taskUpdated');
 
 exports.createTodo = async (req, res) => {
   try {
@@ -47,6 +50,20 @@ exports.createTodo = async (req, res) => {
         { model: User, as: 'assignee', attributes: ['id', 'name', 'email'] },
       ],
     });
+    if (assignedToUserId) {
+      const assignedUser = await User.findByPk(assignedToUserId);
+      const assignedBy = await User.findByPk(req.user.id);
+
+      if (assignedUser && assignedUser.email) {
+        const { subject, text } = taskAssignedEmail(
+          assignedUser,
+          assignedBy,
+          createdTodo
+        );
+        await sendEmail(assignedUser.email, subject, text);
+      }
+    }
+
     res.status(201).json({ success: true, todo: createdTodo });
   } catch (err) {
     logger.error(err);
@@ -113,38 +130,59 @@ exports.updateTodo = async (req, res) => {
   const t = await sequelize.transaction();
   try {
     const { id } = req.params;
-    const isAdmin = req.user.role === 'admin';
     const userId = req.user.id;
+    const isAdmin = req.user.role === 'admin';
 
     const where = isAdmin ? { id } : { id, userId };
-    const todo = await Todo.findOne({ where, transaction: t });
+    const existingTodo = await Todo.findOne({ where, transaction: t });
 
-    if (!todo) {
+    if (!existingTodo) {
       await t.rollback();
       return res
         .status(404)
         .json({ success: false, message: 'Todo not found' });
     }
 
-    await todo.update(req.body, { transaction: t });
+    const oldTodo = existingTodo.toJSON();
+    await existingTodo.update(req.body, { transaction: t });
 
-    await ActivityLog.create(
-      { userId, action: 'UPDATE_TODO', details: `Updated todo: ${todo.title}` },
-      { transaction: t }
-    );
-
-    await t.commit();
-    const updatedTodo = await Todo.findByPk(todo.id, {
+    const updatedTodo = await Todo.findByPk(id, {
       include: [
         { model: User, as: 'owner', attributes: ['id', 'name', 'email'] },
         { model: User, as: 'assignee', attributes: ['id', 'name', 'email'] },
       ],
     });
 
+    const assignedToOld = oldTodo.assignedToUserId;
+    const assignedToNew = updatedTodo.assignedToUserId;
+
+    const updatedBy = await User.findByPk(req.user.id);
+
+    if (assignedToOld !== assignedToNew && assignedToNew) {
+      const newAssignee = await User.findByPk(assignedToNew);
+      const { subject, text } = taskAssignedEmail(
+        newAssignee,
+        updatedBy,
+        updatedTodo
+      );
+      await sendEmail(newAssignee.email, subject, text);
+    }
+
+    if (assignedToNew) {
+      const assignee = await User.findByPk(assignedToNew);
+      const { subject, text } = taskUpdatedEmail(
+        assignee,
+        updatedBy,
+        oldTodo,
+        updatedTodo
+      );
+      await sendEmail(assignee.email, subject, text);
+    }
+
+    await t.commit();
     res.status(200).json({ success: true, todo: updatedTodo });
   } catch (err) {
     await t.rollback();
-    logger.error(err);
     res.status(500).json({ success: false, message: err.message });
   }
 };
@@ -184,16 +222,14 @@ exports.deleteTodo = async (req, res) => {
     let where;
 
     if (isAdmin) {
-      // Admin can delete ANY todo
       where = { id };
     } else {
-      // User: can delete own todos OR todos assigned to them
       where = {
         id,
         [Op.or]: [
-          { userId },               // created by them
-          { assignedToUserId: userId } // assigned to them
-        ]
+          { userId },
+          { assignedToUserId: userId }, // assigned to them
+        ],
       };
     }
 
@@ -215,7 +251,6 @@ exports.deleteTodo = async (req, res) => {
   }
 };
 
-// ✅ DASHBOARD
 exports.getDashboardData = async (req, res) => {
   try {
     const isAdmin = req.user.role === 'admin';
@@ -255,7 +290,6 @@ exports.getDashboardData = async (req, res) => {
   }
 };
 
-// ✅ GET TODOS BY DATE
 exports.getTodosByDate = async (req, res) => {
   try {
     const { date } = req.query;
@@ -298,7 +332,6 @@ exports.getTodosByDate = async (req, res) => {
   }
 };
 
-// ✅ GET TODOS BY DATE RANGE (for calendar dots)
 exports.getTodosByDateRange = async (req, res) => {
   try {
     const { start, end } = req.query;
