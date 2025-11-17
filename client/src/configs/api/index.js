@@ -31,6 +31,8 @@ export const API = {
     promote: (id) => `/api/v1/admin/users/${id}/promote`,
     demote: (id) => `/api/v1/admin/users/${id}/demote`,
     restore: (id) => `/api/v1/admin/users/${id}/restore`,
+
+    userDetails: (id) => `/api/v1/admin/users/${id}/details`,
   },
 
   analytics: {

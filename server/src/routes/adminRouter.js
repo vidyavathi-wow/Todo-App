@@ -5,6 +5,7 @@ const verifyRole = require('../middlewares/verifyRole');
 
 const {
   getAllUsers,
+  getUserDashboardDetails,
   getActivityLogs,
   deleteUserByAdmin,
   restoreUserByAdmin,
@@ -17,6 +18,14 @@ router.get('/', verifyToken, verifyRole('admin'), (req, res) => {
 });
 
 router.get('/users', verifyToken, verifyRole('admin'), getAllUsers);
+
+// NEW - fetch full user details for admin drawer
+router.get(
+  '/users/:id/details',
+  verifyToken,
+  verifyRole('admin'),
+  getUserDashboardDetails
+);
 
 // Promote → Admin
 router.put(
@@ -41,7 +50,13 @@ router.delete(
 );
 
 // Restore soft deleted user
-router.get('/users/:id', verifyToken, verifyRole('admin'), restoreUserByAdmin);
+
+router.patch(
+  '/users/:id/restore',
+  verifyToken,
+  verifyRole('admin'),
+  restoreUserByAdmin
+);
 
 router.get('/activitylogs', verifyToken, verifyRole('admin'), getActivityLogs);
 
