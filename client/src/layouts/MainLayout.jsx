@@ -6,26 +6,19 @@ import ThemeToggleBtn from '../components/ThemeToggleBtn';
 import { FiLogOut, FiUser } from 'react-icons/fi';
 import { FaChevronDown } from 'react-icons/fa';
 
-const Layout = () => {
-  const { token, axios, user, theme, setTheme } = useContext(AppContext);
+const MainLayout = () => {
+  const { token, user, theme, setTheme, logout } = useContext(AppContext);
   const navigate = useNavigate();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
 
-  const logout = () => {
-    localStorage.removeItem('token');
-    axios.defaults.headers.common['Authorization'] = null;
-    navigate('/login');
-  };
-
   useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+    const handler = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target))
         setDropdownOpen(false);
-      }
     };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
   }, []);
 
   return (
@@ -42,7 +35,6 @@ const Layout = () => {
           <div className="flex items-center gap-5">
             <ThemeToggleBtn theme={theme} setTheme={setTheme} />
 
-            {/* ✅ Profile Dropdown */}
             <div className="relative" ref={dropdownRef}>
               <button
                 onClick={() => setDropdownOpen(!dropdownOpen)}
@@ -60,15 +52,12 @@ const Layout = () => {
                   {user.name?.split(' ')[0] || 'User'}
                 </span>
                 <FaChevronDown
-                  className={`text-gray-400 text-sm transition-transform ${
-                    dropdownOpen ? 'rotate-180' : ''
-                  }`}
+                  className={`text-gray-400 text-sm transition-transform ${dropdownOpen ? 'rotate-180' : ''}`}
                 />
               </button>
 
               {dropdownOpen && (
                 <div className="absolute right-0 mt-3 w-52 bg-gray-800 dark:bg-gray-200 rounded-lg shadow-lg py-2 animate-fadeIn border border-gray-700 dark:border-gray-300">
-                  {/* Profile button */}
                   <button
                     onClick={() => {
                       navigate('/profile');
@@ -110,4 +99,4 @@ const Layout = () => {
   );
 };
 
-export default Layout;
+export default MainLayout;
