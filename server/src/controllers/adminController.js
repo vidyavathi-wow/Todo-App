@@ -4,6 +4,7 @@ const ActivityLog = require('../models/ActivityLog');
 const Todo = require('../models/Todo');
 const logger = require('../utils/logger');
 const sendEmail = require('../config/emailServeice');
+
 exports.getAllUsers = async (req, res) => {
   try {
     let { page = 1, limit = 10, includeDeleted } = req.query;
@@ -13,7 +14,7 @@ exports.getAllUsers = async (req, res) => {
 
     const { count, rows: users } = await User.findAndCountAll({
       attributes: ['id', 'name', 'email', 'role', 'createdAt', 'deletedAt'],
-      paranoid: includeDeleted !== 'true', // if ?includeDeleted=true → include soft deleted users too
+      paranoid: false, // <--- always show both active & inactive
       limit,
       offset,
       order: [['createdAt', 'DESC']],
@@ -29,6 +30,53 @@ exports.getAllUsers = async (req, res) => {
   } catch (error) {
     console.error('getAllUsers error:', error);
     return res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
+exports.getUserDashboardDetails = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const user = await User.findByPk(id, {
+      attributes: ['id', 'name', 'email', 'role', 'createdAt', 'deletedAt'],
+      paranoid: false,
+    });
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found',
+      });
+    }
+
+    // Count user todos
+    const todosCount = await Todo.count({
+      where: { userId: id },
+      paranoid: false,
+    });
+
+    // Get recent activity logs
+    const logs = await ActivityLog.findAll({
+      where: { userId: id },
+      order: [['timestamp', 'DESC']],
+      limit: 10,
+    });
+
+    return res.status(200).json({
+      success: true,
+      user,
+      stats: {
+        todosCount,
+        deleted: !!user.deletedAt,
+        isActive: !user.deletedAt,
+      },
+      logs,
+    });
+  } catch (err) {
+    console.error('getUserDashboardDetails error:', err);
+    return res
+      .status(500)
+      .json({ success: false, message: 'Server error fetching user details' });
   }
 };
 
@@ -70,30 +118,57 @@ exports.deleteUserByAdmin = async (req, res) => {
   const t = await sequelize.transaction();
   try {
     const { id } = req.params;
+
+    // Prevent self-deactivation
+    if (req.user.id == id) {
+      return res.status(403).json({
+        success: false,
+        message: 'You cannot deactivate your own admin account.',
+      });
+    }
+
     const user = await User.findByPk(id, { transaction: t });
 
     if (!user) {
       await t.rollback();
-      return res
-        .status(404)
-        .json({ success: false, message: 'User not found' });
+      return res.status(404).json({
+        success: false,
+        message: 'User not found',
+      });
     }
 
+    // Cannot deactivate another admin
     if (user.role === 'admin') {
       await t.rollback();
-      return res
-        .status(403)
-        .json({ success: false, message: 'Admins cannot delete other admins' });
+      return res.status(403).json({
+        success: false,
+        message: 'Admins cannot deactivate other admins.',
+      });
     }
-    await Todo.destroy({ where: { userId: id }, transaction: t });
-    await ActivityLog.destroy({ where: { userId: id }, transaction: t });
+
+    // Check for todos
+    const todoCount = await Todo.count({
+      where: { userId: id },
+      transaction: t,
+    });
+
+    if (todoCount > 0) {
+      await t.rollback();
+      return res.status(400).json({
+        success: false,
+        message:
+          'User has assigned tasks. Reassign or delete tasks before deactivation.',
+      });
+    }
+
+    // Soft delete user
     await user.destroy({ transaction: t });
 
     await ActivityLog.create(
       {
-        userId: req.user?.id || null,
-        action: 'DELETE_USER',
-        details: `Admin ${req.user?.email || 'Unknown'} deactivated user ${user.email}.`,
+        userId: req.user.id,
+        action: 'DEACTIVATE_USER',
+        details: `Admin ${req.user.email} deactivated user ${user.email}.`,
         timestamp: new Date(),
       },
       { transaction: t }
@@ -102,12 +177,12 @@ exports.deleteUserByAdmin = async (req, res) => {
     await t.commit();
     return res.status(200).json({
       success: true,
-      message: `User '${user.email}' and related data deactivated successfully.`,
+      message: `User '${user.email}' deactivated successfully.`,
     });
-  } catch (error) {
+  } catch (err) {
     await t.rollback();
-    console.error('deleteUserByAdmin error:', error);
-    return res.status(500).json({ success: false, message: error.message });
+    console.error('deleteUserByAdmin error:', err);
+    return res.status(500).json({ success: false, message: err.message });
   }
 };
 
