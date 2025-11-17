@@ -9,6 +9,8 @@ import { updateTodoStatus } from '../services/todos';
 export default function TodaysTodos() {
   const { todos, fetchTodos, user } = useContext(AppContext);
 
+  // ✅ Prevent crash: user is null while loading
+  if (!user?.id) return null;
   const today = new Date().toISOString().split('T')[0];
 
   const todaysTodos =
