@@ -257,7 +257,6 @@ exports.demoteUserByAdmin = async (req, res) => {
 
     await t.commit();
 
-    // 📩 Send demotion email (NO rollback if email fails)
     try {
       await sendEmail(
         user.email,

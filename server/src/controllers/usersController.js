@@ -7,7 +7,7 @@ exports.listUsers = async (req, res) => {
       order: [['name', 'ASC']],
       paranoid: true,
     });
-    res.json({ success: true, users });
+    res.status(200).json({ success: true, users });
   } catch (e) {
     res.status(500).json({ success: false, message: 'Failed to fetch users' });
   }
