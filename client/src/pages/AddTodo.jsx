@@ -12,10 +12,8 @@ const getLocalDateTimeMin = () => {
   const now = new Date();
   now.setSeconds(0);
   now.setMilliseconds(0);
-
   const offset = now.getTimezoneOffset();
   const local = new Date(now.getTime() - offset * 60000);
-
   return local.toISOString().slice(0, 16);
 };
 
@@ -111,27 +109,13 @@ const AddTodo = () => {
   return (
     <form
       onSubmit={handleSubmit(onSubmitHandler)}
-      className="
-        flex-1 bg-gray-dark text-secondary h-full overflow-scroll p-4
-        dark:bg-gray-50 dark:text-gray-900
-      "
+      className="flex-1 bg-gray-dark text-secondary h-full overflow-scroll p-4 dark:bg-gray-50 dark:text-gray-900"
     >
-      <div
-        className="
-          bg-gray-dark w-full max-w-3xl p-6 md:p-10 shadow-lg rounded-lg mx-auto border border-gray-light
-          dark:bg-white dark:border-gray-300
-        "
-      >
-        <h2
-          className="
-            text-2xl font-bold mb-6 border-b border-gray-700 pb-2
-            dark:text-gray-900 dark:border-gray-300
-          "
-        >
+      <div className="bg-gray-dark w-full max-w-3xl p-6 md:p-10 shadow-lg rounded-lg mx-auto border border-gray-light dark:bg-white dark:border-gray-300">
+        <h2 className="text-2xl font-bold mb-6 border-b border-gray-700 pb-2 dark:text-gray-900 dark:border-gray-300">
           {editTodo ? 'Edit Todo' : 'Add New Todo'}
         </h2>
 
-        {/* Title */}
         <div className="mb-6">
           <label className="block text-secondary/90 mb-2 font-medium dark:text-gray-700">
             Title <span className="text-red-500">*</span>
@@ -147,7 +131,6 @@ const AddTodo = () => {
           )}
         </div>
 
-        {/* Description */}
         <div className="mb-6">
           <label className="block text-secondary/90 mb-2 font-medium dark:text-gray-700">
             Description <span className="text-red-500">*</span>
@@ -172,38 +155,27 @@ const AddTodo = () => {
             Notes
           </label>
           <textarea
-            className="
-              w-full p-2 border border-gray-300 rounded bg-gray-dark text-text min-h-[150px]
-              dark:bg-gray-100 dark:text-gray-900 dark:border-gray-300
-            "
+            className="w-full p-2 border border-gray-300 rounded bg-gray-dark text-text min-h-[150px] dark:bg-gray-100 dark:text-gray-900 dark:border-gray-300"
             placeholder="Enter notes"
             {...register('notes')}
           />
         </div>
 
-        {/* Date & Time */}
         <div className="mb-6">
           <label className="block text-secondary/90 mb-2 font-medium dark:text-gray-700">
             Date & Time <span className="text-red-500">*</span>
           </label>
-
           <Input
             type="datetime-local"
             min={minDateTime}
             onClick={(e) => e.target.showPicker()}
             onChange={(e) => e.target.blur()}
-            className="
-              cursor-pointer w-full
-              dark:bg-gray-100 dark:text-gray-900 dark:border-gray-300
-              hover:border-primary hover:ring-1 hover:ring-primary
-              focus:ring-primary focus:border-primary
-            "
+            className="cursor-pointer w-full dark:bg-gray-100 dark:text-gray-900 dark:border-gray-300 hover:border-primary hover:ring-1 hover:ring-primary focus:ring-primary focus:border-primary"
             {...register('date', {
               required: 'Date & time are required',
               validate: (value) => {
                 const selected = new Date(value).getTime();
                 const now = new Date().getTime();
-
                 if (selected < now) return 'Cannot select a past time';
                 return true;
               },
@@ -214,10 +186,11 @@ const AddTodo = () => {
           )}
         </div>
 
-        {/* Reminder Before */}
         <div className="mb-6">
+          <label className="block text-secondary/90 mb-2 font-medium dark:text-gray-700">
+            Remind Me Before
+          </label>
           <Select
-            label="Remind Me Before"
             className="dark:bg-gray-100 dark:text-gray-900 dark:border-gray-300"
             {...register('reminderBeforeMinutes')}
             options={[
@@ -229,46 +202,58 @@ const AddTodo = () => {
           />
         </div>
 
-        {/* Category, Priority, Status */}
         <div className="mb-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <Select
-            label="Category"
-            {...register('category')}
-            className="dark:bg-gray-100 dark:text-gray-900 dark:border-gray-300"
-            options={[
-              { label: 'Work', value: 'Work' },
-              { label: 'Personal', value: 'Personal' },
-              { label: 'Other', value: 'Other' },
-            ]}
-          />
+          <div>
+            <label className="block text-secondary/90 mb-2 font-medium dark:text-gray-700">
+              Category
+            </label>
+            <Select
+              {...register('category')}
+              className="dark:bg-gray-100 dark:text-gray-900 dark:border-gray-300"
+              options={[
+                { label: 'Work', value: 'Work' },
+                { label: 'Personal', value: 'Personal' },
+                { label: 'Other', value: 'Other' },
+              ]}
+            />
+          </div>
 
-          <Select
-            label="Priority"
-            {...register('priority')}
-            className="dark:bg-gray-100 dark:text-gray-900 dark:border-gray-300"
-            options={[
-              { label: 'Low', value: 'Low' },
-              { label: 'Moderate', value: 'Moderate' },
-              { label: 'High', value: 'High' },
-            ]}
-          />
+          <div>
+            <label className="block text-secondary/90 mb-2 font-medium dark:text-gray-700">
+              Priority
+            </label>
+            <Select
+              {...register('priority')}
+              className="dark:bg-gray-100 dark:text-gray-900 dark:border-gray-300"
+              options={[
+                { label: 'Low', value: 'Low' },
+                { label: 'Moderate', value: 'Moderate' },
+                { label: 'High', value: 'High' },
+              ]}
+            />
+          </div>
 
-          <Select
-            label="Status"
-            {...register('status')}
-            className="dark:bg-gray-100 dark:text-gray-900 dark:border-gray-300"
-            options={[
-              { label: 'Pending', value: 'pending' },
-              { label: 'In Progress', value: 'inProgress' },
-              { label: 'Completed', value: 'completed' },
-            ]}
-          />
+          <div>
+            <label className="block text-secondary/90 mb-2 font-medium dark:text-gray-700">
+              Status
+            </label>
+            <Select
+              {...register('status')}
+              className="dark:bg-gray-100 dark:text-gray-900 dark:border-gray-300"
+              options={[
+                { label: 'Pending', value: 'pending' },
+                { label: 'In Progress', value: 'inProgress' },
+                { label: 'Completed', value: 'completed' },
+              ]}
+            />
+          </div>
         </div>
 
-        {/* Assigned To */}
         <div className="mb-6">
+          <label className="block text-secondary/90 mb-2 font-medium dark:text-gray-700">
+            Assigned To
+          </label>
           <Select
-            label="Assigned To"
             className="dark:bg-gray-100 dark:text-gray-900 dark:border-gray-300"
             {...register('assignedToUserId')}
             options={[
@@ -281,7 +266,6 @@ const AddTodo = () => {
           />
         </div>
 
-        {/* Buttons */}
         <div className="flex gap-3">
           <Button type="submit" disabled={isSubmitting}>
             {isSubmitting ? 'Saving...' : editTodo ? 'Update Todo' : 'Add Todo'}
