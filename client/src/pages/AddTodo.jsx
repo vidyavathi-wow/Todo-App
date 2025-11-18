@@ -291,7 +291,7 @@ const AddTodo = () => {
             <Button
               type="button"
               onClick={onCancelHandler}
-              className="bg-gray-700 dark:bg-gray-200 dark:text-gray-900"
+              className="bg-gray-700 dark:bg-gray-400 dark:text-gray-900"
             >
               Cancel
             </Button>

@@ -70,6 +70,9 @@ export const AppProvider = ({ children }) => {
   const [todos, setTodos] = useState([]);
   const [users, setUsersList] = useState([]);
 
+  // EDIT TODO ---------------------------
+  const [editTodo, setEditTodo] = useState(null);
+
   // Fetch Todos
   const fetchTodos = async () => {
     try {
@@ -148,6 +151,10 @@ export const AppProvider = ({ children }) => {
     todos,
     setTodos,
     users,
+
+    //editTodo, setEditTodo
+    editTodo,
+    setEditTodo,
 
     fetchTodos,
     fetchUsers,
