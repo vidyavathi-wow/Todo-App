@@ -1,5 +1,5 @@
 import React, { useContext, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
 import AppContext from '../../context/AppContext';
@@ -8,7 +8,8 @@ import Button from '../../components/common/Button';
 import { loginUser } from '../../services/auth';
 
 export default function Login() {
-  const { navigate, setToken } = useContext(AppContext);
+  const navigate = useNavigate();
+  const { setToken } = useContext(AppContext);
   const [loading, setLoading] = useState(false);
 
   const {
@@ -16,30 +17,25 @@ export default function Login() {
     handleSubmit,
     formState: { errors },
     reset,
-  } = useForm({
-    defaultValues: { email: '', password: '' },
-  });
+  } = useForm({ defaultValues: { email: '', password: '' } });
 
   const onSubmit = async (formData) => {
     setLoading(true);
     try {
       const data = await loginUser(formData);
       if (data.success) {
+        // only call context setter (it stores to localStorage inside AppContext)
         setToken(data.accessToken);
-        localStorage.setItem('token', data.accessToken);
         toast.success(data.message || 'Login successful!');
         reset();
-        navigate('/');
+        // replace to prevent back to login
+        navigate('/', { replace: true });
       } else {
         toast.error(data.message || 'Login failed');
       }
-    } catch (error) {
-      const res = error.response?.data;
-      if (res?.errors?.length) {
-        res.errors.forEach((err) => toast.error(err.msg));
-      } else {
-        toast.error(res?.message || 'Login failed');
-      }
+    } catch (err) {
+      const msg = err?.response?.data?.message || 'Login failed';
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
@@ -52,12 +48,10 @@ export default function Login() {
       </h2>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-        {/* Email */}
         <div>
           <label className="block mb-1 text-sm text-white dark:text-gray-900">
             Email Address
           </label>
-
           <Input
             type="email"
             placeholder="Enter your email"
@@ -65,19 +59,11 @@ export default function Login() {
               required: 'Email is required',
               pattern: {
                 value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-                message: 'Enter a valid email address',
+                message: 'Enter a valid email',
               },
             })}
-            className="
-              w-full p-3 rounded
-              bg-gray-700 dark:bg-gray-200
-              border border-gray-600 dark:border-gray-300
-              focus:ring-2 focus:ring-primary
-              text-gray-light dark:text-gray-900
-              placeholder:text-gray-400 dark:placeholder:text-gray-100
-            "
+            className="w-full p-3 rounded bg-gray-700 dark:bg-gray-200 border border-gray-600 dark:border-gray-300 focus:ring-2 focus:ring-primary text-gray-light dark:text-gray-900"
           />
-
           {errors.email && (
             <p className="text-red-400 dark:text-red-500 text-sm mt-1">
               {errors.email.message}
@@ -85,32 +71,19 @@ export default function Login() {
           )}
         </div>
 
-        {/* Password */}
         <div>
           <label className="block mb-1 text-sm text-white dark:text-gray-900">
             Password
           </label>
-
           <Input
             type="password"
             placeholder="Enter your password"
             {...register('password', {
               required: 'Password is required',
-              minLength: {
-                value: 6,
-                message: 'Password must be at least 6 characters long',
-              },
+              minLength: { value: 6, message: 'Minimum 6 chars' },
             })}
-            className="
-              w-full p-3 rounded
-              bg-gray-700 dark:bg-gray-200
-              border border-gray-600 dark:border-gray-300
-              focus:ring-2 focus:ring-primary
-              text-gray-light dark:text-gray-900
-              placeholder:text-gray-400 dark:placeholder:text-gray-100
-            "
+            className="w-full p-3 rounded bg-gray-700 dark:bg-gray-200 border border-gray-600 dark:border-gray-300 focus:ring-2 focus:ring-primary text-gray-light dark:text-gray-900"
           />
-
           {errors.password && (
             <p className="text-red-400 dark:text-red-500 text-sm mt-1">
               {errors.password.message}
@@ -127,13 +100,11 @@ export default function Login() {
           </div>
         </div>
 
-        {/* Submit */}
         <Button
           type="submit"
           disabled={loading}
-          className="w-full bg-primary text-white py-3 rounded-md font-medium
-            hover:bg-primary/80 transition disabled:opacity-50"
           noDefault
+          className="w-full bg-primary text-white py-3 rounded-md font-medium hover:bg-primary/80 transition disabled:opacity-50"
         >
           {loading ? 'Logging in...' : 'Login'}
         </Button>

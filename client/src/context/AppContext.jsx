@@ -1,10 +1,10 @@
-import { createContext, useEffect, useState } from 'react';
+import { createContext, useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 
 import axiosInstance from '../configs/axiosInstance';
-import { getTodos } from '../services/todos';
 import { getProfile } from '../services/profile';
+import { getTodos } from '../services/todos';
 import { getUsers } from '../services/users';
 
 const AppContext = createContext();
@@ -12,6 +12,7 @@ const AppContext = createContext();
 export const AppProvider = ({ children }) => {
   const navigate = useNavigate();
 
+  // THEME ------------------------------
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
 
   useEffect(() => {
@@ -19,81 +20,149 @@ export const AppProvider = ({ children }) => {
     localStorage.setItem('theme', theme);
   }, [theme]);
 
-  const [token, setToken] = useState(null);
-  const [todos, setTodos] = useState([]);
-  const [input, setInput] = useState('');
-  const [editTodo, setEditTodo] = useState(null);
-  const [loading, setLoading] = useState(true);
+  // AUTH -------------------------------
+  const [token, setTokenState] = useState(null);
   const [user, setUser] = useState(null);
-  const [users, setUsers] = useState([]);
+  const [authLoading, setAuthLoading] = useState(true);
 
-  useEffect(() => {
-    const storedToken = localStorage.getItem('token');
-    if (storedToken) setToken(storedToken);
-    setLoading(false);
+  const setToken = useCallback((val) => {
+    if (val) {
+      localStorage.setItem('token', val);
+      setTokenState(val);
+    } else {
+      localStorage.removeItem('token');
+      setTokenState(null);
+    }
   }, []);
 
+  // INITIAL AUTH CHECK ------------------
   useEffect(() => {
-    if (token) {
-      axiosInstance.defaults.headers.common['Authorization'] =
-        `Bearer ${token}`;
-      fetchUserProfile();
-      fetchTodos();
-      fetchUsers();
-    } else {
-      setUser(null);
-      setTodos([]);
-    }
-  }, [token]);
+    let mounted = true;
 
-  const fetchUserProfile = async () => {
-    try {
-      const data = await getProfile();
-      if (data.success) setUser(data.user);
-      else toast.error(data.message || 'Failed to fetch profile');
-    } catch (error) {
-      toast.error(error.response?.data?.message || error.message);
-    }
-  };
+    const init = async () => {
+      const stored = localStorage.getItem('token');
+      if (!stored) {
+        if (mounted) setAuthLoading(false);
+        return;
+      }
 
+      try {
+        const res = await axiosInstance.get('/api/v1/auth/me');
+        if (res.data?.success && mounted) {
+          setTokenState(stored);
+          setUser(res.data.user);
+        } else {
+          setToken(null);
+        }
+      } catch (e) {
+        console.error(e);
+        setToken(null);
+      } finally {
+        if (mounted) setAuthLoading(false);
+      }
+    };
+
+    init();
+    return () => (mounted = false);
+  }, [setToken]);
+
+  // DATA --------------------------------
+  const [todos, setTodos] = useState([]);
+  const [users, setUsersList] = useState([]);
+
+  // EDIT TODO ---------------------------
+  const [editTodo, setEditTodo] = useState(null);
+
+  // Fetch Todos
   const fetchTodos = async () => {
     try {
-      const data = await getTodos();
-      if (data.success) setTodos(data.todos || []);
-      else toast.error(data.message || 'Failed to fetch todos');
-    } catch (error) {
-      toast.error(error.response?.data?.message || error.message);
+      const d = await getTodos();
+      if (d.success) setTodos(d.todos || []);
+    } catch (e) {
+      console.error(e);
     }
   };
 
+  // Fetch Users
   const fetchUsers = async () => {
     try {
-      const data = await getUsers();
-      if (data.success) setUsers(data.users || []);
+      const d = await getUsers();
+      if (d.success) setUsersList(d.users || []);
     } catch (e) {
-      toast.error(e.response?.data?.message || 'Failed to fetch users');
+      console.error(e);
     }
   };
 
+  // Fetch Profile
+  const fetchProfile = async () => {
+    try {
+      const d = await getProfile();
+      if (d.success) setUser(d.user);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  // FETCH WHEN TOKEN IS READY (FIXED)
+  useEffect(() => {
+    // DO NOT RUN ANYTHING WHILE /auth/me IS STILL VALIDATING
+    if (authLoading) return;
+
+    // AFTER VALIDATION: if no token → clean state only, no API calls
+    if (!token) {
+      setUser(null);
+      setTodos([]);
+      setUsersList([]);
+      return;
+    }
+
+    // TOKEN IS CONFIRMED VALID → now safely fetch data
+    (async () => {
+      try {
+        await Promise.all([fetchProfile(), fetchTodos(), fetchUsers()]);
+      } catch (e) {
+        console.error(e);
+      }
+    })();
+  }, [token, authLoading]);
+
+  // LOGOUT ------------------------------
+  const logout = async () => {
+    try {
+      await axiosInstance.post('/api/v1/auth/logout').catch(() => {});
+    } catch (e) {
+      console.error(e);
+    }
+
+    setToken(null);
+    setUser(null);
+    navigate('/login', { replace: true });
+    toast.success('Logged out');
+  };
+
+  // CONTEXT VALUE -----------------------
   const value = {
     axios: axiosInstance,
-    navigate,
     token,
     setToken,
-    todos,
-    setTodos,
-    input,
-    setInput,
-    editTodo,
-    setEditTodo,
-    fetchTodos,
-    loading,
     user,
     setUser,
-    users,
+    logout,
+    authLoading,
 
     theme,
     setTheme,
+
+    todos,
+    setTodos,
+    users,
+
+    editTodo,
+    setEditTodo,
+
+    fetchTodos,
+    fetchUsers,
+    fetchProfile,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

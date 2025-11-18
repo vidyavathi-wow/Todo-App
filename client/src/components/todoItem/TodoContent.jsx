@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { motion as m } from 'framer-motion';
+import { motion as M } from 'framer-motion';
 
 export default function TodoContent({ todo, children }) {
   const [timeLeft, setTimeLeft] = useState('');
@@ -22,14 +22,14 @@ export default function TodoContent({ todo, children }) {
   };
 
   useEffect(() => {
-    const updateTime = () => setTimeLeft(calculateTimeLeft());
-    updateTime();
-    const timer = setInterval(updateTime, 60 * 1000);
+    const update = () => setTimeLeft(calculateTimeLeft());
+    update();
+    const timer = setInterval(update, 60 * 1000);
     return () => clearInterval(timer);
   }, [todo?.date]);
 
   return (
-    <m.div
+    <M.div
       className="p-4 sm:p-8 max-w-4xl mx-auto w-full relative"
       initial={{ opacity: 0, y: 30 }}
       animate={{ opacity: 1, y: 0 }}
@@ -37,13 +37,13 @@ export default function TodoContent({ todo, children }) {
     >
       <div
         className="
-        bg-gray-900 dark:bg-white 
-        text-gray-100 dark:text-gray-900
-        rounded-lg p-6 sm:p-8 
-        shadow-lg border 
-        border-gray-700/50 dark:border-gray-300
-        transition-colors duration-300
-      "
+          bg-gray-900 dark:bg-white 
+          text-gray-100 dark:text-gray-900
+          rounded-lg p-6 sm:p-8 
+          shadow-lg border 
+          border-gray-700/50 dark:border-gray-300
+          transition-colors duration-300
+        "
       >
         {/* HEADER */}
         <div className="flex justify-between items-center mb-6">
@@ -52,7 +52,6 @@ export default function TodoContent({ todo, children }) {
               {todo.title}
             </h1>
 
-            {/* Due date */}
             {todo.date && (
               <>
                 <p className="text-sm text-gray-400 dark:text-gray-600 mt-1">
@@ -80,7 +79,7 @@ export default function TodoContent({ todo, children }) {
           {children && <div className="shrink-0">{children}</div>}
         </div>
 
-        {/* DETAILS GRID */}
+        {/* GRID DETAILS */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
           {/* Category */}
           <div className="bg-gray-800 dark:bg-gray-200 p-4 rounded-lg border border-gray-700 dark:border-gray-300">
@@ -179,13 +178,7 @@ export default function TodoContent({ todo, children }) {
               <h2 className="text-lg font-semibold text-gray-100 dark:text-gray-900 mb-2">
                 Notes
               </h2>
-              <div
-                className="
-                bg-gray-800 dark:bg-gray-200 
-                rounded-lg p-5 sm:p-6 
-                border border-gray-700 dark:border-gray-300
-              "
-              >
+              <div className="bg-gray-800 dark:bg-gray-200 rounded-lg p-5 sm:p-6 border border-gray-700 dark:border-gray-300">
                 <p className="leading-relaxed text-gray-200 dark:text-gray-900 whitespace-pre-line">
                   {todo.notes}
                 </p>
@@ -194,6 +187,6 @@ export default function TodoContent({ todo, children }) {
           )}
         </div>
       </div>
-    </m.div>
+    </M.div>
   );
 }

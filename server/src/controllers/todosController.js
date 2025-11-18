@@ -256,9 +256,12 @@ exports.getDashboardData = async (req, res) => {
     const isAdmin = req.user.role === 'admin';
     const userId = req.user.id;
 
-    const where = isAdmin
-      ? {}
-      : { [Op.or]: [{ userId }, { assignedToUserId: userId }] };
+    const where = {
+      [Op.or]: [
+        { userId: userId }, // created by logged-in user
+        { assignedToUserId: userId }, // assigned to logged-in user
+      ],
+    };
 
     const [statusCounts, recentTodos] = await Promise.all([
       Todo.findAll({
