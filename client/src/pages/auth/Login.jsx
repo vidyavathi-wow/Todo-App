@@ -74,6 +74,7 @@ export default function Login() {
               border border-gray-600 dark:border-gray-300
               focus:ring-2 focus:ring-primary
               text-gray-light dark:text-gray-900
+              placeholder:text-gray-400 dark:placeholder:text-gray-100
             "
           />
 
@@ -106,6 +107,7 @@ export default function Login() {
               border border-gray-600 dark:border-gray-300
               focus:ring-2 focus:ring-primary
               text-gray-light dark:text-gray-900
+              placeholder:text-gray-400 dark:placeholder:text-gray-100
             "
           />
 
@@ -138,7 +140,7 @@ export default function Login() {
       </form>
 
       <p className="text-sm text-center mt-6 text-gray-400 dark:text-gray-700">
-        Don’t have an account?{' '}
+        Don't have an account?{' '}
         <Link to="/signup" className="text-primary hover:underline">
           Sign Up
         </Link>
