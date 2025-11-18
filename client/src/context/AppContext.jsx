@@ -103,8 +103,12 @@ export const AppProvider = ({ children }) => {
     }
   };
 
-  // FETCH WHEN TOKEN AVAILABLE ----------
+  // FETCH WHEN TOKEN IS READY (FIXED)
   useEffect(() => {
+    // DO NOT RUN ANYTHING WHILE /auth/me IS STILL VALIDATING
+    if (authLoading) return;
+
+    // AFTER VALIDATION: if no token → clean state only, no API calls
     if (!token) {
       setUser(null);
       setTodos([]);
@@ -112,6 +116,7 @@ export const AppProvider = ({ children }) => {
       return;
     }
 
+    // TOKEN IS CONFIRMED VALID → now safely fetch data
     (async () => {
       try {
         await Promise.all([fetchProfile(), fetchTodos(), fetchUsers()]);
@@ -119,7 +124,7 @@ export const AppProvider = ({ children }) => {
         console.error(e);
       }
     })();
-  }, [token]);
+  }, [token, authLoading]);
 
   // LOGOUT ------------------------------
   const logout = async () => {
@@ -152,7 +157,6 @@ export const AppProvider = ({ children }) => {
     setTodos,
     users,
 
-    //editTodo, setEditTodo
     editTodo,
     setEditTodo,
 
