@@ -64,11 +64,18 @@ cron.schedule('* * * * *', async () => {
             return;
           }
 
+          // Format date directly without re-parsing
+          const formattedDate = new Intl.DateTimeFormat('en-IN', {
+            dateStyle: 'medium',
+            timeStyle: 'short',
+            timeZone: 'Asia/Kolkata',
+          }).format(new Date(todo.date));
+
           const subject = `⏰ Reminder: ${todo.title} is due soon!`;
           const text = `
 Hi ${user.name || 'there'},
 
-Your assigned task "${todo.title}" is due at ${new Date(todo.date).toLocaleString()}.
+Your assigned task "${todo.title}" is due at ${formattedDate}.
 
 Category: ${todo.category}
 Priority: ${todo.priority}
