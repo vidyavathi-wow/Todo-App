@@ -4,6 +4,7 @@ const {
   register,
   forgotPassword,
   resetPassword,
+  logout,
 } = require('../controllers/authController');
 const {
   validateLogin,
@@ -19,6 +20,7 @@ router.post('/login', validateLogin, login);
 router.post('/register', validateRegister, register);
 router.post('/forgot-password', validateEmail, forgotPassword);
 router.post('/reset-password', validatePassword, resetPassword);
+router.post('/logout', logout);
 
 // 🔥 Add this:
 router.get('/me', verifyToken, (req, res) => {
