@@ -1,41 +1,45 @@
-const { fn, col } = require('sequelize');
+const { fn, col, Op } = require('sequelize');
 const Todo = require('../models/Todo');
 
 exports.getAnalytics = async (req, res) => {
   try {
     const userId = req.user.id;
 
-    // ✅ Default structure
+    // filter for both admin & user
+    const filter = {
+      [Op.or]: [{ userId }, { assignedToUserId: userId }],
+    };
+
+    // Default structure
     const defaults = {
       statusCounts: { completed: 0, inProgress: 0, pending: 0 },
       priorityCounts: { High: 0, Moderate: 0, Low: 0 },
       categoryCounts: { Work: 0, Personal: 0, Other: 0 },
     };
 
-    // ✅ Query function (generic)
+    // Generic aggregator
     const aggregateBy = async (field) => {
       const rows = await Todo.findAll({
-        where: { userId },
+        where: filter,
         attributes: [field, [fn('COUNT', col(field)), 'count']],
         group: [field],
         raw: true,
         paranoid: true,
       });
+
       return Object.fromEntries(
         rows.map((r) => [r[field], parseInt(r.count, 10)])
       );
     };
 
-    // ✅ Execute in parallel
     const [statusCounts, priorityCounts, categoryCounts, totalTodos] =
       await Promise.all([
         aggregateBy('status'),
         aggregateBy('priority'),
         aggregateBy('category'),
-        Todo.count({ where: { userId }, paranoid: true }),
+        Todo.count({ where: filter, paranoid: true }), // 🔥 FIXED
       ]);
 
-    // ✅ Merge actual counts with defaults (ensures all keys exist)
     const mergeCounts = (defaults, actual) =>
       Object.fromEntries(Object.keys(defaults).map((k) => [k, actual[k] || 0]));
 
@@ -43,7 +47,6 @@ exports.getAnalytics = async (req, res) => {
     const mergedPriority = mergeCounts(defaults.priorityCounts, priorityCounts);
     const mergedCategory = mergeCounts(defaults.categoryCounts, categoryCounts);
 
-    // ✅ Compute percentages in a single pass
     const calcPercent = (obj) =>
       Object.fromEntries(
         Object.entries(obj).map(([k, v]) => [

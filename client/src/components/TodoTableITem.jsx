@@ -40,10 +40,10 @@ const TodoTableItem = ({ todo, fetchTodos, index }) => {
   };
 
   return (
-    <tr className="border-b border-gray-700 hover:bg-gray-800 transition-all">
-      <td className="px-2 py-4 xl:px-6 text-gray-400">{index}</td>
+    <tr className="border-b border-gray-700 hover:bg-gray-500 transition-all">
+      <td className="px-2 py-4 xl:px-6 text-gray-600">{index}</td>
 
-      <td className="px-2 dark:text-gray-900 py-4 xl:px-6 font-medium text-gray-100">
+      <td className="px-2 dark:text-gray-800 py-4 xl:px-6 font-medium text-gray-100">
         {todo.title}
       </td>
 
