@@ -43,16 +43,14 @@ exports.createTodo = async (req, res) => {
     let assignedUserName = '';
     if (assignedToUserId) {
       const assignedUser = await User.findByPk(assignedToUserId);
-      assignedUserName = assignedUser ? assignedUser.name : '';
+      assignedUsername = assignedUser ? assignedUser.name : '';
     }
 
     // Activity Log with assigned user name
     await ActivityLog.create({
       userId: req.user.id,
       action: 'CREATE_TODO',
-      details: `Todo created: ${title}${
-        assignedUserName ? ` (assigned to ${assignedUserName})` : ''
-      }`,
+      details: `Todo created: ${title}${assignedUsername ? ` (assigned to ${assignedUsername})` : ''}`,
     });
 
     const createdTodo = await Todo.findByPk(todo.id, {
@@ -224,7 +222,7 @@ exports.updateTodoStatus = async (req, res) => {
   }
 };
 
-// ✅ DELETE TODO
+// DELETE TODO (soft)
 exports.deleteTodo = async (req, res) => {
   try {
     const { id } = req.params;
@@ -305,9 +303,12 @@ exports.getDashboardData = async (req, res) => {
   }
 };
 
+// ------------------------------------------------------------------
+// GET TODOS BY DATE - supports filters: my | all | assignedByMe | assignedToMe
+// ------------------------------------------------------------------
 exports.getTodosByDate = async (req, res) => {
   try {
-    const { date } = req.query;
+    const { date, filter } = req.query;
     const isAdmin = req.user.role === 'admin';
     const userId = req.user.id;
 
@@ -320,14 +321,39 @@ exports.getTodosByDate = async (req, res) => {
     const end = new Date(date);
     end.setHours(23, 59, 59, 999);
 
-    const where = isAdmin
-      ? { date: { [Op.between]: [start, end] } }
-      : {
-          [Op.and]: [
-            { date: { [Op.between]: [start, end] } },
-            { [Op.or]: [{ userId }, { assignedToUserId: userId }] },
-          ],
-        };
+    const dateCondition = { date: { [Op.between]: [start, end] } };
+
+    let where;
+
+    switch ((filter || 'my').toString()) {
+      case 'my':
+        // tasks created by me
+        where = { ...dateCondition, userId };
+        break;
+
+      case 'assignedByMe':
+        // tasks created by me (explicit)
+        where = { ...dateCondition, userId };
+        break;
+
+      case 'assignedToMe':
+        // tasks assigned to me
+        where = { ...dateCondition, assignedToUserId: userId };
+        break;
+
+      case 'all':
+      default:
+        // Admins get everything; non-admins get tasks created by or assigned to them
+        where = isAdmin
+          ? dateCondition
+          : {
+              [Op.and]: [
+                dateCondition,
+                { [Op.or]: [{ userId }, { assignedToUserId: userId }] },
+              ],
+            };
+        break;
+    }
 
     const todos = await Todo.findAll({
       where,
@@ -347,9 +373,12 @@ exports.getTodosByDate = async (req, res) => {
   }
 };
 
+// ------------------------------------------------------------------
+// GET TODOS BY DATE RANGE (month summary) - supports same filters
+// ------------------------------------------------------------------
 exports.getTodosByDateRange = async (req, res) => {
   try {
-    const { start, end } = req.query;
+    const { start, end, filter } = req.query;
     const isAdmin = req.user.role === 'admin';
     const userId = req.user.id;
 
@@ -358,14 +387,38 @@ exports.getTodosByDateRange = async (req, res) => {
         .status(400)
         .json({ success: false, message: 'Start and end dates required' });
 
-    const where = isAdmin
-      ? { date: { [Op.between]: [new Date(start), new Date(end)] } }
-      : {
-          [Op.and]: [
-            { date: { [Op.between]: [new Date(start), new Date(end)] } },
-            { [Op.or]: [{ userId }, { assignedToUserId: userId }] },
-          ],
-        };
+    const startDate = new Date(start);
+    const endDate = new Date(end);
+
+    const dateCondition = { date: { [Op.between]: [startDate, endDate] } };
+
+    let where;
+
+    switch ((filter || 'my').toString()) {
+      case 'my':
+        where = { ...dateCondition, userId };
+        break;
+
+      case 'assignedByMe':
+        where = { ...dateCondition, userId };
+        break;
+
+      case 'assignedToMe':
+        where = { ...dateCondition, assignedToUserId: userId };
+        break;
+
+      case 'all':
+      default:
+        where = isAdmin
+          ? dateCondition // admin sees all
+          : {
+              [Op.and]: [
+                dateCondition,
+                { [Op.or]: [{ userId }, { assignedToUserId: userId }] },
+              ],
+            };
+        break;
+    }
 
     const todos = await Todo.findAll({
       where,
@@ -374,9 +427,9 @@ exports.getTodosByDateRange = async (req, res) => {
     });
 
     const taskSummary = todos.reduce((acc, todo) => {
-      const date = todo.date.toISOString().split('T')[0];
-      if (!acc[date]) acc[date] = [];
-      acc[date].push(todo);
+      const dateKey = todo.date.toISOString().split('T')[0];
+      if (!acc[dateKey]) acc[dateKey] = [];
+      acc[dateKey].push(todo);
       return acc;
     }, {});
 

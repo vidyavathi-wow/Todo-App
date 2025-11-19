@@ -101,7 +101,15 @@ export default function TodaysTodos() {
                 {allowed && (
                   <button
                     onClick={() => handleToggleCompleted(todo)}
-                    className={`p-1 rounded transition-colors duration-200 ${colorClass}`}
+                    className={`
+                      w-6 h-6 flex items-center justify-center rounded-xl border 
+                      transition-colors duration-200 
+                      ${
+                        todo.status === 'completed'
+                          ? 'bg-green-500 border-green-500 text-white'
+                          : 'bg-white dark:bg-gray-800 border-gray-400 text-transparent'
+                      }
+                    `}
                   >
                     ✔
                   </button>

@@ -19,9 +19,9 @@ export const ANALYTICS_COLORS = {
 };
 
 export const STATUS_COLORS = {
-  pending: 'bg-orange-900',
-  inProgress: 'bg-blue-900',
-  completed: 'bg-green-900',
+  pending: 'bg-orange-400',
+  inProgress: 'bg-blue-400',
+  completed: 'bg-green-400',
 };
 
 export const menuItems = [

@@ -39,14 +39,22 @@ export const getDashboardData = async () => {
   return data;
 };
 
-// Get todos for a specific date
-export const getTodosByDate = async (date) => {
-  const { data } = await axiosInstance.get(API.todos.byDate(date));
-  return data;
+export const getTodosByDate = async (date, filter = 'my') => {
+  try {
+    const url = `${API.todos.byDate(date)}${filter ? `&filter=${encodeURIComponent(filter)}` : ''}`;
+    const res = await axiosInstance.get(url);
+    return res.data;
+  } catch (err) {
+    throw err.response?.data || err;
+  }
 };
 
-// Get todos for a date range (calendar summary)
-export const getTodosByDateRange = async (start, end) => {
-  const { data } = await axiosInstance.get(API.todos.byDateRange(start, end));
-  return data;
+export const getTodosByDateRange = async (start, end, filter = 'my') => {
+  try {
+    const url = `${API.todos.byDateRange(start, end)}${filter ? `&filter=${encodeURIComponent(filter)}` : ''}`;
+    const res = await axiosInstance.get(url);
+    return res.data;
+  } catch (err) {
+    throw err.response?.data || err;
+  }
 };
