@@ -32,3 +32,13 @@ export const menuItems = [
   { name: 'Profile', path: '/profile', icon: <User /> },
   { name: 'Activity Logs', path: '/activity-logs', icon: <FiClock /> },
 ];
+
+export const googleColors = [
+  'bg-blue-600',
+  'bg-red-500',
+  'bg-green-600',
+  'bg-purple-600',
+  'bg-pink-500',
+  'bg-amber-500',
+  'bg-indigo-600',
+];
