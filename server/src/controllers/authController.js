@@ -1,6 +1,7 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const RefreshToken = require('../models/RefreshToken');
 const sendEmail = require('../config/emailServeice');
 const ActivityLog = require('../models/ActivityLog');
 
@@ -9,10 +10,9 @@ exports.register = async (req, res) => {
     const { name, email, password } = req.body;
 
     if (!name || !email || !password) {
-      return res.status(400).json({
-        success: false,
-        message: 'All fields are required.',
-      });
+      return res
+        .status(400)
+        .json({ success: false, message: 'All fields are required.' });
     }
 
     const existingUser = await User.findOne({
@@ -28,10 +28,9 @@ exports.register = async (req, res) => {
     }
 
     if (existingUser) {
-      return res.status(400).json({
-        success: false,
-        message: 'Email is already registered.',
-      });
+      return res
+        .status(400)
+        .json({ success: false, message: 'Email is already registered.' });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -66,10 +65,7 @@ exports.register = async (req, res) => {
       },
     });
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: error.message,
-    });
+    return res.status(500).json({ success: false, message: error.message });
   }
 };
 
@@ -78,22 +74,17 @@ exports.login = async (req, res) => {
     const { email, password } = req.body;
 
     if (!email || !password) {
-      return res.status(400).json({
-        success: false,
-        message: 'Email and password are required.',
-      });
+      return res
+        .status(400)
+        .json({ success: false, message: 'Email and password are required.' });
     }
 
-    const user = await User.findOne({
-      where: { email },
-      paranoid: false,
-    });
+    const user = await User.findOne({ where: { email }, paranoid: false });
 
     if (!user) {
-      return res.status(400).json({
-        success: false,
-        message: 'Please enter a registered email.',
-      });
+      return res
+        .status(400)
+        .json({ success: false, message: 'Please enter a registered email.' });
     }
 
     if (user.deletedAt) {
@@ -106,17 +97,27 @@ exports.login = async (req, res) => {
     const isMatch = await bcrypt.compare(password, user.password);
 
     if (!isMatch) {
-      return res.status(400).json({
-        success: false,
-        message: 'Incorrect password.',
-      });
+      return res
+        .status(400)
+        .json({ success: false, message: 'Incorrect password.' });
     }
 
     const accessToken = jwt.sign(
       { userId: user.id, email: user.email, role: user.role },
       process.env.JWT_SECRET,
+      { expiresIn: '15m' }
+    );
+
+    const refreshToken = jwt.sign(
+      { userId: user.id, email: user.email, role: user.role },
+      process.env.JWT_REFRESH_SECRET,
       { expiresIn: '7d' }
     );
+    await RefreshToken.create({
+      userId: user.id,
+      token: refreshToken,
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+    });
 
     ActivityLog.create({
       userId: user.id,
@@ -128,6 +129,7 @@ exports.login = async (req, res) => {
       success: true,
       message: 'Login successful.',
       accessToken,
+      refreshToken,
       user: {
         id: user.id,
         name: user.name,
@@ -136,15 +138,61 @@ exports.login = async (req, res) => {
       },
     });
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: error.message,
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+exports.refreshAccessToken = async (req, res) => {
+  try {
+    const { refreshToken } = req.body;
+
+    if (!refreshToken) {
+      return res
+        .status(400)
+        .json({ success: false, message: 'Refresh token missing.' });
+    }
+
+    const stored = await RefreshToken.findOne({
+      where: { token: refreshToken },
     });
+
+    if (!stored) {
+      return res
+        .status(403)
+        .json({ success: false, message: 'Invalid refresh token.' });
+    }
+
+    let decoded;
+    try {
+      decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
+    } catch (err) {
+      await stored.destroy();
+      return res.status(403).json({
+        success: false,
+        message: 'Refresh token expired. Login again.',
+      });
+    }
+
+    const newAccessToken = jwt.sign(
+      { userId: decoded.userId },
+      process.env.JWT_SECRET,
+      { expiresIn: '15m' }
+    );
+
+    return res.status(200).json({ success: true, accessToken: newAccessToken });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
   }
 };
 
 exports.logout = async (req, res) => {
   try {
+    const { refreshToken } = req.body;
+
+    if (refreshToken) {
+      await RefreshToken.destroy({ where: { token: refreshToken } });
+    }
+
     if (req.user?.id) {
       ActivityLog.create({
         userId: req.user.id,
@@ -158,10 +206,7 @@ exports.logout = async (req, res) => {
       message: 'Logged out successfully.',
     });
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: error.message,
-    });
+    return res.status(500).json({ success: false, message: error.message });
   }
 };
 
@@ -170,16 +215,12 @@ exports.forgotPassword = async (req, res) => {
     const { email } = req.body;
 
     if (!email?.trim()) {
-      return res.status(400).json({
-        success: false,
-        message: 'Please enter your email.',
-      });
+      return res
+        .status(400)
+        .json({ success: false, message: 'Please enter your email.' });
     }
 
-    const user = await User.findOne({
-      where: { email },
-      paranoid: false,
-    });
+    const user = await User.findOne({ where: { email }, paranoid: false });
 
     if (!user) {
       return res.status(400).json({
@@ -199,9 +240,7 @@ exports.forgotPassword = async (req, res) => {
       expiresIn: '1d',
     });
 
-    const link = `${process.env.FRONTEND_URL}/reset-password?token=${encodeURIComponent(
-      token
-    )}`;
+    const link = `${process.env.FRONTEND_URL}/reset-password?token=${encodeURIComponent(token)}`;
 
     sendEmail(email, 'Reset Password', `Reset link: ${link}`).catch(() => {});
 
@@ -210,10 +249,7 @@ exports.forgotPassword = async (req, res) => {
       message: 'If registered, reset link sent.',
     });
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: error.message,
-    });
+    return res.status(500).json({ success: false, message: error.message });
   }
 };
 
@@ -223,41 +259,32 @@ exports.resetPassword = async (req, res) => {
     const { password } = req.body;
 
     if (!token) {
-      return res.status(400).json({
-        success: false,
-        message: 'Reset token missing.',
-      });
+      return res
+        .status(400)
+        .json({ success: false, message: 'Reset token missing.' });
     }
 
     if (!password?.trim()) {
-      return res.status(400).json({
-        success: false,
-        message: 'Password cannot be empty.',
-      });
+      return res
+        .status(400)
+        .json({ success: false, message: 'Password cannot be empty.' });
     }
 
     let decoded;
     try {
       decoded = jwt.verify(token, process.env.JWT_SECRET);
     } catch (err) {
-      return res.status(400).json({
-        success: false,
-        message:
-          err.name === 'TokenExpiredError'
-            ? 'Reset link expired.'
-            : 'Invalid reset link.',
-      });
+      return res
+        .status(400)
+        .json({ success: false, message: 'Invalid or expired reset link.' });
     }
 
-    const user = await User.findByPk(decoded.userId, {
-      paranoid: false,
-    });
+    const user = await User.findByPk(decoded.userId, { paranoid: false });
 
     if (!user || user.deletedAt) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid or expired reset link.',
-      });
+      return res
+        .status(400)
+        .json({ success: false, message: 'Invalid or expired reset link.' });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -269,9 +296,6 @@ exports.resetPassword = async (req, res) => {
       message: 'Password updated successfully.',
     });
   } catch (error) {
-    return res.status(400).json({
-      success: false,
-      message: error.message,
-    });
+    return res.status(400).json({ success: false, message: error.message });
   }
 };

@@ -1,171 +1,163 @@
-import { createContext, useCallback, useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import toast from 'react-hot-toast';
+import { createContext, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
 
-import axiosInstance from '../configs/axiosInstance';
-import { getProfile } from '../services/profile';
-import { getTodos } from '../services/todos';
-import { getUsers } from '../services/users';
+import axiosInstance from "../configs/axiosInstance";
+import { getProfile } from "../services/profile";
+import { getTodos } from "../services/todos";
+import { getUsers } from "../services/users";
 
 const AppContext = createContext();
 
 export const AppProvider = ({ children }) => {
   const navigate = useNavigate();
 
-  // THEME ------------------------------
-  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
-
+  // THEME -----------------------
+  const [theme, setTheme] = useState(localStorage.getItem("theme") || "light");
   useEffect(() => {
-    document.documentElement.classList.toggle('dark', theme === 'dark');
-    localStorage.setItem('theme', theme);
+    document.documentElement.classList.toggle("dark", theme === "dark");
+    localStorage.setItem("theme", theme);
   }, [theme]);
 
-  // AUTH -------------------------------
-  const [token, setTokenState] = useState(null);
+  // STATE -----------------------
+  const [token, setToken] = useState(null);
   const [user, setUser] = useState(null);
-  const [authLoading, setAuthLoading] = useState(true);
+  const [todos, setTodos] = useState([]);
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const setToken = useCallback((val) => {
-    if (val) {
-      localStorage.setItem('token', val);
-      setTokenState(val);
-    } else {
-      localStorage.removeItem('token');
-      setTokenState(null);
-    }
-  }, []);
-
-  // INITIAL AUTH CHECK ------------------
+  // INIT ------------------------
   useEffect(() => {
-    let mounted = true;
-
     const init = async () => {
-      const stored = localStorage.getItem('token');
-      if (!stored) {
-        if (mounted) setAuthLoading(false);
-        return;
+      const storedToken = localStorage.getItem("accessToken");
+      const storedRT = localStorage.getItem("refreshToken");
+
+      if (storedToken) {
+        setToken(storedToken);
+      } else if (!storedToken && storedRT) {
+        await tryRefreshToken();
       }
 
-      try {
-        const res = await axiosInstance.get('/api/v1/auth/me');
-        if (res.data?.success && mounted) {
-          setTokenState(stored);
-          setUser(res.data.user);
-        } else {
-          setToken(null);
-        }
-      } catch (e) {
-        console.error(e);
-        setToken(null);
-      } finally {
-        if (mounted) setAuthLoading(false);
-      }
+      setLoading(false);
     };
 
     init();
-    return () => (mounted = false);
-  }, [setToken]);
+  }, []);
 
-  // DATA --------------------------------
-  const [todos, setTodos] = useState([]);
-  const [users, setUsersList] = useState([]);
+  // REFRESH TOKEN ---------------
+  const tryRefreshToken = async () => {
+    const rt = localStorage.getItem("refreshToken");
+    if (!rt) return;
 
-  // EDIT TODO ---------------------------
-  const [editTodo, setEditTodo] = useState(null);
-
-  // Fetch Todos
-  const fetchTodos = async () => {
     try {
-      const d = await getTodos();
-      if (d.success) setTodos(d.todos || []);
-    } catch (e) {
-      console.error(e);
+      const res = await axiosInstance.post("/api/v1/auth/refresh-token", {
+        refreshToken: rt,
+      });
+
+      if (res.data.success) {
+        localStorage.setItem("accessToken", res.data.accessToken);
+        setToken(res.data.accessToken);
+      }
+    } catch {
+      localStorage.clear();
     }
   };
 
-  // Fetch Users
-  const fetchUsers = async () => {
-    try {
-      const d = await getUsers();
-      if (d.success) setUsersList(d.users || []);
-    } catch (e) {
-      console.error(e);
-    }
-  };
-
-  // Fetch Profile
-  const fetchProfile = async () => {
-    try {
-      const d = await getProfile();
-      if (d.success) setUser(d.user);
-    } catch (e) {
-      console.error(e);
-    }
-  };
-
-  // FETCH WHEN TOKEN IS READY (FIXED)
+  // AFTER TOKEN SET -------------
   useEffect(() => {
-    // DO NOT RUN ANYTHING WHILE /auth/me IS STILL VALIDATING
-    if (authLoading) return;
-
-    // AFTER VALIDATION: if no token → clean state only, no API calls
     if (!token) {
       setUser(null);
       setTodos([]);
-      setUsersList([]);
+      setUsers([]);
       return;
     }
 
-    // TOKEN IS CONFIRMED VALID → now safely fetch data
-    (async () => {
-      try {
-        await Promise.all([fetchProfile(), fetchTodos(), fetchUsers()]);
-      } catch (e) {
-        console.error(e);
-      }
-    })();
-  }, [token, authLoading]);
+    axiosInstance.defaults.headers.common["Authorization"] = `Bearer ${token}`;
 
-  // LOGOUT ------------------------------
-  const logout = async () => {
+    fetchUserProfile();
+    fetchTodosList();
+    fetchUsersList();
+  }, [token]);
+
+  // FETCH: PROFILE --------------
+  const fetchUserProfile = async () => {
     try {
-      await axiosInstance.post('/api/v1/auth/logout').catch(() => {});
+      const data = await getProfile();
+      if (data.success) setUser(data.user);
+    } catch (error) {
+      toast.error(error.response?.data?.message || error.message);
+    }
+  };
+
+  // FETCH: TODOS ----------------
+  const fetchTodosList = async () => {
+    try {
+      const data = await getTodos();
+      if (data.success) setTodos(data.todos || []);
+    } catch (error) {
+      toast.error(error.response?.data?.message || error.message);
+    }
+  };
+
+  // FETCH: USERS ---------------- (for admin)
+  const fetchUsersList = async () => {
+    try {
+      const data = await getUsers();
+      if (data.success) setUsers(data.users || []);
     } catch (e) {
       console.error(e);
     }
+  };
+
+  // LOGOUT ----------------------
+  const logoutUser = async () => {
+    try {
+      await axiosInstance.post("/api/v1/auth/logout", {
+        refreshToken: localStorage.getItem("refreshToken"),
+      });
+    } catch (e) {}
+
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("refreshToken");
 
     setToken(null);
     setUser(null);
-    navigate('/login', { replace: true });
-    toast.success('Logged out');
+    setTodos([]);
+    setUsers([]);
+
+    navigate("/login", { replace: true });
   };
 
-  // CONTEXT VALUE -----------------------
+  // CONTEXT VALUE ---------------
   const value = {
     axios: axiosInstance,
+    navigate,
+
     token,
     setToken,
+
+    todos,
+    setTodos,
+
     user,
     setUser,
-    logout,
-    authLoading,
+
+    users,
 
     theme,
     setTheme,
 
-    todos,
-    setTodos,
-    users,
+    loading,
 
-    editTodo,
-    setEditTodo,
-
-    fetchTodos,
-    fetchUsers,
-    fetchProfile,
+    fetchTodos: fetchTodosList,
+    logout: logoutUser,
   };
 
-  return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
+  return (
+    <AppContext.Provider value={value}>
+      {children}
+    </AppContext.Provider>
+  );
 };
 
 export default AppContext;
