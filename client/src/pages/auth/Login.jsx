@@ -23,19 +23,21 @@ export default function Login() {
     setLoading(true);
     try {
       const data = await loginUser(formData);
+
       if (data.success) {
-        // only call context setter (it stores to localStorage inside AppContext)
+        localStorage.setItem('refreshToken', data.refreshToken);
+        localStorage.setItem('accessToken', data.accessToken);
+
         setToken(data.accessToken);
-        toast.success(data.message || 'Login successful!');
+
+        toast.success(data.message || 'Login successful');
         reset();
-        // replace to prevent back to login
         navigate('/', { replace: true });
       } else {
         toast.error(data.message || 'Login failed');
       }
     } catch (err) {
-      const msg = err?.response?.data?.message || 'Login failed';
-      toast.error(msg);
+      toast.error(err?.response?.data?.message || 'Login failed');
     } finally {
       setLoading(false);
     }

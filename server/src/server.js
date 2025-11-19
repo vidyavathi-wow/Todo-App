@@ -5,6 +5,7 @@ const sequelize = require('./config/db');
 const corsOptions = require('./config/cors');
 const logger = require('./utils/logger.js');
 const errorHandler = require('./middlewares/errorHandler.js');
+require('./models/RefreshToken');
 
 require('./models/User');
 require('./models/Todo');

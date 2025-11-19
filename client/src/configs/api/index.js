@@ -4,6 +4,7 @@ export const API = {
     login: '/api/v1/auth/login',
     forgotPassword: '/api/v1/auth/forgot-password',
     resetPassword: '/api/v1/auth/reset-password',
+    logout: 'api/v1/auth/logout',
   },
 
   users: {
