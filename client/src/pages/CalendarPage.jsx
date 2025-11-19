@@ -1,6 +1,6 @@
 import React, { useContext, useMemo, useState } from 'react';
 import { Calendar, dateFnsLocalizer, Views } from 'react-big-calendar';
-
+import { googleColors } from '../utils/Constants';
 import format from 'date-fns/format';
 import parse from 'date-fns/parse';
 import startOfWeek from 'date-fns/startOfWeek';
@@ -27,31 +27,35 @@ const localizer = dateFnsLocalizer({
 });
 
 // Google event colors
-const googleColors = [
-  'bg-blue-600',
-  'bg-red-500',
-  'bg-green-600',
-  'bg-purple-600',
-  'bg-pink-500',
-  'bg-amber-500',
-  'bg-indigo-600',
-];
+// const googleColors = [
+//   'bg-blue-600',
+//   'bg-red-500',
+//   'bg-green-600',
+//   'bg-purple-600',
+//   'bg-pink-500',
+//   'bg-amber-500',
+//   'bg-indigo-600',
+// ];
 
 export default function CalendarPage() {
-  const { todos, loading } = useContext(AppContext);
+  const { todos, loading, user } = useContext(AppContext);
 
   const [currentDate, setCurrentDate] = useState(new Date());
   const [currentView, setCurrentView] = useState(Views.MONTH);
 
   const events = useMemo(() => {
-    if (!todos) return [];
+    if (!todos || !user) return [];
 
     return todos
-      .filter((t) => t.deletedAt === null)
-      .filter((t) => t.status !== 'completed')
+      .filter(
+        (t) =>
+          t.deletedAt === null &&
+          t.status !== 'completed' &&
+          (t.userId === user.id || t.assignedToUserId === user.id)
+      )
       .map((t) => {
         const start = new Date(t.date);
-        const end = new Date(start.getTime() + 10 * 60 * 1000); // prevent overlapping
+        const end = new Date(start.getTime() + 10 * 60 * 1000);
 
         return {
           title: t.title || 'Untitled',
@@ -65,7 +69,7 @@ export default function CalendarPage() {
           resource: t,
         };
       });
-  }, [todos]);
+  }, [todos, user]);
 
   if (loading) return <Loader />;
 
