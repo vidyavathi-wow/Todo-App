@@ -20,6 +20,7 @@ exports.createTodo = async (req, res) => {
       notes,
       assignedToUserId,
     } = req.body;
+
     let userId = req.user.id;
 
     if (req.body.userId && req.user.role === 'admin') {
@@ -38,10 +39,20 @@ exports.createTodo = async (req, res) => {
       assignedToUserId: assignedToUserId || null,
     });
 
+    // Fetch assigned user (for activity log)
+    let assignedUserName = '';
+    if (assignedToUserId) {
+      const assignedUser = await User.findByPk(assignedToUserId);
+      assignedUserName = assignedUser ? assignedUser.name : '';
+    }
+
+    // Activity Log with assigned user name
     await ActivityLog.create({
       userId: req.user.id,
       action: 'CREATE_TODO',
-      details: `Todo created: ${title}${assignedToUserId ? ` (assigned to #${assignedToUserId})` : ''}`,
+      details: `Todo created: ${title}${
+        assignedUserName ? ` (assigned to ${assignedUserName})` : ''
+      }`,
     });
 
     const createdTodo = await Todo.findByPk(todo.id, {
@@ -50,6 +61,7 @@ exports.createTodo = async (req, res) => {
         { model: User, as: 'assignee', attributes: ['id', 'name', 'email'] },
       ],
     });
+
     if (assignedToUserId) {
       const assignedUser = await User.findByPk(assignedToUserId);
       const assignedBy = await User.findByPk(req.user.id);
