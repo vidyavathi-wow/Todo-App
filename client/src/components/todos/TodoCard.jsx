@@ -59,7 +59,7 @@ export default function TodoCard({ todo, onToggleCompleted, currentUser }) {
         <span
           className={`px-3 py-1 rounded-full text-xs font-medium capitalize ${
             STATUS_COLORS[status] ||
-            'bg-gray-700 dark:bg-gray-200 text-gray-300 dark:text-gray-700'
+            'bg-blue-500 dark:bg-blue-400 text-white dark:text-black'
           }`}
         >
           {todo.status}

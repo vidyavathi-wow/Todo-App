@@ -11,45 +11,49 @@ const AppContext = createContext();
 
 export const AppProvider = ({ children }) => {
   const navigate = useNavigate();
+
   const [editTodo, setEditTodo] = useState(null);
   const [input, setInput] = useState('');
 
-  // THEME -----------------------
-  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
-
+  // 🌙 THEME
+  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
   useEffect(() => {
     document.documentElement.classList.toggle('dark', theme === 'dark');
     document.documentElement.style.backgroundColor =
       theme === 'dark' ? '#0f172a' : '#f5f5f5';
-
     localStorage.setItem('theme', theme);
   }, [theme]);
-  // STATE -----------------------
+
+  // 🔑 AUTH
   const [token, setToken] = useState(null);
+
+  // 👤 USER + TODOS
   const [user, setUser] = useState(null);
   const [todos, setTodos] = useState([]);
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // INIT ------------------------
+  // ⭐ GLOBAL FILTER (for TodoList + Calendar sync)
+  const [selectedFilter, setSelectedFilter] = useState('my');
+
+  // INIT
   useEffect(() => {
     const init = async () => {
-      const storedToken = localStorage.getItem('accessToken');
-      const storedRT = localStorage.getItem('refreshToken');
+      const at = localStorage.getItem('accessToken');
+      const rt = localStorage.getItem('refreshToken');
 
-      if (storedToken) {
-        setToken(storedToken);
-      } else if (!storedToken && storedRT) {
+      if (at) {
+        setToken(at);
+      } else if (!at && rt) {
         await tryRefreshToken();
       }
 
       setLoading(false);
     };
-
     init();
   }, []);
 
-  // REFRESH TOKEN ---------------
+  // REFRESH TOKEN
   const tryRefreshToken = async () => {
     const rt = localStorage.getItem('refreshToken');
     if (!rt) return;
@@ -68,7 +72,7 @@ export const AppProvider = ({ children }) => {
     }
   };
 
-  // AFTER TOKEN SET -------------
+  // AFTER TOKEN
   useEffect(() => {
     if (!token) {
       setUser(null);
@@ -84,7 +88,7 @@ export const AppProvider = ({ children }) => {
     fetchUsersList();
   }, [token]);
 
-  // FETCH: PROFILE --------------
+  // GET PROFILE
   const fetchUserProfile = async () => {
     try {
       const data = await getProfile();
@@ -94,7 +98,7 @@ export const AppProvider = ({ children }) => {
     }
   };
 
-  // FETCH: TODOS ----------------
+  // GET TODOS
   const fetchTodosList = async () => {
     try {
       const data = await getTodos();
@@ -104,23 +108,25 @@ export const AppProvider = ({ children }) => {
     }
   };
 
-  // FETCH: USERS ---------------- (for admin)
+  // GET USERS (admin)
   const fetchUsersList = async () => {
     try {
       const data = await getUsers();
       if (data.success) setUsers(data.users || []);
-    } catch (e) {
-      console.error(e);
+    } catch (error) {
+      console.error(error);
     }
   };
 
-  // LOGOUT ----------------------
+  // LOGOUT
   const logoutUser = async () => {
     try {
       await axiosInstance.post('/api/v1/auth/logout', {
         refreshToken: localStorage.getItem('refreshToken'),
       });
-    } catch (e) {}
+    } catch (e) {
+      console.error('Logout error:', e);
+    }
 
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
@@ -133,7 +139,7 @@ export const AppProvider = ({ children }) => {
     navigate('/login', { replace: true });
   };
 
-  // CONTEXT VALUE ---------------
+  // EXPORT CONTEXT
   const value = {
     axios: axiosInstance,
     navigate,
@@ -157,6 +163,9 @@ export const AppProvider = ({ children }) => {
     setEditTodo,
     input,
     setInput,
+
+    selectedFilter,
+    setSelectedFilter,
 
     fetchTodos: fetchTodosList,
     logout: logoutUser,

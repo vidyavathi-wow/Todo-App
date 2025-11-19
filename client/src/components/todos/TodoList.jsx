@@ -11,18 +11,31 @@ import { updateTodoStatus } from '../../services/todos';
 const normalize = (v) => (typeof v === 'string' ? v.trim().toLowerCase() : '');
 
 export default function TodoList() {
-  const { todos, fetchTodos, user } = useContext(AppContext);
+  const { todos, fetchTodos, user, selectedFilter, setSelectedFilter } =
+    useContext(AppContext);
+
   const [filterStatus, setFilterStatus] = useState('');
-  const [adminView, setAdminView] = useState('my');
+  const [adminView, setAdminView] = useState(selectedFilter || 'my');
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
 
+  // 🔄 Sync dropdown → global filter (AppContext)
+  useEffect(() => {
+    if (user?.role === 'admin') {
+      setSelectedFilter(adminView);
+    } else {
+      setSelectedFilter('my');
+    }
+  }, [adminView, user, setSelectedFilter]);
+
+  // FILTER LOGIC
   const filteredTodos = useMemo(() => {
     const statusFilter = normalize(filterStatus);
     const q = normalize(searchQuery);
+
     let results = Array.isArray(todos) ? todos : [];
 
-    // 🔹 ADMIN FILTER LOGIC
+    // ADMIN FILTER
     if (user?.role === 'admin') {
       switch (adminView) {
         case 'my':
@@ -49,14 +62,14 @@ export default function TodoList() {
       }
     }
 
-    // 🔹 STATUS FILTER
+    // STATUS FILTER
     if (statusFilter) {
       results = results.filter(
         (todo) => normalize(todo?.status) === statusFilter
       );
     }
 
-    // 🔹 SEARCH FILTER
+    // SEARCH
     if (q) {
       results = results.filter(
         (todo) =>
@@ -68,6 +81,7 @@ export default function TodoList() {
     return results;
   }, [todos, filterStatus, searchQuery, adminView, user]);
 
+  // LOADING
   useEffect(() => {
     const t = setTimeout(() => setLoading(false), 300);
     return () => clearTimeout(t);
@@ -104,7 +118,7 @@ export default function TodoList() {
 
   return (
     <div className="overflow-y-auto max-h-[80vh] pr-2 transition-colors duration-300">
-      {/* 🔍 Search Bar */}
+      {/* 🔍 SEARCH */}
       <div className="w-full mb-3">
         <SearchTodo
           value={searchQuery}
@@ -115,7 +129,7 @@ export default function TodoList() {
         />
       </div>
 
-      {/* 🧩 Filters Row */}
+      {/* FILTERS */}
       <div className="flex flex-col sm:flex-row justify-between items-center gap-3 mb-4 flex-wrap">
         {/* Status Filter */}
         <Select
@@ -130,10 +144,10 @@ export default function TodoList() {
             { value: 'inProgress', label: 'In Progress' },
             { value: 'completed', label: 'Completed' },
           ]}
-          className="w-full sm:w-48 h-11 px-3 text-sm border border-gray-600 dark:border-gray-400 rounded-md bg-gray-900 dark:bg-gray-100 text-gray-200 dark:text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary leading-tight truncate transition-colors duration-300"
+          className="w-full sm:w-48 h-11 px-3 text-sm border border-gray-600 dark:border-gray-400 rounded-md bg-gray-900 dark:bg-gray-100 text-gray-200 dark:text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary transition-colors duration-300"
         />
 
-        {/* 👑 Admin Filter (Visible only to admins) */}
+        {/* ADMIN FILTER */}
         {user?.role === 'admin' && (
           <Select
             noDefault
@@ -147,31 +161,27 @@ export default function TodoList() {
               { value: 'assignedToMe', label: 'Assigned To Me' },
               { value: 'assignedByMe', label: 'Assigned By Me' },
             ]}
-            className="w-full sm:w-56 h-11 px-3 text-sm border border-gray-600 dark:border-gray-400 rounded-md bg-gray-900 dark:bg-gray-100 text-gray-200 dark:text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary leading-tight truncate transition-colors duration-300"
+            className="w-full sm:w-56 h-11 px-3 text-sm border border-gray-600 dark:border-gray-400 rounded-md bg-gray-900 dark:bg-gray-100 text-gray-200 dark:text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary transition-colors duration-300"
           />
         )}
 
-        {/* Reset Filters */}
+        {/* RESET */}
         <button
           onClick={handleResetFilters}
           disabled={
-            !normalize(filterStatus) &&
-            !normalize(searchQuery) &&
-            (!user?.role || adminView === 'my')
+            !filterStatus && !searchQuery && (!user?.role || adminView === 'my')
           }
           className={`w-full sm:w-auto px-4 h-11 text-sm rounded-md transition-all duration-300 ${
-            !normalize(filterStatus) &&
-            !normalize(searchQuery) &&
-            (!user?.role || adminView === 'my')
-              ? 'bg-gray-700 dark:bg-gray-300 text-gray-400 dark:text-gray-600 cursor-not-allowed'
-              : 'bg-primary text-white hover:bg-primary/80 dark:hover:bg-primary/70'
+            !filterStatus && !searchQuery && (!user?.role || adminView === 'my')
+              ? 'bg-gray-700 dark:bg-gray-300 text-gray-400 cursor-not-allowed'
+              : 'bg-primary text-white hover:bg-primary/80'
           }`}
         >
           Reset Filters
         </button>
       </div>
 
-      {/* 📋 Todo List */}
+      {/* LIST */}
       <div className="space-y-4 mt-4">
         {filteredTodos.length > 0 ? (
           filteredTodos.map((todo) => (
