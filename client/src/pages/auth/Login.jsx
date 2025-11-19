@@ -64,7 +64,7 @@ export default function Login() {
                 message: 'Enter a valid email',
               },
             })}
-            className="w-full p-3 rounded bg-gray-700 dark:bg-gray-200 border border-gray-600 dark:border-gray-300 focus:ring-2 focus:ring-primary text-gray-light dark:text-gray-900"
+            className="w-full p-3 rounded bg-gray-700 dark:bg-gray-200 border border-gray-600 dark:border-gray-300 focus:ring-2 focus:ring-primary text-white dark:text-gray-900"
           />
           {errors.email && (
             <p className="text-red-400 dark:text-red-500 text-sm mt-1">
@@ -84,7 +84,7 @@ export default function Login() {
               required: 'Password is required',
               minLength: { value: 6, message: 'Minimum 6 chars' },
             })}
-            className="w-full p-3 rounded bg-gray-700 dark:bg-gray-200 border border-gray-600 dark:border-gray-300 focus:ring-2 focus:ring-primary text-gray-light dark:text-gray-900"
+            className="w-full p-3 rounded bg-gray-700 dark:bg-gray-200 border border-gray-600 dark:border-gray-300 focus:ring-2 focus:ring-primary text-white dark:text-gray-900"
           />
           {errors.password && (
             <p className="text-red-400 dark:text-red-500 text-sm mt-1">

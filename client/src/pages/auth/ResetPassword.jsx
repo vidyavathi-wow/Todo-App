@@ -70,7 +70,7 @@ export default function ResetPassword() {
               bg-gray-700 dark:bg-gray-200
               border border-gray-600 dark:border-gray-300
               focus:ring-2 focus:ring-primary outline-none
-              text-gray-light dark:text-gray-900
+              text-white dark:text-gray-900
             "
             {...register('password', {
               required: 'Password is required',

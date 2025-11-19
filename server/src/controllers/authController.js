@@ -145,7 +145,6 @@ exports.login = async (req, res) => {
 exports.refreshAccessToken = async (req, res) => {
   try {
     const { refreshToken } = req.body;
-
     if (!refreshToken) {
       return res
         .status(400)
@@ -155,12 +154,10 @@ exports.refreshAccessToken = async (req, res) => {
     const stored = await RefreshToken.findOne({
       where: { token: refreshToken },
     });
-
-    if (!stored) {
+    if (!stored)
       return res
         .status(403)
         .json({ success: false, message: 'Invalid refresh token.' });
-    }
 
     let decoded;
     try {
@@ -173,8 +170,20 @@ exports.refreshAccessToken = async (req, res) => {
       });
     }
 
+    const user = await User.findByPk(decoded.userId);
+    if (!user) {
+      await stored.destroy();
+      return res
+        .status(403)
+        .json({ success: false, message: 'User not found.' });
+    }
+
     const newAccessToken = jwt.sign(
-      { userId: decoded.userId },
+      {
+        userId: user.id,
+        email: user.email,
+        role: user.role,
+      },
       process.env.JWT_SECRET,
       { expiresIn: '15m' }
     );

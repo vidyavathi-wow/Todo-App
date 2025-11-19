@@ -1,24 +1,29 @@
-import { createContext, useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import toast from "react-hot-toast";
+import { createContext, useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
 
-import axiosInstance from "../configs/axiosInstance";
-import { getProfile } from "../services/profile";
-import { getTodos } from "../services/todos";
-import { getUsers } from "../services/users";
+import axiosInstance from '../configs/axiosInstance';
+import { getProfile } from '../services/profile';
+import { getTodos } from '../services/todos';
+import { getUsers } from '../services/users';
 
 const AppContext = createContext();
 
 export const AppProvider = ({ children }) => {
   const navigate = useNavigate();
+  const [editTodo, setEditTodo] = useState(null);
+  const [input, setInput] = useState('');
 
   // THEME -----------------------
-  const [theme, setTheme] = useState(localStorage.getItem("theme") || "light");
-  useEffect(() => {
-    document.documentElement.classList.toggle("dark", theme === "dark");
-    localStorage.setItem("theme", theme);
-  }, [theme]);
+  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
 
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', theme === 'dark');
+    document.documentElement.style.backgroundColor =
+      theme === 'dark' ? '#0f172a' : '#f5f5f5';
+
+    localStorage.setItem('theme', theme);
+  }, [theme]);
   // STATE -----------------------
   const [token, setToken] = useState(null);
   const [user, setUser] = useState(null);
@@ -29,8 +34,8 @@ export const AppProvider = ({ children }) => {
   // INIT ------------------------
   useEffect(() => {
     const init = async () => {
-      const storedToken = localStorage.getItem("accessToken");
-      const storedRT = localStorage.getItem("refreshToken");
+      const storedToken = localStorage.getItem('accessToken');
+      const storedRT = localStorage.getItem('refreshToken');
 
       if (storedToken) {
         setToken(storedToken);
@@ -46,16 +51,16 @@ export const AppProvider = ({ children }) => {
 
   // REFRESH TOKEN ---------------
   const tryRefreshToken = async () => {
-    const rt = localStorage.getItem("refreshToken");
+    const rt = localStorage.getItem('refreshToken');
     if (!rt) return;
 
     try {
-      const res = await axiosInstance.post("/api/v1/auth/refresh-token", {
+      const res = await axiosInstance.post('/api/v1/auth/refresh-token', {
         refreshToken: rt,
       });
 
       if (res.data.success) {
-        localStorage.setItem("accessToken", res.data.accessToken);
+        localStorage.setItem('accessToken', res.data.accessToken);
         setToken(res.data.accessToken);
       }
     } catch {
@@ -72,7 +77,7 @@ export const AppProvider = ({ children }) => {
       return;
     }
 
-    axiosInstance.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+    axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
     fetchUserProfile();
     fetchTodosList();
@@ -112,20 +117,20 @@ export const AppProvider = ({ children }) => {
   // LOGOUT ----------------------
   const logoutUser = async () => {
     try {
-      await axiosInstance.post("/api/v1/auth/logout", {
-        refreshToken: localStorage.getItem("refreshToken"),
+      await axiosInstance.post('/api/v1/auth/logout', {
+        refreshToken: localStorage.getItem('refreshToken'),
       });
     } catch (e) {}
 
-    localStorage.removeItem("accessToken");
-    localStorage.removeItem("refreshToken");
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
 
     setToken(null);
     setUser(null);
     setTodos([]);
     setUsers([]);
 
-    navigate("/login", { replace: true });
+    navigate('/login', { replace: true });
   };
 
   // CONTEXT VALUE ---------------
@@ -148,16 +153,16 @@ export const AppProvider = ({ children }) => {
     setTheme,
 
     loading,
+    editTodo,
+    setEditTodo,
+    input,
+    setInput,
 
     fetchTodos: fetchTodosList,
     logout: logoutUser,
   };
 
-  return (
-    <AppContext.Provider value={value}>
-      {children}
-    </AppContext.Provider>
-  );
+  return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 };
 
 export default AppContext;
