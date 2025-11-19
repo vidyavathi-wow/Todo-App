@@ -21,52 +21,63 @@ export default function Calendar() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [tasksByDate, setTasksByDate] = useState({});
-  const { setTodos, user } = useContext(AppContext);
+  const { setTodos, user, selectedFilter } = useContext(AppContext);
+
+  // default filter fallback: if selectedFilter missing, use 'my' for admins and 'my' for non-admins (keeps behavior safe)
+  const effectiveFilter =
+    selectedFilter || (user?.role === 'admin' ? 'my' : 'my');
 
   // Fetch monthly task summary
-  const fetchMonthTasks = async () => {
+  const fetchMonthTasks = async (filter = effectiveFilter) => {
     try {
       const monthStart = format(startOfMonth(currentMonth), 'yyyy-MM-dd');
       const monthEnd = format(endOfMonth(currentMonth), 'yyyy-MM-dd');
 
-      const data = await getTodosByDateRange(monthStart, monthEnd);
+      const data = await getTodosByDateRange(monthStart, monthEnd, filter);
 
       if (data.success && data.taskSummary) {
         setTasksByDate(data.taskSummary);
+      } else {
+        setTasksByDate({});
       }
     } catch (error) {
       console.error('Month tasks fetch error:', error);
+      setTasksByDate({});
     }
   };
 
   // Fetch todos for selected date
-  const fetchTodosForDate = async (date) => {
+  const fetchTodosForDate = async (date, filter = effectiveFilter) => {
     try {
       const formattedDate = format(date, 'yyyy-MM-dd');
 
-      const data = await getTodosByDate(formattedDate);
+      const data = await getTodosByDate(formattedDate, filter);
 
       if (data.success) {
         setTodos(data.todos || []);
         toast.success(
           user?.role === 'admin'
-            ? `Showing all tasks for ${formattedDate}`
+            ? `Showing tasks (${filter}) for ${formattedDate}`
             : `Showing your tasks for ${formattedDate}`
         );
+      } else {
+        setTodos([]);
       }
     } catch (error) {
-      toast.error(`Failed to fetch tasks: ${error}`);
+      toast.error(`Failed to fetch tasks: ${error?.message || error}`);
+      setTodos([]);
     }
   };
 
   const handleDateClick = (day) => {
     setSelectedDate(day);
-    fetchTodosForDate(day);
+    fetchTodosForDate(day, effectiveFilter);
   };
 
+  // re-fetch when month or filter changes
   useEffect(() => {
-    fetchMonthTasks();
-  }, [currentMonth]);
+    fetchMonthTasks(effectiveFilter);
+  }, [currentMonth, effectiveFilter]);
 
   const renderHeader = () => (
     <div className="flex justify-between items-center mb-2 px-2 text-secondary dark:text-gray-800">
@@ -133,7 +144,7 @@ export default function Calendar() {
 
         days.push(
           <div
-            key={day}
+            key={day.toISOString()}
             onClick={() => handleDateClick(cloneDay)}
             className={`flex flex-col items-center justify-center cursor-pointer rounded-full transition-colors 
               ${
@@ -154,7 +165,7 @@ export default function Calendar() {
             {hasTasks && (
               <span
                 className={`mt-0.5 w-1.5 h-1.5 rounded-full ${statusColor}`}
-              ></span>
+              />
             )}
           </div>
         );
@@ -163,7 +174,10 @@ export default function Calendar() {
       }
 
       rows.push(
-        <div key={day} className="flex justify-between mb-1 gap-1">
+        <div
+          key={day.toISOString()}
+          className="flex justify-between mb-1 gap-1"
+        >
           {days.map((d, idx) => (
             <div key={idx} className="flex-1">
               {d}
