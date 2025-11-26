@@ -8,9 +8,11 @@ import {
   addDays,
   addMonths,
   subMonths,
+  isSameMonth,
   isSameDay,
   isWithinInterval,
 } from 'date-fns';
+
 import { FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 import AppContext from '../context/AppContext';
 import toast from 'react-hot-toast';
@@ -39,9 +41,8 @@ export default function Calendar() {
     load();
   }, []);
 
-  // FILTER MONTH SUMMARY IN FRONTEND
+  // FILTER MONTH SUMMARY ON FRONTEND
   useEffect(() => {
-    // ✅ if user is not ready yet, don't try to read user.id
     if (!user || !user.id) {
       setTasksByDate({});
       return;
@@ -52,7 +53,7 @@ export default function Calendar() {
 
     let filtered = allTasks;
 
-    // Apply filters safely using user.id
+    // Apply filters based on dropdown selection
     if (effectiveFilter === 'my') {
       filtered = allTasks.filter((t) => t.owner?.id === user.id);
     }
@@ -80,7 +81,7 @@ export default function Calendar() {
     setTasksByDate(summary);
   }, [currentMonth, allTasks, effectiveFilter, user]);
 
-  // DAY CLICK → FILTER ONLY FRONTEND
+  // DAY CLICK — FILTER IN FRONTEND
   const handleDateClick = (day) => {
     setSelectedDate(day);
 
@@ -107,28 +108,35 @@ export default function Calendar() {
     toast.success(`Tasks updated for ${selected}`);
   };
 
-  // UI HEADER
+  // HEADER UI
   const renderHeader = () => (
-    <div className="flex justify-between items-center mb-2 px-2">
-      <button onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}>
+    <div className="flex justify-between items-center mb-2 px-2 text-secondary dark:text-gray-800">
+      <button
+        onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
+        className="p-1 rounded hover:bg-gray-700 dark:hover:bg-gray-300 transition"
+      >
         <FiChevronLeft />
       </button>
 
-      <span className="font-semibold text-sm">
+      <span className="font-semibold text-sm text-secondary dark:text-gray-900">
         {format(currentMonth, 'MMMM yyyy')}
       </span>
 
-      <button onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}>
+      <button
+        onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
+        className="p-1 rounded hover:bg-gray-700 dark:hover:bg-gray-300 transition"
+      >
         <FiChevronRight />
       </button>
     </div>
   );
 
-  // Week Days
+  // WEEK DAYS HEADER
   const renderDays = () => {
     const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
     return (
-      <div className="flex justify-between text-xs mb-1">
+      <div className="flex justify-between text-xs text-gray-light dark:text-gray-500 mb-1">
         {days.map((day) => (
           <div key={day} className="text-center flex-1">
             {day}
@@ -138,7 +146,7 @@ export default function Calendar() {
     );
   };
 
-  // CALENDAR CELLS + STATUS COLORS
+  // CALENDAR CELLS
   const renderCells = () => {
     const monthStart = startOfMonth(currentMonth);
     const monthEnd = endOfMonth(monthStart);
@@ -148,15 +156,16 @@ export default function Calendar() {
     const rows = [];
     let days = [];
     let day = startDate;
-    let weekIndex = 0; // ✅ for unique row keys
+    let weekKey = 0;
 
     while (day <= endDate) {
       for (let i = 0; i < 7; i++) {
         const cloneDay = day;
+        const inactive = !isSameMonth(day, monthStart);
+        const selected = isSameDay(day, selectedDate);
+
         const formattedDate = format(day, 'yyyy-MM-dd');
-
         const tasks = tasksByDate[formattedDate] || [];
-
         const hasTasks = tasks.length > 0;
 
         const statusColor = hasTasks
@@ -167,23 +176,31 @@ export default function Calendar() {
               : 'bg-red-400'
           : '';
 
-        const cellKey = day.toISOString(); // ✅ stable unique key for each cell
+        const cellKey = `${day.toISOString()}-${i}`;
 
         days.push(
           <div
             key={cellKey}
             onClick={() => handleDateClick(cloneDay)}
-            className={`p-2 text-center rounded cursor-pointer ${
-              isSameDay(day, selectedDate)
-                ? 'bg-primary text-white'
-                : 'hover:bg-gray-300'
-            }`}
+            className={`flex flex-col items-center justify-center cursor-pointer rounded-full transition-colors 
+              ${
+                inactive
+                  ? 'text-gray-light dark:text-black'
+                  : 'text-secondary dark:text-gray-900'
+              } 
+              ${
+                selected
+                  ? 'bg-primary text-white'
+                  : 'hover:bg-gray-700 dark:hover:bg-gray-300'
+              }
+            `}
+            style={{ aspectRatio: '1 / 1' }}
           >
             <span>{format(day, 'd')}</span>
 
             {hasTasks && (
-              <div
-                className={`w-1.5 h-1.5 rounded-full mx-auto mt-1 ${statusColor}`}
+              <span
+                className={`mt-0.5 w-1.5 h-1.5 rounded-full ${statusColor}`}
               />
             )}
           </div>
@@ -192,22 +209,28 @@ export default function Calendar() {
         day = addDays(day, 1);
       }
 
-      // ✅ give each week row a unique key
       rows.push(
-        <div key={`week-${weekIndex}`} className="grid grid-cols-7 gap-0.5">
-          {days}
+        <div
+          key={`week-${weekKey}`}
+          className="flex justify-between mb-1 gap-1"
+        >
+          {days.map((d, idx) => (
+            <div key={idx} className="flex-1">
+              {d}
+            </div>
+          ))}
         </div>
       );
-      weekIndex += 1;
 
       days = [];
+      weekKey++;
     }
 
     return <div>{rows}</div>;
   };
 
   return (
-    <div className="bg-white rounded p-2 shadow">
+    <div className="bg-gray dark:bg-white rounded-lg shadow p-2 mb-4 w-full border border-gray-light dark:border-gray-300 transition-colors duration-300">
       {renderHeader()}
       {renderDays()}
       {renderCells()}

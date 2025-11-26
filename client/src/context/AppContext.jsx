@@ -29,7 +29,10 @@ export const AppProvider = ({ children }) => {
   const [editTodo, setEditTodo] = useState(null);
   const [input, setInput] = useState('');
 
-  // INIT (runs on page load) ------------------------
+  // ⭐ ADD THIS (missing in your code)
+  const [selectedFilter, setSelectedFilter] = useState('my');
+
+  // INIT ------------------------
   useEffect(() => {
     const init = async () => {
       const storedToken = localStorage.getItem('accessToken');
@@ -78,7 +81,6 @@ export const AppProvider = ({ children }) => {
 
     axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
-    // ⭐ Load PROFILE first (instant UI)
     fetchUserProfile().then((loaded) => {
       if (!loaded) return;
 
@@ -92,7 +94,7 @@ export const AppProvider = ({ children }) => {
     });
   }, [token]);
 
-  // FETCH: PROFILE --------------
+  // FETCH FUNCTIONS -------------
   const fetchUserProfile = async () => {
     try {
       const data = await getProfile();
@@ -106,7 +108,6 @@ export const AppProvider = ({ children }) => {
     return false;
   };
 
-  // FETCH: TODOS ----------------
   const fetchTodosList = async () => {
     try {
       const data = await getTodos();
@@ -116,7 +117,6 @@ export const AppProvider = ({ children }) => {
     }
   };
 
-  // FETCH: USERS ---------------- (admin only)
   const fetchUsersList = async () => {
     try {
       const data = await getUsers();
@@ -132,10 +132,11 @@ export const AppProvider = ({ children }) => {
       await axiosInstance.post('/api/v1/auth/logout', {
         refreshToken: localStorage.getItem('refreshToken'),
       });
-    } catch {}
+    } catch (error) {
+      console.error(error);
+    }
 
     localStorage.clear();
-
     setToken(null);
     setUser(null);
     setTodos([]);
@@ -168,6 +169,9 @@ export const AppProvider = ({ children }) => {
     setEditTodo,
     input,
     setInput,
+
+    selectedFilter,
+    setSelectedFilter,
 
     fetchUserProfile,
     fetchTodos: fetchTodosList,
