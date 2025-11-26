@@ -1,19 +1,3 @@
-// // src/theme/colors.js
-
-// export const CHART_COLORS = {
-//   grid: '#444',
-//   axis: '#ccc',
-
-//   tooltip: {
-//     lightBg: '#1f2937', // dark gray
-//     lightText: '#fff',
-//     darkBg: '#f9fafb', // light gray
-//     darkText: '#111',
-//   },
-// };
-
-// src/theme/colors.js
-
 export const ANALYTICS_COLORS = {
   status: ['#10b981', '#3b82f6', '#f97316'],
   priority: ['#22c55e', '#eab308', '#ef4444'],
