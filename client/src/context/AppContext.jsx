@@ -12,7 +12,6 @@ const AppContext = createContext();
 export const AppProvider = ({ children }) => {
   const navigate = useNavigate();
 
-
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
   useEffect(() => {
     document.documentElement.classList.toggle('dark', theme === 'dark');
@@ -20,7 +19,6 @@ export const AppProvider = ({ children }) => {
       theme === 'dark' ? '#0f172a' : '#f5f5f5';
     localStorage.setItem('theme', theme);
   }, [theme]);
-
 
   const [token, setToken] = useState(null);
   const [user, setUser] = useState(null);
@@ -84,11 +82,13 @@ export const AppProvider = ({ children }) => {
     fetchUserProfile().then((loaded) => {
       if (!loaded) return;
 
-      // ⭐ Load other data AFTER we know the user
       fetchTodosList();
 
-     
+      try {
         fetchUsersList();
+      } catch (e) {
+        console.warn('Users list failed but ignored in non-admin', e);
+      }
     });
   }, [token]);
 
@@ -174,9 +174,7 @@ export const AppProvider = ({ children }) => {
     logout: logoutUser,
   };
 
-  return (
-    <AppContext.Provider value={value}>{children}</AppContext.Provider>
-  );
+  return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 };
 
 export default AppContext;
