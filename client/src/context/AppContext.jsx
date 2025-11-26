@@ -12,7 +12,9 @@ const AppContext = createContext();
 export const AppProvider = ({ children }) => {
   const navigate = useNavigate();
 
+  // THEME -------------------------------------------------
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
+
   useEffect(() => {
     document.documentElement.classList.toggle('dark', theme === 'dark');
     document.documentElement.style.backgroundColor =
@@ -20,19 +22,26 @@ export const AppProvider = ({ children }) => {
     localStorage.setItem('theme', theme);
   }, [theme]);
 
+  // AUTH / DATA STATE -------------------------------------
   const [token, setToken] = useState(null);
   const [user, setUser] = useState(null);
+
   const [todos, setTodos] = useState([]);
   const [users, setUsers] = useState([]);
+
   const [loading, setLoading] = useState(true);
 
   const [editTodo, setEditTodo] = useState(null);
   const [input, setInput] = useState('');
 
-  // ⭐ ADD THIS (missing in your code)
+  // Filter used for calendar / todo list
   const [selectedFilter, setSelectedFilter] = useState('my');
 
-  // INIT ------------------------
+  // (optional) pagination meta for users (backend now supports it)
+  const [userPage, setUserPage] = useState(1);
+  const [totalUserPages, setTotalUserPages] = useState(1);
+
+  // INIT --------------------------------------------------
   useEffect(() => {
     const init = async () => {
       const storedToken = localStorage.getItem('accessToken');
@@ -50,7 +59,7 @@ export const AppProvider = ({ children }) => {
     init();
   }, []);
 
-  // REFRESH TOKEN ---------------
+  // REFRESH TOKEN -----------------------------------------
   const tryRefreshToken = async () => {
     const rt = localStorage.getItem('refreshToken');
     if (!rt) return;
@@ -70,7 +79,7 @@ export const AppProvider = ({ children }) => {
     }
   };
 
-  // AFTER TOKEN SET -------------
+  // AFTER TOKEN CHANGES -----------------------------------
   useEffect(() => {
     if (!token) {
       setUser(null);
@@ -81,20 +90,23 @@ export const AppProvider = ({ children }) => {
 
     axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
+    // 1) Load profile first
     fetchUserProfile().then((loaded) => {
       if (!loaded) return;
 
+      // 2) Load todos (full list; Dashboard paginates on frontend)
       fetchTodosList();
 
+      // 3) Load users (first page) – used for "Assigned To" dropdown etc.
       try {
         fetchUsersList();
       } catch (e) {
-        console.warn('Users list failed but ignored in non-admin', e);
+        console.warn('Users list failed (non-blocking):', e);
       }
     });
   }, [token]);
 
-  // FETCH FUNCTIONS -------------
+  // FETCH: PROFILE ----------------------------------------
   const fetchUserProfile = async () => {
     try {
       const data = await getProfile();
@@ -108,25 +120,36 @@ export const AppProvider = ({ children }) => {
     return false;
   };
 
+  // FETCH: TODOS  (no pagination here; Dashboard slices locally)
   const fetchTodosList = async () => {
     try {
-      const data = await getTodos();
-      if (data.success) setTodos(data.todos || []);
+      const data = await getTodos(); // uses /todos without page/limit or with your defaults
+      if (data.success) {
+        // support both old {todos} and paginated {todos, totalPages}
+        setTodos(data.todos || []);
+      }
     } catch (error) {
       toast.error(error.response?.data?.message || error.message);
     }
   };
 
-  const fetchUsersList = async () => {
+  // FETCH: USERS (with backend pagination support)
+  const fetchUsersList = async (page = 1, limit = 10) => {
     try {
-      const data = await getUsers();
-      if (data.success) setUsers(data.users || []);
+      const data = await getUsers(page, limit);
+      if (data.success) {
+        setUsers(data.users || []);
+        if (data.totalPages) {
+          setUserPage(data.currentPage || page);
+          setTotalUserPages(data.totalPages || 1);
+        }
+      }
     } catch (error) {
       console.error(error);
     }
   };
 
-  // LOGOUT ----------------------
+  // LOGOUT -----------------------------------------------
   const logoutUser = async () => {
     try {
       await axiosInstance.post('/api/v1/auth/logout', {
@@ -137,6 +160,7 @@ export const AppProvider = ({ children }) => {
     }
 
     localStorage.clear();
+
     setToken(null);
     setUser(null);
     setTodos([]);
@@ -145,7 +169,7 @@ export const AppProvider = ({ children }) => {
     navigate('/login', { replace: true });
   };
 
-  // CONTEXT VALUE ---------------
+  // CONTEXT VALUE ----------------------------------------
   const value = {
     axios: axiosInstance,
     navigate,
@@ -160,6 +184,10 @@ export const AppProvider = ({ children }) => {
     setTodos,
 
     users,
+    // user pagination (if you need it in UI later)
+    userPage,
+    totalUserPages,
+    setUserPage,
 
     theme,
     setTheme,
@@ -175,6 +203,7 @@ export const AppProvider = ({ children }) => {
 
     fetchUserProfile,
     fetchTodos: fetchTodosList,
+    fetchUsers: fetchUsersList,
     logout: logoutUser,
   };
 

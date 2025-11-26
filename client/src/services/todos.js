@@ -1,13 +1,15 @@
 import axiosInstance from '../configs/axiosInstance';
 import { API } from '../configs/api';
 
-// Fetch all todos (admin sees all, normal user sees own + assigned)
-export const getTodos = async () => {
-  const { data } = await axiosInstance.get(API.todos.base);
+// Fetch all todos (admin sees all, user sees own + assigned)
+export const getTodos = async (page = 1, limit = 10) => {
+  const { data } = await axiosInstance.get(
+    `${API.todos.base}?page=${page}&limit=${limit}`
+  );
   return data;
 };
 
-// CRUD operations
+// CRUD operations stay same
 export const getTodoById = async (id) => {
   const { data } = await axiosInstance.get(API.todos.byId(id));
   return data;
