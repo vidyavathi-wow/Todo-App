@@ -12,11 +12,8 @@ const AppContext = createContext();
 export const AppProvider = ({ children }) => {
   const navigate = useNavigate();
 
-  const [editTodo, setEditTodo] = useState(null);
-  const [input, setInput] = useState('');
 
-  // 🌙 THEME
-  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
+  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
   useEffect(() => {
     document.documentElement.classList.toggle('dark', theme === 'dark');
     document.documentElement.style.backgroundColor =
@@ -24,36 +21,35 @@ export const AppProvider = ({ children }) => {
     localStorage.setItem('theme', theme);
   }, [theme]);
 
-  // 🔑 AUTH
-  const [token, setToken] = useState(null);
 
-  // 👤 USER + TODOS
+  const [token, setToken] = useState(null);
   const [user, setUser] = useState(null);
   const [todos, setTodos] = useState([]);
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // ⭐ GLOBAL FILTER (for TodoList + Calendar sync)
-  const [selectedFilter, setSelectedFilter] = useState('my');
+  const [editTodo, setEditTodo] = useState(null);
+  const [input, setInput] = useState('');
 
-  // INIT
+  // INIT (runs on page load) ------------------------
   useEffect(() => {
     const init = async () => {
-      const at = localStorage.getItem('accessToken');
-      const rt = localStorage.getItem('refreshToken');
+      const storedToken = localStorage.getItem('accessToken');
+      const storedRT = localStorage.getItem('refreshToken');
 
-      if (at) {
-        setToken(at);
-      } else if (!at && rt) {
+      if (storedToken) {
+        setToken(storedToken);
+      } else if (!storedToken && storedRT) {
         await tryRefreshToken();
       }
 
       setLoading(false);
     };
+
     init();
   }, []);
 
-  // REFRESH TOKEN
+  // REFRESH TOKEN ---------------
   const tryRefreshToken = async () => {
     const rt = localStorage.getItem('refreshToken');
     if (!rt) return;
@@ -65,6 +61,7 @@ export const AppProvider = ({ children }) => {
 
       if (res.data.success) {
         localStorage.setItem('accessToken', res.data.accessToken);
+        localStorage.setItem('refreshToken', res.data.refreshToken);
         setToken(res.data.accessToken);
       }
     } catch {
@@ -72,7 +69,7 @@ export const AppProvider = ({ children }) => {
     }
   };
 
-  // AFTER TOKEN
+  // AFTER TOKEN SET -------------
   useEffect(() => {
     if (!token) {
       setUser(null);
@@ -83,22 +80,33 @@ export const AppProvider = ({ children }) => {
 
     axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
-    fetchUserProfile();
-    fetchTodosList();
-    fetchUsersList();
+    // ⭐ Load PROFILE first (instant UI)
+    fetchUserProfile().then((loaded) => {
+      if (!loaded) return;
+
+      // ⭐ Load other data AFTER we know the user
+      fetchTodosList();
+
+     
+        fetchUsersList();
+    });
   }, [token]);
 
-  // GET PROFILE
+  // FETCH: PROFILE --------------
   const fetchUserProfile = async () => {
     try {
       const data = await getProfile();
-      if (data.success) setUser(data.user);
+      if (data.success) {
+        setUser(data.user);
+        return true;
+      }
     } catch (error) {
       toast.error(error.response?.data?.message || error.message);
     }
+    return false;
   };
 
-  // GET TODOS
+  // FETCH: TODOS ----------------
   const fetchTodosList = async () => {
     try {
       const data = await getTodos();
@@ -108,7 +116,7 @@ export const AppProvider = ({ children }) => {
     }
   };
 
-  // GET USERS (admin)
+  // FETCH: USERS ---------------- (admin only)
   const fetchUsersList = async () => {
     try {
       const data = await getUsers();
@@ -118,18 +126,15 @@ export const AppProvider = ({ children }) => {
     }
   };
 
-  // LOGOUT
+  // LOGOUT ----------------------
   const logoutUser = async () => {
     try {
       await axiosInstance.post('/api/v1/auth/logout', {
         refreshToken: localStorage.getItem('refreshToken'),
       });
-    } catch (e) {
-      console.error('Logout error:', e);
-    }
+    } catch {}
 
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('refreshToken');
+    localStorage.clear();
 
     setToken(null);
     setUser(null);
@@ -139,7 +144,7 @@ export const AppProvider = ({ children }) => {
     navigate('/login', { replace: true });
   };
 
-  // EXPORT CONTEXT
+  // CONTEXT VALUE ---------------
   const value = {
     axios: axiosInstance,
     navigate,
@@ -147,11 +152,11 @@ export const AppProvider = ({ children }) => {
     token,
     setToken,
 
-    todos,
-    setTodos,
-
     user,
     setUser,
+
+    todos,
+    setTodos,
 
     users,
 
@@ -164,14 +169,14 @@ export const AppProvider = ({ children }) => {
     input,
     setInput,
 
-    selectedFilter,
-    setSelectedFilter,
-
+    fetchUserProfile,
     fetchTodos: fetchTodosList,
     logout: logoutUser,
   };
 
-  return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
+  return (
+    <AppContext.Provider value={value}>{children}</AppContext.Provider>
+  );
 };
 
 export default AppContext;

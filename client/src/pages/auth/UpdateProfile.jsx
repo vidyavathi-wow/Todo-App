@@ -1,11 +1,14 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useContext } from 'react';
 import { useForm } from 'react-hook-form';
 import Input from '../../components/common/Input';
 import Button from '../../components/common/Button';
 import toast from 'react-hot-toast';
-import { getProfile, updateProfile } from '../../services/profile';
+import { updateProfile } from '../../services/profile';
+import AppContext from '../../context/AppContext';
 
 const Profile = () => {
+  const { user, fetchUserProfile } = useContext(AppContext);
+
   const [preview, setPreview] = useState('/default-avatar.png');
   const [loading, setLoading] = useState(false);
   const [serverError, setServerError] = useState('');
@@ -26,44 +29,46 @@ const Profile = () => {
 
   const profilePic = watch('profilePic');
 
+  // Preview selected image
   useEffect(() => {
     if (profilePic && profilePic.length > 0) {
-      const file = profilePic[0];
-      setPreview(URL.createObjectURL(file));
+      setPreview(URL.createObjectURL(profilePic[0]));
     }
   }, [profilePic]);
 
+  // Load fresh profile from context (context always loads it FIRST)
   useEffect(() => {
-    const fetchProfileData = async () => {
-      try {
-        setServerError('');
-        const data = await getProfile();
-        reset({
-          name: data.user.name || '',
-          email: data.user.email || '',
-        });
-        setPreview(data.user.profilePic || '/default-avatar.png');
-      } catch (error) {
-        toast.error(error.message);
-        setServerError('Failed to load profile');
-      }
-    };
-    fetchProfileData();
-  }, [reset]);
+    if (user) {
+      reset({
+        name: user.name || '',
+        email: user.email || '',
+      });
+      setPreview(user.profilePic || '/default-avatar.png');
+    }
+  }, [user, reset]);
 
   const onSubmit = async (formValues) => {
     try {
       setLoading(true);
       setServerError('');
+
       const formData = new FormData();
       formData.append('name', formValues.name);
       formData.append('email', formValues.email);
+
       if (formValues.profilePic && formValues.profilePic.length > 0) {
         formData.append('profilePic', formValues.profilePic[0]);
       }
+
       const data = await updateProfile(formData);
       toast.success('Profile updated successfully!');
+
+      // Update preview instantly for UI
       setPreview(data.user.profilePic || preview);
+
+      // Re-fetch fresh profile from backend (no cache)
+      await fetchUserProfile();
+
       reset({
         name: data.user.name,
         email: data.user.email,
@@ -90,6 +95,7 @@ const Profile = () => {
         </div>
       )}
 
+      {/* Avatar */}
       <div className="flex flex-col md:flex-row items-center gap-6 mb-8">
         <div className="relative">
           <img
@@ -113,6 +119,7 @@ const Profile = () => {
         </div>
       </div>
 
+      {/* Form */}
       <form
         onSubmit={handleSubmit(onSubmit)}
         className="bg-gray-800 dark:bg-white p-6 rounded-2xl shadow-md border border-gray-700 dark:border-gray-300 w-full md:w-2/3 transition-colors duration-300"
@@ -156,11 +163,12 @@ const Profile = () => {
         <div className="flex justify-end gap-3">
           <Button
             type="button"
-            className="px-5 py-2 rounded bg-gray-700 dark:bg-gray-400 text-white dark:text-gray-900 hover:bg-gray-600 dark:hover:bg-gray-400 transition"
             onClick={() => window.history.back()}
+            className="px-5 py-2 rounded bg-gray-700 dark:bg-gray-600 text-white dark:text-gray-900 hover:bg-gray-600 dark:hover:bg-gray-500 transition"
           >
             Cancel
           </Button>
+
           <Button
             type="submit"
             disabled={loading}
