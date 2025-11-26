@@ -1,17 +1,28 @@
 // client/src/configs/axiosInstance.js
 import axios from 'axios';
 
+const BASE_URL = import.meta.env.VITE_BASE_URL || 'http://localhost:5000';
+
 const axiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_BASE_URL || 'http://localhost:5000',
+  baseURL: BASE_URL,
   withCredentials: true,
 });
 
-axiosInstance.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
-  if (token) config.headers.Authorization = `Bearer ${token}`;
-  return config;
-});
+// Attach access token on every request
+axiosInstance.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('accessToken');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    } else {
+      delete config.headers.Authorization;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
 
+// Auto-refresh on 401 and retry once
 axiosInstance.interceptors.response.use(
   (res) => res,
   async (err) => {
@@ -30,12 +41,13 @@ axiosInstance.interceptors.response.use(
 
       try {
         const res = await axios.post(
-          `${import.meta.env.VITE_BASE_URL}/api/v1/auth/refresh-token`,
-          { refreshToken }
+          `${BASE_URL}/api/v1/auth/refresh-token`,
+          { refreshToken },
+          { withCredentials: true }
         );
 
         const newToken = res.data.accessToken;
-        localStorage.setItem('token', newToken);
+        localStorage.setItem('accessToken', newToken);
 
         axiosInstance.defaults.headers.Authorization = `Bearer ${newToken}`;
         original.headers.Authorization = `Bearer ${newToken}`;
@@ -44,6 +56,7 @@ axiosInstance.interceptors.response.use(
       } catch (e) {
         localStorage.clear();
         window.location.href = '/login';
+        return Promise.reject(e);
       }
     }
 

@@ -259,7 +259,7 @@ const AddTodo = () => {
             options={[
               { label: 'Unassigned', value: '' },
               ...(users || []).map((u) => ({
-                label: `${u.name} (${u.email})`,
+                label: `${u.name}`,
                 value: String(u.id),
               })),
             ]}
