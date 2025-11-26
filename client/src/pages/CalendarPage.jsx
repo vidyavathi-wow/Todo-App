@@ -26,17 +26,6 @@ const localizer = dateFnsLocalizer({
   locales,
 });
 
-// Google event colors
-// const googleColors = [
-//   'bg-blue-600',
-//   'bg-red-500',
-//   'bg-green-600',
-//   'bg-purple-600',
-//   'bg-pink-500',
-//   'bg-amber-500',
-//   'bg-indigo-600',
-// ];
-
 export default function CalendarPage() {
   const { todos, loading, user } = useContext(AppContext);
 

@@ -53,7 +53,8 @@ axiosInstance.interceptors.response.use(
         original.headers.Authorization = `Bearer ${newToken}`;
 
         return axiosInstance(original);
-      } catch (e) {
+      } catch (error) {
+        console.error('Refresh token failed:', error);
         localStorage.clear();
         window.location.href = '/login';
         return Promise.reject(e);
