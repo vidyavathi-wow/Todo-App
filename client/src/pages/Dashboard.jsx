@@ -1,13 +1,27 @@
-import { useContext } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import TodoList from '../components/todos/TodoList';
 import AppContext from '../context/AppContext';
 import Calendar from '../components/Calender';
 import TodaysTodos from '../components/TodaysTodos';
 import toast from 'react-hot-toast';
 import { updateTodoStatus } from '../services/todos';
+import Pagination from '../components/common/Pagination';
 
 export default function Dashboard() {
   const { todos, fetchTodos, user } = useContext(AppContext);
+
+  // Pagination for todos (client-side)
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 10; // ⬅️ show 10 todos at a time
+
+  const totalPages = Math.max(1, Math.ceil(todos.length / PAGE_SIZE));
+
+  const paginatedTodos = todos.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  // reset page when todo list changes (e.g. filter/calendar/add/delete)
+  useEffect(() => {
+    setPage(1);
+  }, [todos]);
 
   const handleUpdateStatus = async (todo) => {
     try {
@@ -40,8 +54,18 @@ export default function Dashboard() {
             </h2>
           </div>
 
-          {/* Only ONE TodoList */}
-          <TodoList todos={todos} onUpdateStatus={handleUpdateStatus} />
+          {/* Paginated TodoList */}
+          <TodoList
+            todos={paginatedTodos}
+            onUpdateStatus={handleUpdateStatus}
+          />
+
+          {/* Pagination under the list */}
+          <Pagination
+            currentPage={page}
+            totalPages={totalPages}
+            onPageChange={setPage}
+          />
         </div>
 
         {/* RIGHT SIDE – Calendar + Today's Todos */}

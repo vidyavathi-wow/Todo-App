@@ -8,6 +8,9 @@ const sendEmail = require('../config/emailServeice');
 const taskAssignedEmail = require('../emails/taskAssigned');
 const taskUpdatedEmail = require('../emails/taskUpdated');
 
+// -------------------------------------------------------------
+// CREATE TODO
+// -------------------------------------------------------------
 exports.createTodo = async (req, res) => {
   try {
     const {
@@ -39,18 +42,18 @@ exports.createTodo = async (req, res) => {
       assignedToUserId: assignedToUserId || null,
     });
 
-    // Fetch assigned user (for activity log)
-    let assignedUserName = '';
+    let assignedUsername = '';
     if (assignedToUserId) {
       const assignedUser = await User.findByPk(assignedToUserId);
       assignedUsername = assignedUser ? assignedUser.name : '';
     }
 
-    // Activity Log with assigned user name
     await ActivityLog.create({
       userId: req.user.id,
       action: 'CREATE_TODO',
-      details: `Todo created: ${title}${assignedUsername ? ` (assigned to ${assignedUsername})` : ''}`,
+      details: `Todo created: ${title}${
+        assignedUsername ? ` (assigned to ${assignedUsername})` : ''
+      }`,
     });
 
     const createdTodo = await Todo.findByPk(todo.id, {
@@ -81,8 +84,18 @@ exports.createTodo = async (req, res) => {
   }
 };
 
+// -------------------------------------------------------------
+// GET ALL TODOS (ADMIN = ALL, USER = OWN + ASSIGNED) + PAGINATION
+// -------------------------------------------------------------
 exports.getAllTodos = async (req, res) => {
   try {
+    let { page = 1, limit = 10 } = req.query;
+
+    page = Number(page) > 0 ? Number(page) : 1;
+    limit = Number(limit) > 0 ? Number(limit) : 10;
+
+    const offset = (page - 1) * limit;
+
     const isAdmin = req.user.role === 'admin';
     const userId = req.user.id;
 
@@ -90,8 +103,10 @@ exports.getAllTodos = async (req, res) => {
       ? {}
       : { [Op.or]: [{ userId }, { assignedToUserId: userId }] };
 
-    const todos = await Todo.findAll({
+    const { count, rows: todos } = await Todo.findAndCountAll({
       where,
+      offset,
+      limit,
       order: [['createdAt', 'DESC']],
       include: [
         { model: User, as: 'owner', attributes: ['id', 'name', 'email'] },
@@ -99,13 +114,22 @@ exports.getAllTodos = async (req, res) => {
       ],
     });
 
-    res.status(200).json({ success: true, todos });
+    return res.status(200).json({
+      success: true,
+      currentPage: page,
+      totalPages: Math.ceil(count / limit),
+      totalTodos: count,
+      todos,
+    });
   } catch (err) {
     logger.error(err);
-    res.status(500).json({ success: false, message: err.message });
+    return res.status(500).json({ success: false, message: err.message });
   }
 };
 
+// -------------------------------------------------------------
+// GET TODO BY ID
+// -------------------------------------------------------------
 exports.getTodo = async (req, res) => {
   try {
     const { id } = req.params;
@@ -136,6 +160,9 @@ exports.getTodo = async (req, res) => {
   }
 };
 
+// -------------------------------------------------------------
+// UPDATE TODO
+// -------------------------------------------------------------
 exports.updateTodo = async (req, res) => {
   const t = await sequelize.transaction();
   try {
@@ -197,6 +224,9 @@ exports.updateTodo = async (req, res) => {
   }
 };
 
+// -------------------------------------------------------------
+// UPDATE TODO STATUS
+// -------------------------------------------------------------
 exports.updateTodoStatus = async (req, res) => {
   try {
     const { status } = req.body;
@@ -222,93 +252,47 @@ exports.updateTodoStatus = async (req, res) => {
   }
 };
 
-// DELETE TODO (soft)
+// -------------------------------------------------------------
+// DELETE TODO
+// -------------------------------------------------------------
 exports.deleteTodo = async (req, res) => {
   try {
     const { id } = req.params;
     const isAdmin = req.user.role === 'admin';
     const userId = req.user.id;
 
-    let where;
-
-    if (isAdmin) {
-      where = { id };
-    } else {
-      where = {
-        id,
-        [Op.or]: [
-          { userId },
-          { assignedToUserId: userId }, // assigned to them
-        ],
-      };
-    }
+    const where = isAdmin
+      ? { id }
+      : {
+          id,
+          [Op.or]: [{ userId }, { assignedToUserId: userId }],
+        };
 
     const deleted = await Todo.destroy({ where });
 
     if (!deleted) {
       return res.status(404).json({
         success: false,
-        message: 'Todo not found or you do not have permission to delete it',
+        message: 'Todo not found or no permission',
       });
     }
 
     res.json({
       success: true,
-      message: 'Todo deleted successfully (soft deleted)',
+      message: 'Todo deleted successfully',
     });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
 };
 
-exports.getDashboardData = async (req, res) => {
-  try {
-    const isAdmin = req.user.role === 'admin';
-    const userId = req.user.id;
-
-    const where = {
-      [Op.or]: [
-        { userId: userId }, // created by logged-in user
-        { assignedToUserId: userId }, // assigned to logged-in user
-      ],
-    };
-
-    const [statusCounts, recentTodos] = await Promise.all([
-      Todo.findAll({
-        attributes: ['status', [fn('COUNT', col('status')), 'count']],
-        where,
-        group: ['status'],
-        raw: true,
-      }),
-      Todo.findAll({
-        where,
-        order: [['createdAt', 'DESC']],
-        limit: 5,
-        include: [
-          { model: User, as: 'owner', attributes: ['id', 'name'] },
-          { model: User, as: 'assignee', attributes: ['id', 'name'] },
-        ],
-      }),
-    ]);
-
-    const overviewData = { completed: 0, inProgress: 0, pending: 0 };
-    statusCounts.forEach(
-      ({ status, count }) => (overviewData[status] = Number(count))
-    );
-
-    res.status(200).json({ success: true, overviewData, recentTodos });
-  } catch (err) {
-    logger.error(err);
-    res.status(500).json({ success: false, message: err.message });
-  }
-};
-
-// ------------------------------------------------------------------
-// GET TODOS BY DATE - supports filters: my | all | assignedByMe | assignedToMe
-// ------------------------------------------------------------------
+// -------------------------------------------------------------
+// GET TODOS BY DATE (Paginated + Filters)
+// -------------------------------------------------------------
 exports.getTodosByDate = async (req, res) => {
   try {
-    const { date, filter } = req.query;
+    const { date, filter = 'my', page = 1, limit = 20 } = req.query;
+
     const isAdmin = req.user.role === 'admin';
     const userId = req.user.id;
 
@@ -316,6 +300,10 @@ exports.getTodosByDate = async (req, res) => {
       return res
         .status(400)
         .json({ success: false, message: 'Date is required' });
+
+    const p = Number(page);
+    const l = Number(limit);
+    const offset = (p - 1) * l;
 
     const start = new Date(date);
     const end = new Date(date);
@@ -325,25 +313,18 @@ exports.getTodosByDate = async (req, res) => {
 
     let where;
 
-    switch ((filter || 'my').toString()) {
+    switch (filter) {
       case 'my':
-        // tasks created by me
-        where = { ...dateCondition, userId };
-        break;
-
       case 'assignedByMe':
-        // tasks created by me (explicit)
         where = { ...dateCondition, userId };
         break;
 
       case 'assignedToMe':
-        // tasks assigned to me
         where = { ...dateCondition, assignedToUserId: userId };
         break;
 
       case 'all':
       default:
-        // Admins get everything; non-admins get tasks created by or assigned to them
         where = isAdmin
           ? dateCondition
           : {
@@ -355,30 +336,38 @@ exports.getTodosByDate = async (req, res) => {
         break;
     }
 
-    const todos = await Todo.findAll({
+    const { count, rows: todos } = await Todo.findAndCountAll({
       where,
+      offset,
+      limit: l,
+      order: [['createdAt', 'DESC']],
       include: [
         { model: User, as: 'owner', attributes: ['id', 'name', 'email'] },
         { model: User, as: 'assignee', attributes: ['id', 'name', 'email'] },
       ],
-      order: [['createdAt', 'DESC']],
     });
 
-    res.status(200).json({ success: true, todos });
+    return res.status(200).json({
+      success: true,
+      currentPage: p,
+      totalPages: Math.ceil(count / l),
+      totalTodos: count,
+      todos,
+    });
   } catch (error) {
     logger.error('getTodosByDate error:', error);
-    res
+    return res
       .status(500)
       .json({ success: false, message: 'Failed to fetch todos by date' });
   }
 };
 
-// ------------------------------------------------------------------
-// GET TODOS BY DATE RANGE (month summary) - supports same filters
-// ------------------------------------------------------------------
+// -------------------------------------------------------------
+// GET TODOS BY DATE RANGE (Month Summary)
+// -------------------------------------------------------------
 exports.getTodosByDateRange = async (req, res) => {
   try {
-    const { start, end, filter } = req.query;
+    const { start, end, filter = 'my' } = req.query;
     const isAdmin = req.user.role === 'admin';
     const userId = req.user.id;
 
@@ -394,11 +383,8 @@ exports.getTodosByDateRange = async (req, res) => {
 
     let where;
 
-    switch ((filter || 'my').toString()) {
+    switch (filter) {
       case 'my':
-        where = { ...dateCondition, userId };
-        break;
-
       case 'assignedByMe':
         where = { ...dateCondition, userId };
         break;
@@ -410,7 +396,7 @@ exports.getTodosByDateRange = async (req, res) => {
       case 'all':
       default:
         where = isAdmin
-          ? dateCondition // admin sees all
+          ? dateCondition
           : {
               [Op.and]: [
                 dateCondition,
@@ -433,8 +419,52 @@ exports.getTodosByDateRange = async (req, res) => {
       return acc;
     }, {});
 
-    res.status(200).json({ success: true, taskSummary });
+    return res.status(200).json({ success: true, taskSummary });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+exports.getDashboardData = async (req, res) => {
+  try {
+    const isAdmin = req.user.role === 'admin';
+    const userId = req.user.id;
+
+    const where = isAdmin
+      ? {}
+      : { [Op.or]: [{ userId }, { assignedToUserId: userId }] };
+
+    const [statusCounts, recentTodos] = await Promise.all([
+      Todo.findAll({
+        attributes: ['status', [fn('COUNT', col('status')), 'count']],
+        where,
+        group: ['status'],
+        raw: true,
+      }),
+      Todo.findAll({
+        where,
+        order: [['createdAt', 'DESC']],
+        limit: 5,
+        include: [
+          { model: User, as: 'owner', attributes: ['id', 'name'] },
+          { model: User, as: 'assignee', attributes: ['id', 'name'] },
+        ],
+      }),
+    ]);
+
+    const overviewData = { completed: 0, inProgress: 0, pending: 0 };
+
+    statusCounts.forEach(({ status, count }) => {
+      overviewData[status] = Number(count);
+    });
+
+    return res.status(200).json({
+      success: true,
+      overviewData,
+      recentTodos,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: err.message });
   }
 };
