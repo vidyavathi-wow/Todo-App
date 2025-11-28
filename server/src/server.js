@@ -5,6 +5,7 @@ const sequelize = require('./config/db');
 const corsOptions = require('./config/cors');
 const logger = require('./utils/logger.js');
 const errorHandler = require('./middlewares/errorHandler.js');
+const cookieParser = require('cookie-parser');
 require('./models/RefreshToken');
 
 require('./models/User');
@@ -23,6 +24,7 @@ const PORT = parseInt(process.env.PORT || '3000', 10);
 
 app.use(cors(corsOptions));
 app.use(express.json());
+app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
 
 app.get('/', (req, res) => {

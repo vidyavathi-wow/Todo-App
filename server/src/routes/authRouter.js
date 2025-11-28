@@ -22,7 +22,7 @@ router.post('/register', validateRegister, register);
 router.post('/forgot-password', validateEmail, forgotPassword);
 router.post('/reset-password', validatePassword, resetPassword);
 router.post('/logout', logout);
-router.post('/refresh-token', refreshAccessToken);
+router.get('/refresh-token', refreshAccessToken);
 
 router.get('/me', verifyToken, (req, res) => {
   return res.status(200).json({
