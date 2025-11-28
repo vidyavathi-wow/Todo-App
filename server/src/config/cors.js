@@ -1,10 +1,9 @@
 require('dotenv').config();
 
-const allowedOrigins = [
-  process.env.FRONTEND_URL,
-  process.env.FRONTEND_URL + '/',
-  'http://localhost:5173',
-];
+// Remove trailing slash
+const FRONTEND = process.env.FRONTEND_URL?.replace(/\/$/, '');
+
+const allowedOrigins = [FRONTEND, 'http://localhost:5173'];
 
 const corsOptions = {
   origin: (origin, callback) => {
