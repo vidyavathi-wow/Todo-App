@@ -1,19 +1,18 @@
-// client/src/configs/axiosInstance.js
 import axios from 'axios';
 
 const BASE_URL = import.meta.env.VITE_BASE_URL || 'http://localhost:5000';
+
+let accessToken = localStorage.getItem('accessToken') || null;
 
 const axiosInstance = axios.create({
   baseURL: BASE_URL,
   withCredentials: true,
 });
 
-// Attach access token on every request
 axiosInstance.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('accessToken');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+    if (accessToken) {
+      config.headers.Authorization = `Bearer ${accessToken}`;
     } else {
       delete config.headers.Authorization;
     }
@@ -22,45 +21,31 @@ axiosInstance.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Auto-refresh on 401 and retry once
 axiosInstance.interceptors.response.use(
   (res) => res,
   async (err) => {
     const original = err.config;
-    const status = err?.response?.status;
-
-    if (status === 401 && !original._retry) {
+    if (err.response?.status === 401 && !original._retry) {
       original._retry = true;
 
-      const refreshToken = localStorage.getItem('refreshToken');
-      if (!refreshToken) {
-        localStorage.clear();
-        window.location.href = '/login';
-        return Promise.reject(err);
-      }
-
       try {
-        const res = await axios.post(
-          `${BASE_URL}/api/v1/auth/refresh-token`,
-          { refreshToken },
-          { withCredentials: true }
-        );
+        const res = await axios.get(`${BASE_URL}/api/v1/auth/refresh-token`, {
+          withCredentials: true,
+        });
 
         const newToken = res.data.accessToken;
+        accessToken = newToken;
         localStorage.setItem('accessToken', newToken);
-
-        axiosInstance.defaults.headers.Authorization = `Bearer ${newToken}`;
         original.headers.Authorization = `Bearer ${newToken}`;
 
         return axiosInstance(original);
-      } catch (error) {
-        console.error('Refresh token failed:', error);
+      } catch (e) {
+        accessToken = null;
         localStorage.clear();
         window.location.href = '/login';
         return Promise.reject(e);
       }
     }
-
     return Promise.reject(err);
   }
 );

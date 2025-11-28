@@ -25,9 +25,7 @@ export default function Login() {
       const data = await loginUser(formData);
 
       if (data.success) {
-        localStorage.setItem('refreshToken', data.refreshToken);
         localStorage.setItem('accessToken', data.accessToken);
-
         setToken(data.accessToken);
 
         toast.success(data.message || 'Login successful');
@@ -91,7 +89,6 @@ export default function Login() {
               {errors.password.message}
             </p>
           )}
-
           <div className="text-right mt-2">
             <Link
               to="/forgot-password"
@@ -101,7 +98,6 @@ export default function Login() {
             </Link>
           </div>
         </div>
-
         <Button
           type="submit"
           disabled={loading}

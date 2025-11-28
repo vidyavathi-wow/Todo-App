@@ -5,7 +5,8 @@ import { API } from '../configs/api';
 export const registerUser = async (userData) => {
   const { data } = await axios.post(
     import.meta.env.VITE_BASE_URL + API.auth.register,
-    userData
+    userData,
+    { withCredentials: true }
   );
   return data;
 };
@@ -13,7 +14,8 @@ export const registerUser = async (userData) => {
 export const loginUser = async (credentials) => {
   const { data } = await axios.post(
     import.meta.env.VITE_BASE_URL + API.auth.login,
-    credentials
+    credentials,
+    { withCredentials: true }
   );
   return data;
 };
