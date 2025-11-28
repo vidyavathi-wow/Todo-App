@@ -123,10 +123,11 @@ exports.login = async (req, res) => {
     });
 
     // 🔥 Send refresh token in HttpOnly cookie
+
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
-      secure: true, // keep true for HTTPS
-      sameSite: 'lax',
+      secure: true,
+      sameSite: 'none',
       path: '/',
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
