@@ -1,58 +1,8 @@
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
-const User = require('../models/User');
-const RefreshToken = require('../models/RefreshToken');
-const sendEmail = require('../config/emailServeice');
-const ActivityLog = require('../models/ActivityLog');
+const authService = require('../services/authService');
 
 exports.register = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
-
-    if (!name || !email || !password) {
-      return res
-        .status(400)
-        .json({ success: false, message: 'All fields are required.' });
-    }
-
-    const existingUser = await User.findOne({
-      where: { email },
-      paranoid: false,
-    });
-
-    if (existingUser && existingUser.deletedAt) {
-      return res.status(403).json({
-        success: false,
-        message: 'Your account is deactivated. Contact admin.',
-      });
-    }
-
-    if (existingUser) {
-      return res
-        .status(400)
-        .json({ success: false, message: 'Email is already registered.' });
-    }
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    const user = await User.create({
-      name,
-      email,
-      password: hashedPassword,
-      role: 'user',
-    });
-
-    sendEmail(
-      email,
-      'Welcome to Your To-Do App!',
-      `Hi ${name},\n\nWelcome to your To-Do App! 🎉`
-    ).catch(() => {});
-
-    ActivityLog.create({
-      userId: user.id,
-      action: 'User Registered',
-      details: `New account created for ${user.email}`,
-    });
+    const user = await authService.register(req.body);
 
     return res.status(201).json({
       success: true,
@@ -65,64 +15,16 @@ exports.register = async (req, res) => {
       },
     });
   } catch (error) {
-    return res.status(500).json({ success: false, message: error.message });
+    return res.status(400).json({ success: false, message: error.message });
   }
 };
 
 exports.login = async (req, res) => {
   try {
-    const { email, password } = req.body;
-
-    if (!email || !password) {
-      return res
-        .status(400)
-        .json({ success: false, message: 'Email and password are required.' });
-    }
-
-    const user = await User.findOne({ where: { email }, paranoid: false });
-
-    if (!user) {
-      return res.status(400).json({
-        success: false,
-        message: 'Please enter a registered email.',
-      });
-    }
-
-    if (user.deletedAt) {
-      return res.status(403).json({
-        success: false,
-        message: 'Your account is deactivated. Contact admin.',
-      });
-    }
-
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return res
-        .status(400)
-        .json({ success: false, message: 'Incorrect password.' });
-    }
-
-    // Create tokens
-    const accessToken = jwt.sign(
-      { userId: user.id, email: user.email, role: user.role },
-      process.env.JWT_SECRET,
-      { expiresIn: '15m' }
+    const { user, accessToken, refreshToken } = await authService.login(
+      req.body.email,
+      req.body.password
     );
-
-    const refreshToken = jwt.sign(
-      { userId: user.id },
-      process.env.JWT_REFRESH_SECRET,
-      { expiresIn: '7d' }
-    );
-
-    // Save refresh token in DB
-    await RefreshToken.create({
-      userId: user.id,
-      token: refreshToken,
-      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-    });
-
-    // 🔥 Send refresh token in HttpOnly cookie
 
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
@@ -132,16 +34,10 @@ exports.login = async (req, res) => {
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
-    ActivityLog.create({
-      userId: user.id,
-      action: 'User Logged In',
-      details: `${user.email} logged in.`,
-    });
-
     return res.json({
       success: true,
       message: 'Login successful.',
-      accessToken, // and frontend stores in memory
+      accessToken,
       user: {
         id: user.id,
         name: user.name,
@@ -150,89 +46,25 @@ exports.login = async (req, res) => {
       },
     });
   } catch (error) {
-    return res.status(500).json({ success: false, message: error.message });
+    return res.status(400).json({ success: false, message: error.message });
   }
 };
 
 exports.refreshAccessToken = async (req, res) => {
   try {
-    const refreshToken = req.cookies.refreshToken;
+    const newToken = await authService.refreshToken(req.cookies.refreshToken);
 
-    if (!refreshToken) {
-      return res.status(400).json({
-        success: false,
-        message: 'Refresh token missing.',
-      });
-    }
-
-    const stored = await RefreshToken.findOne({
-      where: { token: refreshToken },
-    });
-
-    if (!stored) {
-      return res.status(403).json({
-        success: false,
-        message: 'Invalid refresh token.',
-      });
-    }
-
-    let decoded;
-    try {
-      decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
-    } catch (err) {
-      await stored.destroy();
-      return res.status(403).json({
-        success: false,
-        message: 'Refresh token expired. Login again.',
-      });
-    }
-
-    const user = await User.findByPk(decoded.userId);
-
-    if (!user) {
-      await stored.destroy();
-      return res
-        .status(403)
-        .json({ success: false, message: 'User not found.' });
-    }
-
-    // Create new access token
-    const newAccessToken = jwt.sign(
-      {
-        userId: user.id,
-        email: user.email,
-        role: user.role,
-      },
-      process.env.JWT_SECRET,
-      { expiresIn: '15m' }
-    );
-
-    return res.json({ success: true, accessToken: newAccessToken });
+    return res.json({ success: true, accessToken: newToken });
   } catch (error) {
-    return res.status(500).json({ success: false, message: error.message });
+    return res.status(403).json({ success: false, message: error.message });
   }
 };
 
 exports.logout = async (req, res) => {
   try {
-    const { refreshToken } = req.body;
+    await authService.logout(req.body.refreshToken, req.user?.id);
 
-    if (refreshToken) {
-      await RefreshToken.destroy({ where: { token: refreshToken } });
-    }
-
-    if (req.user?.id) {
-      ActivityLog.create({
-        userId: req.user.id,
-        action: 'User Logged Out',
-        details: 'User logged out.',
-      });
-    }
-
-    return res.status(200).json({
-      success: true,
-      message: 'Logged out successfully.',
-    });
+    return res.json({ success: true, message: 'Logged out successfully.' });
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message });
   }
@@ -240,86 +72,22 @@ exports.logout = async (req, res) => {
 
 exports.forgotPassword = async (req, res) => {
   try {
-    const { email } = req.body;
+    await authService.forgotPassword(req.body.email);
 
-    if (!email?.trim()) {
-      return res
-        .status(400)
-        .json({ success: false, message: 'Please enter your email.' });
-    }
-
-    const user = await User.findOne({ where: { email }, paranoid: false });
-
-    if (!user) {
-      return res.status(400).json({
-        success: false,
-        message: 'Enter your registered email address.',
-      });
-    }
-
-    if (user.deletedAt) {
-      return res.status(403).json({
-        success: false,
-        message: 'Your account is deactivated. Contact admin.',
-      });
-    }
-
-    const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, {
-      expiresIn: '1d',
-    });
-
-    const link = `${process.env.FRONTEND_URL}/reset-password?token=${encodeURIComponent(token)}`;
-
-    sendEmail(email, 'Reset Password', `Reset link: ${link}`).catch(() => {});
-
-    return res.status(200).json({
+    return res.json({
       success: true,
       message: 'If registered, reset link sent.',
     });
   } catch (error) {
-    return res.status(500).json({ success: false, message: error.message });
+    return res.status(400).json({ success: false, message: error.message });
   }
 };
 
 exports.resetPassword = async (req, res) => {
   try {
-    const { token } = req.query;
-    const { password } = req.body;
+    await authService.resetPassword(req.query.token, req.body.password);
 
-    if (!token) {
-      return res
-        .status(400)
-        .json({ success: false, message: 'Reset token missing.' });
-    }
-
-    if (!password?.trim()) {
-      return res
-        .status(400)
-        .json({ success: false, message: 'Password cannot be empty.' });
-    }
-
-    let decoded;
-    try {
-      decoded = jwt.verify(token, process.env.JWT_SECRET);
-    } catch (err) {
-      return res
-        .status(400)
-        .json({ success: false, message: 'Invalid or expired reset link.' });
-    }
-
-    const user = await User.findByPk(decoded.userId, { paranoid: false });
-
-    if (!user || user.deletedAt) {
-      return res
-        .status(400)
-        .json({ success: false, message: 'Invalid or expired reset link.' });
-    }
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-    user.password = hashedPassword;
-    await user.save();
-
-    return res.status(200).json({
+    return res.json({
       success: true,
       message: 'Password updated successfully.',
     });
