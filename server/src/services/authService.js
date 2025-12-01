@@ -2,25 +2,29 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const RefreshToken = require('../models/RefreshToken');
-const ActivityLog = require('../models/ActivityLog');
 const sendEmail = require('../config/emailServeice');
+const ActivityLog = require('../models/ActivityLog');
 
 module.exports = {
-  // ---------------------------------------------------------
-  // REGISTER USER
-  // ---------------------------------------------------------
-  register: async ({ name, email, password }) => {
+  register: async (name, email, password) => {
+    if (!name || !email || !password) {
+      return { status: 400, error: 'All fields are required.' };
+    }
+
     const existingUser = await User.findOne({
       where: { email },
       paranoid: false,
     });
 
     if (existingUser && existingUser.deletedAt) {
-      throw new Error('Your account is deactivated. Contact admin.');
+      return {
+        status: 403,
+        error: 'Your account is deactivated. Contact admin.',
+      };
     }
 
     if (existingUser) {
-      throw new Error('Email is already registered.');
+      return { status: 400, error: 'Email is already registered.' };
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -32,35 +36,51 @@ module.exports = {
       role: 'user',
     });
 
-    // Send welcome email
     sendEmail(
       email,
       'Welcome to Your To-Do App!',
-      `Hi ${name}, welcome!`
+      `Hi ${name},\n\nWelcome to your To-Do App! 🎉`
     ).catch(() => {});
 
-    // Activity log
-    await ActivityLog.create({
+    ActivityLog.create({
       userId: user.id,
       action: 'User Registered',
       details: `New account created for ${user.email}`,
     });
 
-    return user;
+    return {
+      status: 201,
+      data: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
+    };
   },
 
-  // ---------------------------------------------------------
-  // LOGIN
-  // ---------------------------------------------------------
   login: async (email, password) => {
+    if (!email || !password) {
+      return { status: 400, error: 'Email and password are required.' };
+    }
+
     const user = await User.findOne({ where: { email }, paranoid: false });
 
-    if (!user) throw new Error('Please enter a registered email.');
-    if (user.deletedAt)
-      throw new Error('Your account is deactivated. Contact admin.');
+    if (!user) {
+      return { status: 400, error: 'Please enter a registered email.' };
+    }
+
+    if (user.deletedAt) {
+      return {
+        status: 403,
+        error: 'Your account is deactivated. Contact admin.',
+      };
+    }
 
     const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) throw new Error('Incorrect password.');
+    if (!isMatch) {
+      return { status: 400, error: 'Incorrect password.' };
+    }
 
     const accessToken = jwt.sign(
       { userId: user.id, email: user.email, role: user.role },
@@ -77,39 +97,55 @@ module.exports = {
     await RefreshToken.create({
       userId: user.id,
       token: refreshToken,
-      expiresAt: new Date(Date.now() + 7 * 86400000),
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
     });
 
-    await ActivityLog.create({
+    ActivityLog.create({
       userId: user.id,
       action: 'User Logged In',
       details: `${user.email} logged in.`,
     });
 
-    return { user, accessToken, refreshToken };
+    return {
+      status: 200,
+      data: {
+        accessToken,
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+        },
+        refreshToken,
+      },
+    };
   },
 
-  // ---------------------------------------------------------
-  // REFRESH ACCESS TOKEN
-  // ---------------------------------------------------------
-  refreshToken: async (incomingToken) => {
+  refreshAccessToken: async (refreshToken) => {
+    if (!refreshToken) {
+      return { status: 400, error: 'Refresh token missing.' };
+    }
+
     const stored = await RefreshToken.findOne({
-      where: { token: incomingToken },
+      where: { token: refreshToken },
     });
-    if (!stored) throw new Error('Invalid refresh token.');
+
+    if (!stored) {
+      return { status: 403, error: 'Invalid refresh token.' };
+    }
 
     let decoded;
     try {
-      decoded = jwt.verify(incomingToken, process.env.JWT_REFRESH_SECRET);
+      decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
     } catch (err) {
       await stored.destroy();
-      throw new Error('Refresh token expired. Login again.');
+      return { status: 403, error: 'Refresh token expired. Login again.' };
     }
 
     const user = await User.findByPk(decoded.userId);
     if (!user) {
       await stored.destroy();
-      throw new Error('User not found.');
+      return { status: 403, error: 'User not found.' };
     }
 
     const newAccessToken = jwt.sign(
@@ -118,66 +154,91 @@ module.exports = {
       { expiresIn: '15m' }
     );
 
-    return newAccessToken;
+    return {
+      status: 200,
+      data: { accessToken: newAccessToken },
+    };
   },
 
-  // ---------------------------------------------------------
-  // LOGOUT
-  // ---------------------------------------------------------
   logout: async (refreshToken, userId) => {
     if (refreshToken) {
       await RefreshToken.destroy({ where: { token: refreshToken } });
     }
 
     if (userId) {
-      await ActivityLog.create({
+      ActivityLog.create({
         userId,
         action: 'User Logged Out',
         details: 'User logged out.',
       });
     }
+
+    return {
+      status: 200,
+      data: 'Logged out successfully.',
+    };
   },
 
-  // ---------------------------------------------------------
-  // FORGOT PASSWORD
-  // ---------------------------------------------------------
   forgotPassword: async (email) => {
+    if (!email?.trim()) {
+      return { status: 400, error: 'Please enter your email.' };
+    }
+
     const user = await User.findOne({ where: { email }, paranoid: false });
 
-    if (!user) throw new Error('Enter your registered email address.');
-    if (user.deletedAt)
-      throw new Error('Your account is deactivated. Contact admin.');
+    if (!user) {
+      return { status: 400, error: 'Enter your registered email address.' };
+    }
+
+    if (user.deletedAt) {
+      return {
+        status: 403,
+        error: 'Your account is deactivated. Contact admin.',
+      };
+    }
 
     const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, {
       expiresIn: '1d',
     });
 
-    const link = `${process.env.FRONTEND_URL}/reset-password?token=${encodeURIComponent(token)}`;
+    const link = `${process.env.FRONTEND_URL}/reset-password?token=${encodeURIComponent(
+      token
+    )}`;
 
     sendEmail(email, 'Reset Password', `Reset link: ${link}`).catch(() => {});
 
-    return true;
+    return { status: 200, data: 'If registered, reset link sent.' };
   },
 
-  // ---------------------------------------------------------
-  // RESET PASSWORD
-  // ---------------------------------------------------------
-  resetPassword: async (token, newPassword) => {
+  resetPassword: async (token, password) => {
+    if (!token) {
+      return { status: 400, error: 'Reset token missing.' };
+    }
+
+    if (!password?.trim()) {
+      return { status: 400, error: 'Password cannot be empty.' };
+    }
+
     let decoded;
     try {
       decoded = jwt.verify(token, process.env.JWT_SECRET);
     } catch (err) {
-      throw new Error('Invalid or expired reset link.');
+      return { status: 400, error: 'Invalid or expired reset link.' };
     }
 
     const user = await User.findByPk(decoded.userId, { paranoid: false });
-    if (!user || user.deletedAt)
-      throw new Error('Invalid or expired reset link.');
 
-    const hashed = await bcrypt.hash(newPassword, 10);
-    user.password = hashed;
+    if (!user || user.deletedAt) {
+      return { status: 400, error: 'Invalid or expired reset link.' };
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    user.password = hashedPassword;
     await user.save();
 
-    return true;
+    return {
+      status: 200,
+      data: 'Password updated successfully.',
+    };
   },
 };

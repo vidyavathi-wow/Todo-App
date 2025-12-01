@@ -2,11 +2,10 @@ const User = require('../models/User');
 const ActivityLog = require('../models/ActivityLog');
 
 module.exports = {
-  // ---------------------------------------------------------
-  // GET PROFILE
-  // ---------------------------------------------------------
   getProfile: async (userId) => {
-    if (!userId) throw new Error('Unauthorized');
+    if (!userId) {
+      return { status: 401, error: 'Unauthorized' };
+    }
 
     const user = await User.findByPk(userId, {
       attributes: [
@@ -22,37 +21,53 @@ module.exports = {
     });
 
     if (!user) {
-      throw new Error('Details does not match');
+      return { status: 404, error: 'Details does not match' };
     }
 
     if (user.deletedAt) {
-      throw new Error(
-        'Your account has been deactivated. Please contact support.'
-      );
+      return {
+        status: 403,
+        error: 'Your account has been deactivated. Please contact support.',
+      };
     }
 
-    return {
+    const profile = {
       ...user.toJSON(),
       profilePic: user.profilePic || null,
     };
+
+    return { status: 200, data: profile };
   },
 
-  // ---------------------------------------------------------
-  // UPDATE PROFILE
-  // ---------------------------------------------------------
-  updateProfile: async (userId, updates, file) => {
-    if (!userId) throw new Error('Unauthorized');
+  updateProfile: async (userId, body, file) => {
+    if (!userId) {
+      return { status: 401, error: 'Unauthorized' };
+    }
 
     const user = await User.findByPk(userId, { paranoid: false });
 
-    if (!user) throw new Error('User not found');
-    if (user.deletedAt)
-      throw new Error('Your account is deactivated and cannot be updated.');
+    if (!user) {
+      return { status: 404, error: 'User not found' };
+    }
 
-    // Update fields
-    if (updates.name?.trim()) user.name = updates.name.trim();
-    if (updates.email?.trim()) user.email = updates.email.trim();
-    if (file?.path) user.profilePic = file.path;
+    if (user.deletedAt) {
+      return {
+        status: 403,
+        error: 'Your account is deactivated and cannot be updated.',
+      };
+    }
+
+    if (body.name && body.name.trim()) {
+      user.name = body.name.trim();
+    }
+
+    if (body.email && body.email.trim()) {
+      user.email = body.email.trim();
+    }
+
+    if (file && file.path) {
+      user.profilePic = file.path;
+    }
 
     await user.save();
 
@@ -63,11 +78,18 @@ module.exports = {
     });
 
     return {
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      profilePic: user.profilePic,
-      role: user.role,
+      status: 200,
+      data: {
+        success: true,
+        message: 'Profile updated successfully',
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          profilePic: user.profilePic,
+          role: user.role,
+        },
+      },
     };
   },
 };

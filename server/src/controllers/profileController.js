@@ -2,37 +2,47 @@ const profileService = require('../services/profileService');
 
 exports.getProfile = async (req, res) => {
   try {
-    const user = await profileService.getProfile(req.user?.id);
+    const result = await profileService.getProfile(req.user?.id);
+
+    if (result.error) {
+      return res.status(result.status).json({
+        success: false,
+        message: result.error,
+      });
+    }
 
     return res.status(200).json({
       success: true,
-      user,
+      user: result.data,
     });
   } catch (error) {
-    return res.status(error.message === 'Unauthorized' ? 401 : 400).json({
+    return res.status(500).json({
       success: false,
-      message: error.message,
+      message: 'Server error: ' + error.message,
     });
   }
 };
 
 exports.updateProfile = async (req, res) => {
   try {
-    const updatedUser = await profileService.updateProfile(
+    const result = await profileService.updateProfile(
       req.user?.id,
       req.body,
       req.file
     );
 
-    return res.status(200).json({
-      success: true,
-      message: 'Profile updated successfully',
-      user: updatedUser,
-    });
+    if (result.error) {
+      return res.status(result.status).json({
+        success: false,
+        message: result.error,
+      });
+    }
+
+    return res.status(200).json(result.data);
   } catch (error) {
-    return res.status(error.message.includes('deactivated') ? 403 : 400).json({
+    return res.status(500).json({
       success: false,
-      message: error.message,
+      message: error.message || 'Failed to update profile',
     });
   }
 };

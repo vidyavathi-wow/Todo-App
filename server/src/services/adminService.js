@@ -2,17 +2,14 @@ const sequelize = require('../config/db');
 const User = require('../models/User');
 const ActivityLog = require('../models/ActivityLog');
 const Todo = require('../models/Todo');
-const sendEmail = require('../config/emailServeice');
 const logger = require('../utils/logger');
+const sendEmail = require('../config/emailServeice');
 
 module.exports = {
-  // -------------------------------------------------------
-  // GET ALL USERS (Paginated)
-  // -------------------------------------------------------
-  getAllUsers: async (page = 1, limit = 10) => {
+  getAllUsers: async ({ page, limit }) => {
     const offset = (page - 1) * limit;
 
-    const { count, rows: users } = await User.findAndCountAll({
+    const data = await User.findAndCountAll({
       attributes: ['id', 'name', 'email', 'role', 'createdAt', 'deletedAt'],
       paranoid: false,
       limit,
@@ -20,18 +17,10 @@ module.exports = {
       order: [['createdAt', 'DESC']],
     });
 
-    return {
-      currentPage: page,
-      totalPages: Math.ceil(count / limit),
-      totalUsers: count,
-      users,
-    };
+    return data;
   },
 
-  // -------------------------------------------------------
-  // USER DASHBOARD DETAILS
-  // -------------------------------------------------------
-  getUserDashboardDetails: async (id) => {
+  getUserDashboardDetails: async ({ id }) => {
     const user = await User.findByPk(id, {
       attributes: ['id', 'name', 'email', 'role', 'createdAt', 'deletedAt'],
       paranoid: false,
@@ -50,24 +39,13 @@ module.exports = {
       limit: 10,
     });
 
-    return {
-      user,
-      stats: {
-        todosCount,
-        deleted: !!user.deletedAt,
-        isActive: !user.deletedAt,
-      },
-      logs,
-    };
+    return { user, todosCount, logs };
   },
 
-  // -------------------------------------------------------
-  // ACTIVITY LOGS (Paginated)
-  // -------------------------------------------------------
-  getActivityLogs: async (page = 1, limit = 10) => {
+  getActivityLogs: async ({ page, limit }) => {
     const offset = (page - 1) * limit;
 
-    const { count, rows: logs } = await ActivityLog.findAndCountAll({
+    return await ActivityLog.findAndCountAll({
       include: [
         {
           model: User,
@@ -80,36 +58,44 @@ module.exports = {
       offset,
       order: [['timestamp', 'DESC']],
     });
-
-    return {
-      currentPage: page,
-      totalPages: Math.ceil(count / limit),
-      totalLogs: count,
-      logs,
-    };
   },
 
-  // -------------------------------------------------------
-  // DELETE USER BY ADMIN
-  // -------------------------------------------------------
-  deleteUserByAdmin: async (admin, userId) => {
+  deleteUserByAdmin: async ({ admin, id }) => {
     return await sequelize.transaction(async (t) => {
-      if (admin.id == userId) {
-        throw new Error('You cannot deactivate your own admin account.');
+      if (admin.id == id) {
+        return {
+          error: true,
+          status: 403,
+          message: 'You cannot deactivate your own admin account.',
+        };
       }
 
-      const user = await User.findByPk(userId, { transaction: t });
-      if (!user) throw new Error('User not found');
+      const user = await User.findByPk(id, { transaction: t });
+
+      if (!user) {
+        return { error: true, status: 404, message: 'User not found' };
+      }
 
       if (user.role === 'admin') {
-        throw new Error('Admins cannot deactivate other admins.');
+        return {
+          error: true,
+          status: 403,
+          message: 'Admins cannot deactivate other admins.',
+        };
       }
 
-      const todoCount = await Todo.count({ where: { userId }, transaction: t });
+      const todoCount = await Todo.count({
+        where: { userId: id },
+        transaction: t,
+      });
+
       if (todoCount > 0) {
-        throw new Error(
-          'User has assigned tasks. Reassign or delete tasks first.'
-        );
+        return {
+          error: true,
+          status: 400,
+          message:
+            'User has assigned tasks. Reassign or delete tasks before deactivation.',
+        };
       }
 
       await user.destroy({ transaction: t });
@@ -124,97 +110,118 @@ module.exports = {
         { transaction: t }
       );
 
-      return `User '${user.email}' deactivated successfully.`;
+      return {
+        error: false,
+        message: `User '${user.email}' deactivated successfully.`,
+      };
     });
   },
 
-  // -------------------------------------------------------
-  // RESTORE USER
-  // -------------------------------------------------------
-  restoreUserByAdmin: async (admin, userId) => {
+  restoreUserByAdmin: async ({ admin, id }) => {
     return await sequelize.transaction(async (t) => {
-      const user = await User.findByPk(userId, {
+      const user = await User.findByPk(id, {
         paranoid: false,
         transaction: t,
       });
 
-      if (!user || !user.deletedAt)
-        throw new Error('No deactivated user found');
+      if (!user || !user.deletedAt) {
+        return {
+          error: true,
+          status: 404,
+          message: 'No deactivated user found',
+        };
+      }
 
       await user.restore({ transaction: t });
-      await Todo.restore({ where: { userId }, transaction: t });
-      await ActivityLog.restore({ where: { userId }, transaction: t });
+      await Todo.restore({ where: { userId: id }, transaction: t });
+      await ActivityLog.restore({ where: { userId: id }, transaction: t });
 
       await ActivityLog.create(
         {
-          userId: admin.id,
+          userId: admin?.id || null,
           action: 'RESTORE_USER',
-          details: `Admin ${admin.email} restored user ${user.email}.`,
+          details: `Admin ${admin?.email || 'Unknown'} restored user ${user.email}.`,
           timestamp: new Date(),
         },
         { transaction: t }
       );
 
-      return `User '${user.email}' restored successfully.`;
+      return {
+        error: false,
+        message: `User '${user.email}' restored successfully.`,
+      };
     });
   },
 
-  // -------------------------------------------------------
-  // PROMOTE USER
-  // -------------------------------------------------------
-  promoteUserByAdmin: async (admin, userId) => {
+  promoteUserByAdmin: async ({ admin, id }) => {
     return await sequelize.transaction(async (t) => {
-      const user = await User.findByPk(userId, { transaction: t });
-      if (!user) throw new Error('User not found');
+      const user = await User.findByPk(id, { transaction: t });
 
-      if (user.role === 'admin') throw new Error('User is already an admin');
+      if (!user) return { error: true, status: 404, message: 'User not found' };
+
+      if (user.role === 'admin')
+        return {
+          error: true,
+          status: 400,
+          message: 'User is already an admin',
+        };
 
       await user.update({ role: 'admin' }, { transaction: t });
 
       await ActivityLog.create(
         {
-          userId: admin.id,
+          userId: admin?.id,
           action: 'PROMOTE_USER',
-          details: `Admin ${admin.email} promoted ${user.email}.`,
+          details: `Admin ${admin.email} promoted ${user.email} to admin.`,
           timestamp: new Date(),
         },
         { transaction: t }
       );
 
-      // send email
       try {
         await sendEmail(
           user.email,
           '🎉 You’ve been promoted to Admin',
           `Hello ${user.name || user.email},
 
-You have been promoted to Admin by ${admin.email}.`
+Good news! You have been *promoted to Admin*.
+
+Promoted by: ${admin.email}
+
+Regards,
+To-Do App Team`
         );
-      } catch (err) {
-        logger.error('Promotion email failed:', err);
+      } catch (emailErr) {
+        logger.error('Promotion email failed:', emailErr);
       }
 
-      return `User '${user.email}' promoted to admin.`;
+      return {
+        error: false,
+        message: `User '${user.email}' promoted to admin`,
+      };
     });
   },
 
-  // -------------------------------------------------------
-  // DEMOTE USER
-  // -------------------------------------------------------
-  demoteUserByAdmin: async (admin, userId) => {
+  demoteUserByAdmin: async ({ admin, id }) => {
     return await sequelize.transaction(async (t) => {
-      const user = await User.findByPk(userId, { transaction: t });
-      if (!user) throw new Error('User not found');
+      const user = await User.findByPk(id, { transaction: t });
 
-      if (user.role !== 'admin') throw new Error('User is already normal user');
+      if (!user) return { error: true, status: 404, message: 'User not found' };
+
+      if (user.role !== 'admin')
+        return {
+          error: true,
+          status: 400,
+          message: 'User is already a normal user',
+        };
 
       await user.update({ role: 'user' }, { transaction: t });
 
       await ActivityLog.create(
         {
-          userId: admin.id,
+          userId: admin?.id,
           action: 'DEMOTE_USER',
-          details: `Admin ${admin.email} demoted ${user.email}.`,
+          details: `Admin ${admin.email} demoted ${user.email} from admin.`,
           timestamp: new Date(),
         },
         { transaction: t }
@@ -223,14 +230,24 @@ You have been promoted to Admin by ${admin.email}.`
       try {
         await sendEmail(
           user.email,
-          '⚠️ Your Admin Privileges have been removed',
-          `Hello ${user.name}, ${admin.email} removed your admin role.`
+          '⚠️ Your Admin Privileges Have Been Updated',
+          `Hello ${user.name || user.email},
+
+Your admin privileges have been revoked by the administrator:
+
+Changed by: ${admin.email}
+
+Regards,
+To-Do App Team`
         );
-      } catch (err) {
-        logger.error('Demotion email failed:', err);
+      } catch (emailErr) {
+        logger.error('Demotion email failed:', emailErr);
       }
 
-      return `Admin '${user.email}' demoted to user.`;
+      return {
+        error: false,
+        message: `Admin '${user.email}' demoted to user`,
+      };
     });
   },
 };

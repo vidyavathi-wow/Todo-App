@@ -1,90 +1,184 @@
 const adminService = require('../services/adminService');
 
-// GET ALL USERS
 exports.getAllUsers = async (req, res) => {
   try {
-    const { page = 1, limit = 10 } = req.query;
-    const result = await adminService.getAllUsers(page, limit);
-    return res.status(200).json({ success: true, ...result });
+    let { page = 1, limit = 10 } = req.query;
+    page = Number(page) > 0 ? Number(page) : 1;
+    limit = Number(limit) > 0 ? Number(limit) : 10;
+
+    const { count, rows: users } = await adminService.getAllUsers({
+      page,
+      limit,
+    });
+
+    return res.status(200).json({
+      success: true,
+      currentPage: page,
+      totalPages: Math.ceil(count / limit),
+      totalUsers: count,
+      users,
+    });
   } catch (error) {
-    return res.status(500).json({ success: false, message: error.message });
+    console.error('getAllUsers error:', error);
+    return res.status(500).json({ success: false, message: 'Server error' });
   }
 };
 
-// USER DASHBOARD DETAILS
 exports.getUserDashboardDetails = async (req, res) => {
   try {
-    const result = await adminService.getUserDashboardDetails(req.params.id);
+    const { id } = req.params;
+
+    const result = await adminService.getUserDashboardDetails({ id });
+
     if (!result) {
-      return res
-        .status(404)
-        .json({ success: false, message: 'User not found' });
+      return res.status(404).json({
+        success: false,
+        message: 'User not found',
+      });
     }
-    return res.status(200).json({ success: true, ...result });
-  } catch (error) {
-    return res.status(500).json({ success: false, message: error.message });
+
+    return res.status(200).json({
+      success: true,
+      user: result.user,
+      stats: {
+        todosCount: result.todosCount,
+        deleted: !!result.user.deletedAt,
+        isActive: !result.user.deletedAt,
+      },
+      logs: result.logs,
+    });
+  } catch (err) {
+    console.error('getUserDashboardDetails error:', err);
+    return res
+      .status(500)
+      .json({ success: false, message: 'Server error fetching user details' });
   }
 };
 
-// ACTIVITY LOGS
 exports.getActivityLogs = async (req, res) => {
   try {
-    const { page = 1, limit = 10 } = req.query;
-    const result = await adminService.getActivityLogs(page, limit);
-    return res.status(200).json({ success: true, ...result });
+    let { page = 1, limit = 10 } = req.query;
+    page = Number(page) > 0 ? Number(page) : 1;
+    limit = Number(limit) > 0 ? Number(limit) : 10;
+
+    const { count, rows: logs } = await adminService.getActivityLogs({
+      page,
+      limit,
+    });
+
+    return res.status(200).json({
+      success: true,
+      currentPage: page,
+      totalPages: Math.ceil(count / limit),
+      totalLogs: count,
+      logs,
+    });
   } catch (error) {
+    console.error('getActivityLogs error:', error);
     return res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// DELETE USER
 exports.deleteUserByAdmin = async (req, res) => {
   try {
-    const message = await adminService.deleteUserByAdmin(
-      req.user,
-      req.params.id
-    );
-    return res.status(200).json({ success: true, message });
-  } catch (error) {
-    return res.status(400).json({ success: false, message: error.message });
+    const { id } = req.params;
+
+    const result = await adminService.deleteUserByAdmin({
+      admin: req.user,
+      id,
+    });
+
+    if (result.error) {
+      return res.status(result.status).json({
+        success: false,
+        message: result.message,
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: result.message,
+    });
+  } catch (err) {
+    console.error('deleteUserByAdmin error:', err);
+    return res.status(500).json({ success: false, message: err.message });
   }
 };
 
-// RESTORE USER
 exports.restoreUserByAdmin = async (req, res) => {
   try {
-    const message = await adminService.restoreUserByAdmin(
-      req.user,
-      req.params.id
-    );
-    return res.status(200).json({ success: true, message });
+    const { id } = req.params;
+
+    const result = await adminService.restoreUserByAdmin({
+      admin: req.user,
+      id,
+    });
+
+    if (result.error) {
+      return res.status(result.status).json({
+        success: false,
+        message: result.message,
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: result.message,
+    });
   } catch (error) {
-    return res.status(400).json({ success: false, message: error.message });
+    console.error('restoreUserByAdmin error:', error);
+    return res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// PROMOTE USER
 exports.promoteUserByAdmin = async (req, res) => {
   try {
-    const message = await adminService.promoteUserByAdmin(
-      req.user,
-      req.params.id
-    );
-    return res.status(200).json({ success: true, message });
+    const { id } = req.params;
+
+    const result = await adminService.promoteUserByAdmin({
+      admin: req.user,
+      id,
+    });
+
+    if (result.error) {
+      return res.status(result.status).json({
+        success: false,
+        message: result.message,
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: result.message,
+    });
   } catch (error) {
-    return res.status(400).json({ success: false, message: error.message });
+    console.error('promoteUserByAdmin error:', error);
+    return res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// DEMOTE USER
 exports.demoteUserByAdmin = async (req, res) => {
   try {
-    const message = await adminService.demoteUserByAdmin(
-      req.user,
-      req.params.id
-    );
-    return res.status(200).json({ success: true, message });
+    const { id } = req.params;
+
+    const result = await adminService.demoteUserByAdmin({
+      admin: req.user,
+      id,
+    });
+
+    if (result.error) {
+      return res.status(result.status).json({
+        success: false,
+        message: result.message,
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: result.message,
+    });
   } catch (error) {
-    return res.status(400).json({ success: false, message: error.message });
+    console.error('demoteUserByAdmin error:', error);
+    return res.status(500).json({ success: false, message: error.message });
   }
 };

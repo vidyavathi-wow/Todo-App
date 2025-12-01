@@ -1,32 +1,41 @@
 const authService = require('../services/authService');
 
 exports.register = async (req, res) => {
-  try {
-    const user = await authService.register(req.body);
+  const { name, email, password } = req.body;
 
-    return res.status(201).json({
+  try {
+    const result = await authService.register(name, email, password);
+
+    if (result.error) {
+      return res
+        .status(result.status)
+        .json({ success: false, message: result.error });
+    }
+
+    return res.status(result.status).json({
       success: true,
       message: 'Account created successfully.',
-      user: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-      },
+      user: result.data,
     });
   } catch (error) {
-    return res.status(400).json({ success: false, message: error.message });
+    return res.status(500).json({ success: false, message: error.message });
   }
 };
 
 exports.login = async (req, res) => {
-  try {
-    const { user, accessToken, refreshToken } = await authService.login(
-      req.body.email,
-      req.body.password
-    );
+  const { email, password } = req.body;
 
-    res.cookie('refreshToken', refreshToken, {
+  try {
+    const result = await authService.login(email, password);
+
+    if (result.error) {
+      return res
+        .status(result.status)
+        .json({ success: false, message: result.error });
+    }
+
+    // Set cookie exactly like original code
+    res.cookie('refreshToken', result.data.refreshToken, {
       httpOnly: true,
       secure: true,
       sameSite: 'none',
@@ -34,37 +43,49 @@ exports.login = async (req, res) => {
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
-    return res.json({
+    return res.status(200).json({
       success: true,
       message: 'Login successful.',
-      accessToken,
-      user: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-      },
+      accessToken: result.data.accessToken,
+      user: result.data.user,
     });
   } catch (error) {
-    return res.status(400).json({ success: false, message: error.message });
+    return res.status(500).json({ success: false, message: error.message });
   }
 };
 
 exports.refreshAccessToken = async (req, res) => {
   try {
-    const newToken = await authService.refreshToken(req.cookies.refreshToken);
+    const result = await authService.refreshAccessToken(
+      req.cookies.refreshToken
+    );
 
-    return res.json({ success: true, accessToken: newToken });
+    if (result.error) {
+      return res
+        .status(result.status)
+        .json({ success: false, message: result.error });
+    }
+
+    return res.status(200).json({
+      success: true,
+      accessToken: result.data.accessToken,
+    });
   } catch (error) {
-    return res.status(403).json({ success: false, message: error.message });
+    return res.status(500).json({ success: false, message: error.message });
   }
 };
 
 exports.logout = async (req, res) => {
   try {
-    await authService.logout(req.body.refreshToken, req.user?.id);
+    const result = await authService.logout(
+      req.body.refreshToken,
+      req.user?.id
+    );
 
-    return res.json({ success: true, message: 'Logged out successfully.' });
+    return res.status(result.status).json({
+      success: true,
+      message: result.data,
+    });
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message });
   }
@@ -72,24 +93,39 @@ exports.logout = async (req, res) => {
 
 exports.forgotPassword = async (req, res) => {
   try {
-    await authService.forgotPassword(req.body.email);
+    const result = await authService.forgotPassword(req.body.email);
 
-    return res.json({
+    if (result.error) {
+      return res
+        .status(result.status)
+        .json({ success: false, message: result.error });
+    }
+
+    return res.status(200).json({
       success: true,
-      message: 'If registered, reset link sent.',
+      message: result.data,
     });
   } catch (error) {
-    return res.status(400).json({ success: false, message: error.message });
+    return res.status(500).json({ success: false, message: error.message });
   }
 };
 
 exports.resetPassword = async (req, res) => {
   try {
-    await authService.resetPassword(req.query.token, req.body.password);
+    const result = await authService.resetPassword(
+      req.query.token,
+      req.body.password
+    );
 
-    return res.json({
+    if (result.error) {
+      return res
+        .status(result.status)
+        .json({ success: false, message: result.error });
+    }
+
+    return res.status(200).json({
       success: true,
-      message: 'Password updated successfully.',
+      message: result.data,
     });
   } catch (error) {
     return res.status(400).json({ success: false, message: error.message });
