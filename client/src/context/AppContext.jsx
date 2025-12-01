@@ -66,7 +66,9 @@ export const AppProvider = ({ children }) => {
 
       try {
         fetchUsersList();
-      } catch (e) {}
+      } catch (e) {
+        console.error('Failed to fetch users:', e);
+      }
     });
   }, [token]);
 
@@ -104,14 +106,18 @@ export const AppProvider = ({ children }) => {
           setTotalUserPages(data.totalPages || 1);
         }
       }
-    } catch (error) {}
+    } catch (error) {
+      toast.error(error.response?.data?.message || error.message);
+    }
   };
 
   // LOGOUT -----------------------------------------------
   const logoutUser = async () => {
     try {
       await axiosInstance.post('/api/v1/auth/logout');
-    } catch (error) {}
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
 
     localStorage.clear();
 

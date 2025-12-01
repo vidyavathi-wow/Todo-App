@@ -1,32 +1,24 @@
-const ActivityLog = require('../models/ActivityLog');
-const User = require('../models/User');
+const activityService = require('../services/activityService');
 
 exports.getActivityLogs = async (req, res) => {
   try {
     const userId = req.user.id;
-    let { page = 1, limit = 5 } = req.query;
+    const { page = 1, limit = 5 } = req.query;
 
-    page = Math.max(Number(page), 1);
-    limit = Math.max(Number(limit), 1);
-    const offset = (page - 1) * limit;
+    const data = await activityService.getUserActivityLogs(userId, page, limit);
 
-    const { count, rows: logs } = await ActivityLog.findAndCountAll({
-      where: { userId },
-      attributes: ['id', 'action', 'details', 'timestamp'],
-      order: [['timestamp', 'DESC']],
-      limit,
-      offset,
-    });
-
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
-      logs,
-      currentPage: page,
-      totalPages: Math.ceil(count / limit),
-      totalLogs: count,
+      logs: data.logs,
+      currentPage: data.currentPage,
+      totalPages: data.totalPages,
+      totalLogs: data.totalLogs,
     });
   } catch (error) {
     console.error('❌ Error fetching user activity logs:', error);
-    res.status(500).json({ success: false, message: 'Failed to fetch logs' });
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to fetch logs',
+    });
   }
 };
