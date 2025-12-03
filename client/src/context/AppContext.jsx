@@ -39,14 +39,25 @@ export const AppProvider = ({ children }) => {
   const [userPage, setUserPage] = useState(1);
   const [totalUserPages, setTotalUserPages] = useState(1);
 
-  // INIT --------------------------------------------------
+  // INIT --------------------------------------
   useEffect(() => {
     const storedToken = localStorage.getItem('accessToken');
-    if (storedToken) {
-      setToken(storedToken);
-    }
+    if (storedToken) setToken(storedToken);
     setLoading(false);
   }, []);
+
+  // 🔥 HEARTBEAT CHECK -----------------------------------
+  useEffect(() => {
+    if (!token) return;
+
+    const interval = setInterval(() => {
+      axiosInstance.get('/api/v1/auth/heartbeat').catch(() => {
+        // 403 logout will be handled by axios interceptor
+      });
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [token]);
 
   // AFTER TOKEN CHANGES -----------------------------------
   useEffect(() => {
@@ -114,18 +125,23 @@ export const AppProvider = ({ children }) => {
   // LOGOUT -----------------------------------------------
   const logoutUser = async () => {
     try {
-      await axiosInstance.post('/api/v1/auth/logout');
+      const refreshToken = localStorage.getItem('refreshToken');
+      await axiosInstance.post(
+        '/api/v1/auth/logout',
+        { refreshToken },
+        { withCredentials: true }
+      );
     } catch (error) {
       console.error('Logout error:', error);
     }
 
-    localStorage.clear();
-
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
     setToken(null);
     setUser(null);
     setTodos([]);
     setUsers([]);
-
+    delete axiosInstance.defaults.headers.common['Authorization'];
     navigate('/login', { replace: true });
   };
 

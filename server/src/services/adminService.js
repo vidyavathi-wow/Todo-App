@@ -4,6 +4,7 @@ const ActivityLog = require('../models/ActivityLog');
 const Todo = require('../models/Todo');
 const logger = require('../utils/logger');
 const sendEmail = require('../config/emailServeice');
+const RefreshToken = require('../models/RefreshToken'); // <-- ADDED
 
 module.exports = {
   getAllUsers: async ({ page, limit }) => {
@@ -153,6 +154,9 @@ module.exports = {
     });
   },
 
+  // ================================
+  // 🚀 UPDATED PROMOTE WITH FORCE LOGOUT
+  // ================================
   promoteUserByAdmin: async ({ admin, id }) => {
     return await sequelize.transaction(async (t) => {
       const user = await User.findByPk(id, { transaction: t });
@@ -167,6 +171,9 @@ module.exports = {
         };
 
       await user.update({ role: 'admin' }, { transaction: t });
+
+      // 🔥 FORCE LOGOUT: Destroy refresh tokens
+      await RefreshToken.destroy({ where: { userId: id } });
 
       await ActivityLog.create(
         {
@@ -198,10 +205,15 @@ To-Do App Team`
       return {
         error: false,
         message: `User '${user.email}' promoted to admin`,
+        forceLogout: true,
+        targetUserId: id,
       };
     });
   },
 
+  // ================================
+  // 🚀 UPDATED DEMOTE WITH FORCE LOGOUT
+  // ================================
   demoteUserByAdmin: async ({ admin, id }) => {
     return await sequelize.transaction(async (t) => {
       const user = await User.findByPk(id, { transaction: t });
@@ -216,6 +228,9 @@ To-Do App Team`
         };
 
       await user.update({ role: 'user' }, { transaction: t });
+
+      // 🔥 FORCE LOGOUT: Destroy refresh tokens
+      await RefreshToken.destroy({ where: { userId: id } });
 
       await ActivityLog.create(
         {
@@ -247,6 +262,8 @@ To-Do App Team`
       return {
         error: false,
         message: `Admin '${user.email}' demoted to user`,
+        forceLogout: true,
+        targetUserId: id,
       };
     });
   },
