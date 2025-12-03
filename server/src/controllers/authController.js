@@ -33,6 +33,12 @@ exports.login = async (req, res) => {
         .status(result.status)
         .json({ success: false, message: result.error });
     }
+    res.clearCookie('refreshToken', {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'none',
+      path: '/',
+    });
 
     // Set cookie exactly like original code
     res.cookie('refreshToken', result.data.refreshToken, {
@@ -78,9 +84,16 @@ exports.refreshAccessToken = async (req, res) => {
 exports.logout = async (req, res) => {
   try {
     const result = await authService.logout(
-      req.body.refreshToken,
+      req.cookies.refreshToken || req.body.refreshToken,
       req.user?.id
     );
+
+    res.clearCookie('refreshToken', {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'none',
+      path: '/',
+    });
 
     return res.status(result.status).json({
       success: true,

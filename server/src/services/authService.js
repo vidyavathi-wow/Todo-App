@@ -4,7 +4,7 @@ const User = require('../models/User');
 const RefreshToken = require('../models/RefreshToken');
 const sendEmail = require('../config/emailServeice');
 const ActivityLog = require('../models/ActivityLog');
-
+const { Op } = require('sequelize');
 module.exports = {
   register: async (name, email, password) => {
     if (!name || !email || !password) {
@@ -16,15 +16,25 @@ module.exports = {
       paranoid: false,
     });
 
-    if (existingUser && existingUser.deletedAt) {
-      return {
-        status: 403,
-        error: 'Your account is deactivated. Contact admin.',
-      };
+    if (existingUser) {
+      if (existingUser.deletedAt) {
+        return {
+          status: 403,
+          error: 'Your account is deactivated. Contact admin.',
+        };
+      }
+      return { status: 400, error: 'Email is already registered.' };
     }
 
-    if (existingUser) {
-      return { status: 400, error: 'Email is already registered.' };
+    const existingName = await User.findOne({
+      where: { name: { [Op.iLike]: name } },
+      paranoid: false,
+    });
+    if (existingName) {
+      return {
+        status: 400,
+        error: 'Name is already taken. Please choose another.',
+      };
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -36,12 +46,14 @@ module.exports = {
       role: 'user',
     });
 
+    // Optional welcome email
     sendEmail(
       email,
       'Welcome to Your To-Do App!',
       `Hi ${name},\n\nWelcome to your To-Do App! 🎉`
     ).catch(() => {});
 
+    // Log activity
     ActivityLog.create({
       userId: user.id,
       action: 'User Registered',

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useContext } from 'react';
 import { UserX, UserCheck, ArrowUpCircle, ArrowDownCircle } from 'lucide-react';
 
 import Loader from '../common/Loader';
@@ -14,7 +14,11 @@ import {
   restoreUser,
 } from '../../services/admin';
 
+import AppContext from '../../context/AppContext';
+
 const UsersList = () => {
+  const { user, logout } = useContext(AppContext);
+
   const [users, setUsers] = useState([]);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -31,7 +35,6 @@ const UsersList = () => {
         toast.error(data.message || 'Failed to load users');
       }
     } catch (err) {
-      console.error('Error fetching users:', err.message);
       toast.error('Failed to load users');
     } finally {
       setLoading(false);
@@ -45,10 +48,10 @@ const UsersList = () => {
     try {
       const data = await deleteUser(id);
       if (data.success) {
-        toast.success(data.message || 'User deactivated successfully');
+        toast.success(data.message);
         fetchUsers();
       } else {
-        toast.error(data.message || 'Failed to deactivate user');
+        toast.error(data.message);
       }
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to deactivate user');
@@ -57,12 +60,12 @@ const UsersList = () => {
 
   const handleRestore = async (id) => {
     try {
-      const data = await restoreUser(id, { restore: true });
+      const data = await restoreUser(id);
       if (data.success) {
-        toast.success(data.message || 'User restored successfully');
+        toast.success(data.message);
         fetchUsers();
       } else {
-        toast.error(data.message || 'Failed to restore user');
+        toast.error(data.message);
       }
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to restore user');
@@ -71,12 +74,20 @@ const UsersList = () => {
 
   const handlePromote = async (id) => {
     try {
-      const data = await promoteUser(id, { role: 'admin' });
-      if (data.success) {
-        toast.success('User promoted to admin');
+      const res = await promoteUser(id);
+
+      if (res.success) {
+        toast.success(res.message);
+
+        // 🔥 Force logout for the promoted user (not admin)
+        if (res.forceLogout && user?.id === res.targetUserId) {
+          logout();
+          return;
+        }
+
         fetchUsers();
       } else {
-        toast.error(data.message || 'Failed to promote user');
+        toast.error(res.message);
       }
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to promote user');
@@ -85,12 +96,20 @@ const UsersList = () => {
 
   const handleDemote = async (id) => {
     try {
-      const data = await demoteUser(id, { role: 'user' });
-      if (data.success) {
-        toast.success('Admin demoted to user');
+      const res = await demoteUser(id);
+
+      if (res.success) {
+        toast.success(res.message);
+
+        // 🔥 Force logout for the demoted user
+        if (res.forceLogout && user?.id === res.targetUserId) {
+          logout();
+          return;
+        }
+
         fetchUsers();
       } else {
-        toast.error(data.message || 'Failed to demote user');
+        toast.error(res.message);
       }
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to demote user');
@@ -123,7 +142,6 @@ const UsersList = () => {
               bg-gray-800 dark:bg-white border border-gray-700 dark:border-gray-300
               p-4 rounded-xl hover:border-primary/50 transition-colors duration-300"
             >
-              {/* User Details */}
               <div className="flex-1 min-w-[60%] break-words">
                 <p className="font-medium text-white dark:text-gray-900 text-base sm:text-lg leading-snug">
                   {u.name}
@@ -136,7 +154,6 @@ const UsersList = () => {
                 </p>
               </div>
 
-              {/* ACTION BUTTONS */}
               <div
                 className="
                   mt-3 sm:mt-0
@@ -146,7 +163,6 @@ const UsersList = () => {
                   gap-3
                 "
               >
-                {/* Restore */}
                 {u.deletedAt ? (
                   <button
                     onClick={() => handleRestore(u.id)}
@@ -161,7 +177,6 @@ const UsersList = () => {
                   </button>
                 ) : (
                   <>
-                    {/* Promote */}
                     {u.role !== 'admin' && (
                       <button
                         onClick={() => handlePromote(u.id)}
@@ -176,7 +191,6 @@ const UsersList = () => {
                       </button>
                     )}
 
-                    {/* Demote */}
                     {u.role === 'admin' && (
                       <button
                         onClick={() => handleDemote(u.id)}
@@ -191,7 +205,6 @@ const UsersList = () => {
                       </button>
                     )}
 
-                    {/* Deactivate */}
                     <button
                       onClick={() => handleDeactivate(u.id)}
                       className="
